@@ -579,17 +579,26 @@ namespace ProjectSMP.Entities.Players.Character
             if (player.IsDisposed) return;
             SpawnCharacter(player);
         }
-
         private static void SpawnCharacter(Player player)
         {
             CinematicCameraService.Stop(player);
             player.ToggleSpectating(false);
             player.Interior = player.CharSpawnPos.Interior;
             player.VirtualWorld = player.CharSpawnPos.World;
-            player.SetSpawnInfo(0, player.Skin,
+            player.SetSpawnInfo(0, player.CharSkin,
                 new Vector3(player.CharSpawnPos.X, player.CharSpawnPos.Y, player.CharSpawnPos.Z),
                 player.CharSpawnPos.A);
             player.Spawn();
+        }
+        public static void RespawnCharacter(Player player)
+        {
+            if (!player.IsCharLoaded) return;
+            var pos = player.CharSpawnPos;
+            player.Interior = pos.Interior;
+            player.VirtualWorld = pos.World;
+            player.SetSpawnInfo(0, player.CharSkin,
+                new Vector3(pos.X, pos.Y, pos.Z), pos.A);
+            player.ToggleSpectating(false);
         }
 
         private static void ApplyToPlayer(Player player, RawCharRow r)
@@ -600,7 +609,7 @@ namespace ProjectSMP.Entities.Players.Character
             player.LastLogin = r.last_login;
             player.VerifiedChar = r.verified_char;
             player.Username = r.username;
-            player.Skin = r.skin;
+            player.CharSkin = r.skin;
             player.Gender = r.gender;
             player.BirthDate = r.birth_date;
             player.Height = r.height;

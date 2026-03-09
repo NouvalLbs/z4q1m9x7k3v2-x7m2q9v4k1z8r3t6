@@ -1,6 +1,7 @@
 ﻿using ProjectSMP.Core;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.GarageBlocker;
+using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
 using System;
 
@@ -19,6 +20,10 @@ namespace ProjectSMP
 
             // Initialize PreviewModelDialog
             PreviewModelDialog.Init();
+
+            // Initialize Weapon Config
+            var (wcCfg, wcWeapons) = WeaponConfigLoader.Load();
+            WeaponConfigService.Init(wcCfg, wcWeapons);
 
             // Initialize Database Manager
             _ = DatabaseManager.InitAsync();

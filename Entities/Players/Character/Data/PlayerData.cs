@@ -1,5 +1,6 @@
 ﻿using ProjectSMP.Entities.Players.Character;
 using ProjectSMP.Features.Bank;
+using SampSharp.GameMode;
 using System.Collections.Generic;
 
 namespace ProjectSMP
@@ -14,6 +15,7 @@ namespace ProjectSMP
         public long LoadTick { get; set; }
 
         public string Username { get; set; } = "";
+        public int CharSkin { get; set; }
         public int Gender { get; set; }
         public string BirthDate { get; set; } = "";
         public int Height { get; set; } = 150;
@@ -42,5 +44,6 @@ namespace ProjectSMP
         public List<CharJob> Jobs { get; set; } = new();
 
         public List<PlayerBankAccount> BankAccounts { get; set; } = new();
+        public Vector3 DeathPosition { get; set; }
     }
 }
