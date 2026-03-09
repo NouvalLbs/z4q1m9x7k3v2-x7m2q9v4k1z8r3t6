@@ -66,7 +66,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static void TogglePlayerControllable(Player p, bool toggle)
         {
-            if (WeaponConfigService.IsPlayerDying(p)) return;
             p.ToggleControllable(toggle);
         }
 

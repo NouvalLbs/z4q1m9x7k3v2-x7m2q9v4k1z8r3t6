@@ -243,15 +243,30 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
             p.ApplyAnimation(prep.AnimLib, prep.AnimName, 4.0f, false, false, false, prep.AnimLock, 0, true);
 
+            p.ToggleControllable(false);
+            p.ResetWeapons();
+            p.ApplyAnimation(prep.AnimLib, prep.AnimName, 4.0f, false, false, false, prep.AnimLock, 0, true);
+
             var cts = new CancellationTokenSource();
             s.DeathCts = cts;
-            _ = RunDeathAsync(p, s, prep.RespawnTime, cts.Token, cancelable: false);
+            _ = RunDeathAsync(p, s, prep.AnimLib, prep.AnimName, prep.AnimLock, prep.RespawnTime, cts.Token, cancelable: false);
         }
 
         public static void OnUpdate(Player p)
         {
             if (!_states.TryGetValue(p.Id, out var s)) return;
             s.LastUpdateTick = Environment.TickCount;
+
+            if (s.IsDying)
+            {
+                if (p.SpecialAction != SpecialAction.None || p.AnimationIndex == 0)
+                {
+                    var (lib, anim) = GetDeathAnim(0, 0);
+                    p.ApplyAnimation(lib, anim, 4.0f, false, false, false, true, 0, true);
+                }
+                return;
+            }
+
             if (_cfg.CustomFallDamage && !s.IsDying) CheckFallDamage(p, s);
             if (_cfg.CustomVendingMachines) WeaponConfigVendingMachines.OnUpdate(p);
         }
@@ -265,6 +280,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             s.DeathCts?.Cancel();
             s.DelayedDeathCts?.Cancel();
             s.IsDying = false;
+            spectator.ToggleControllable(true);
             WeaponConfigDamageFeed.ClearSpectating(spectator);
         }
 
@@ -645,12 +661,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
             SyncFakeVitals(p, s);
             WeaponConfigHealthBar.Update(p, s.Health, s.MaxHealth);
 
-            if (s.Health <= 0 && !s.IsDying)
+            if (s.Health <= 0 && !s.IsDying) {
                 TriggerDeath(p, s, weaponId, bodypart, cancelable: true);
+            }
         }
 
-        private static void TriggerDeath(Player p, PlayerWcState s, int weaponId,
-            int bodypart = 0, bool cancelable = true)
+        private static void TriggerDeath(Player p, PlayerWcState s, int weaponId, int bodypart = 0, bool cancelable = true)
         {
             var now = Environment.TickCount;
             if (now - s.LastDeathTick < _deathSkipTimeout)
@@ -682,20 +698,22 @@ namespace ProjectSMP.Plugins.WeaponConfig
             PlayerPrepareDeath?.Invoke(null, prep);
             if (prep.Cancel) return;
 
+            p.ToggleControllable(false);
+            p.ResetWeapons();
             p.ApplyAnimation(prep.AnimLib, prep.AnimName, 4.0f, false, false, false, prep.AnimLock, 0, true);
 
             var cts = new CancellationTokenSource();
             s.DeathCts = cts;
-            _ = RunDeathAsync(p, s, prep.RespawnTime, cts.Token, cancelable);
+            _ = RunDeathAsync(p, s, prep.AnimLib, prep.AnimName, prep.AnimLock, prep.RespawnTime, cts.Token, cancelable);
         }
 
         private static (string Lib, string Name) GetDeathAnim(int wid, int bodypart)
         {
             if (wid is 16 or 18 or 35 or 36 or 39 or 51)
-                return ("PED", "KD_SKYDIVE_DIE");
+                return ("PARACHUTE", "FALL_SKYDIVE_DIE");
 
             if (wid == 54)
-                return ("PED", "FALL_SKYDIVE_DIE");
+                return ("PARACHUTE", "FALL_SKYDIVE_DIE");
 
             if (wid is 49 or 50 or 52)
                 return ("PED", "BIKE_FALL_OFF");
@@ -785,24 +803,44 @@ namespace ProjectSMP.Plugins.WeaponConfig
             s.HitsIssued++;
         }
 
-        private static async Task RunDeathAsync(Player p, PlayerWcState s, int delayMs,
-            CancellationToken ct, bool cancelable)
+        private static async Task RunDeathAsync(Player p, PlayerWcState s, string animLib, string animName, bool animLock, int delayMs, CancellationToken ct, bool cancelable)
         {
             try
             {
                 p.VirtualWorld = DeathWorld;
-                await Task.Delay(delayMs, ct);
+
+                var elapsed = 0;
+                while (elapsed < delayMs)
+                {
+                    if (p.IsDisposed) return;
+
+                    p.ApplyAnimation(animLib, animName, 4.0f, false, false, false, animLock, 0, true);
+
+                    var waitTime = Math.Min(1000, delayMs - elapsed);
+                    await Task.Delay(waitTime, ct);
+                    elapsed += waitTime;
+                }
+
                 if (p.IsDisposed) return;
 
                 s.IsDying = false;
                 s.Health = s.MaxHealth;
                 s.Armour = 0;
                 p.VirtualWorld = s.IntendedWorld;
+                p.ToggleControllable(true);
 
                 PlayerDeathFinished?.Invoke(null,
                     new DeathFinishedArgs { Player = p, Cancelable = cancelable });
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            {
+                if (!p.IsDisposed)
+                {
+                    p.ToggleControllable(true);
+                    p.VirtualWorld = s.IntendedWorld;
+                    s.IsDying = false;
+                }
+            }
         }
 
         private static ResyncSnapshot CaptureSnapshot(Player p, PlayerWcState s)
