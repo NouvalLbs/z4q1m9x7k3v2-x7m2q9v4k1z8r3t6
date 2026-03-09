@@ -35,6 +35,7 @@ namespace ProjectSMP
             WeaponConfigService.OnDisconnect(this);
             base.OnDisconnected(e);
         }
+
         private async Task SaveOnDisconnectAsync()
         {
             try { await CharacterService.SaveAsync(this); }
@@ -55,7 +56,15 @@ namespace ProjectSMP
             if (IsCharLoaded)
             {
                 var p = Position;
-                CharSpawnPos = new CharPosition { X = p.X, Y = p.Y, Z = p.Z, A = Angle, Interior = Interior, World = VirtualWorld };
+                CharSpawnPos = new CharPosition
+                {
+                    X = p.X,
+                    Y = p.Y,
+                    Z = p.Z,
+                    A = Angle,
+                    Interior = Interior,
+                    World = VirtualWorld
+                };
             }
             WeaponConfigService.OnDeath(this, e.Killer as Player, (int)e.DeathReason);
         }
@@ -63,6 +72,8 @@ namespace ProjectSMP
         public override void OnRequestClass(RequestClassEventArgs e)
         {
             base.OnRequestClass(e);
+            WeaponConfigService.OnRequestClass(this);
+
             if (!IsCharLoaded) return;
 
             SetSpawnInfo(0, CharSkin,
@@ -93,14 +104,16 @@ namespace ProjectSMP
             }
             else
             {
-                WeaponConfigService.HandleGiveDamage(this, e.OtherPlayer as Player, e.Amount, (int)e.Weapon, (int)e.BodyPart);
+                WeaponConfigService.HandleGiveDamage(this, e.OtherPlayer as Player,
+                    e.Amount, (int)e.Weapon, (int)e.BodyPart);
             }
             base.OnGiveDamage(e);
         }
 
         public override void OnTakeDamage(DamageEventArgs e)
         {
-            WeaponConfigService.HandleTakeDamage(this, e.OtherPlayer as Player, e.Amount, (int)e.Weapon, (int)e.BodyPart);
+            WeaponConfigService.HandleTakeDamage(this, e.OtherPlayer as Player,
+                e.Amount, (int)e.Weapon, (int)e.BodyPart);
             base.OnTakeDamage(e);
         }
 

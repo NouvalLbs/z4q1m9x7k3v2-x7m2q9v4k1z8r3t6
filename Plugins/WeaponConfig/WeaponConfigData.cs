@@ -7,6 +7,7 @@ using SampSharp.GameMode.Definitions;
 namespace ProjectSMP.Plugins.WeaponConfig
 {
     public enum DamageType { Multiplier = 0, Static = 1, RangeMultiplier = 2, Range = 3 }
+    public enum LagCompMode { Disabled = 0, Enabled = 1, Strict = 2 }
 
     public enum HitRejectReason
     {
@@ -39,6 +40,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
     public class WeaponConfig
     {
+        public LagCompMode LagCompensation { get; set; } = LagCompMode.Enabled;
         public bool VehiclePassengerDamage { get; set; } = false;
         public bool VehicleUnoccupiedDamage { get; set; } = false;
         public bool CbugAllowed { get; set; } = true;
@@ -57,6 +59,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public int DamageTakenSound { get; set; } = 1190;
         public int DamageGivenSound { get; set; } = 17802;
         public bool CustomVendingMachines { get; set; } = true;
+        public int DeathSkipTimeout { get; set; } = 500;
     }
 
     public class WeaponConfigRoot
@@ -65,7 +68,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public List<WeaponEntry> Weapons { get; set; } = new();
     }
 
-    /// <summary>Full per-player state snapshot captured before a resync teleport.</summary>
     public sealed class ResyncSnapshot
     {
         public float Health;
@@ -74,7 +76,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public int Team;
         public Vector3 Position;
         public float FacingAngle;
-        /// <summary>13 weapon slots (WeaponSlot 0-12): weapon id + ammo.</summary>
         public (Weapon Weapon, int Ammo)[] Weapons = new (Weapon, int)[13];
     }
 
@@ -90,6 +91,20 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public float Info2 { get; set; }
         public float Info3 { get; set; }
         public string TargetName { get; set; } = "";
+    }
+
+    public sealed class SpawnClassInfo
+    {
+        public int Skin { get; set; }
+        public int Team { get; set; }
+        public Vector3 Position { get; set; }
+        public float Rotation { get; set; }
+        public Weapon Weapon1 { get; set; }
+        public int Ammo1 { get; set; }
+        public Weapon Weapon2 { get; set; }
+        public int Ammo2 { get; set; }
+        public Weapon Weapon3 { get; set; }
+        public int Ammo3 { get; set; }
     }
 
     public class PlayerDamageArgs : EventArgs
@@ -126,10 +141,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
     public class DeathFinishedArgs : EventArgs
     {
         public Player Player { get; init; } = null!;
-        /// <summary>
-        /// True when death was triggered by the custom health system (health hit 0).
-        /// False when triggered by SA:MP's native OnPlayerDeath (already processed by the server).
-        /// </summary>
         public bool Cancelable { get; init; }
     }
 
@@ -147,7 +158,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
     public class VendingMachineArgs : EventArgs
     {
         public Player Player { get; init; } = null!;
-        /// <summary>Health to give (default 5). Set to 0 or set Cancel = true to suppress.</summary>
         public float HealthGiven { get; set; } = 5f;
         public bool Cancel { get; set; }
     }
