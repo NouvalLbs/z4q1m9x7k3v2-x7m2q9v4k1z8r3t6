@@ -214,8 +214,7 @@ namespace ProjectSMP.Entities.Players.Account
 
             session.Password = hashed;
             CancelKickTimer(player);
-
-            // TODO: CheckPlayerChar(player);
+            CharacterService.CheckPlayerCharAsync(player);
         }
 
         private static void HandleLogin(Player player, string password)
@@ -238,8 +237,7 @@ namespace ProjectSMP.Entities.Players.Account
             }
 
             CancelKickTimer(player);
-
-            // TODO: CheckPlayerChar(player);
+            CharacterService.CheckPlayerCharAsync(player);
         }
 
         // ── Session ───────────────────────────────────────────────────────────
