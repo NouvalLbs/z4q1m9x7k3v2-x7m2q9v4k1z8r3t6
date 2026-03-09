@@ -2,6 +2,7 @@
 #nullable enable
 using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Account.Data;
+using ProjectSMP.Entities.Players.Character;
 using SampSharp.GameMode.Definitions;
 using System;
 using System.Collections.Generic;
