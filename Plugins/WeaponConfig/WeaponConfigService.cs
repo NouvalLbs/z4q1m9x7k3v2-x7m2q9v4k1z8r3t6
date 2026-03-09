@@ -682,8 +682,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             PlayerPrepareDeath?.Invoke(null, prep);
             if (prep.Cancel) return;
 
-            p.ApplyAnimation(prep.AnimLib, prep.AnimName, 4.0f, false, false, false,
-                prep.AnimLock, 0, true);
+            p.ApplyAnimation(prep.AnimLib, prep.AnimName, 4.0f, false, false, false, prep.AnimLock, 0, true);
 
             var cts = new CancellationTokenSource();
             s.DeathCts = cts;
@@ -698,7 +697,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (wid == 54)
                 return ("PED", "FALL_SKYDIVE_DIE");
 
-            if (wid == 50)
+            if (wid is 49 or 50 or 52)
                 return ("PED", "BIKE_FALL_OFF");
 
             if (bodypart == BodypartHead)
@@ -1385,7 +1384,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             return $"[{hit.Tick}] {issuerName} -> {hit.Amount:F1} dmg ({weaponName}, {bodypartName}) | HP: {hit.Health:F1}, Armour: {hit.Armour:F1}";
         }
 
-        private static string GetBodypartName(int bodypart)
+        public static string GetBodypartName(int bodypart)
         {
             return bodypart switch
             {

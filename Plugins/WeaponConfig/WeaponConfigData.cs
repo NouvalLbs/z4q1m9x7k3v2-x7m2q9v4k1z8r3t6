@@ -189,4 +189,16 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public float HealthGiven { get; set; } = 5f;
         public bool Cancel { get; set; }
     }
+
+    public static class WeaponConfigConstants
+    {
+        public const int BodyPartUnknown = 0;
+        public const int BodyPartTorso = 3;
+        public const int BodyPartGroin = 4;
+        public const int BodyPartLeftArm = 5;
+        public const int BodyPartRightArm = 6;
+        public const int BodyPartLeftLeg = 7;
+        public const int BodyPartRightLeg = 8;
+        public const int BodyPartHead = 9;
+    }
 }

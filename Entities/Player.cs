@@ -5,6 +5,7 @@ using ProjectSMP.Feature.CinematicCamera;
 using ProjectSMP.Features.Bank;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.WeaponConfig;
+using SampSharp.GameMode;
 using SampSharp.GameMode.Events;
 using SampSharp.GameMode.Pools;
 using SampSharp.GameMode.World;
@@ -74,10 +75,10 @@ namespace ProjectSMP
             base.OnRequestClass(e);
             WeaponConfigService.OnRequestClass(this);
 
-            if (!IsCharLoaded) return;
+            if (!IsCharLoaded || WeaponConfigService.IsPlayerInClassSelection(this)) return;
 
             SetSpawnInfo(0, CharSkin,
-                new SampSharp.GameMode.Vector3(CharSpawnPos.X, CharSpawnPos.Y, CharSpawnPos.Z),
+                new Vector3(CharSpawnPos.X, CharSpawnPos.Y, CharSpawnPos.Z),
                 CharSpawnPos.A);
             Spawn();
         }
@@ -112,8 +113,7 @@ namespace ProjectSMP
 
         public override void OnTakeDamage(DamageEventArgs e)
         {
-            WeaponConfigService.HandleTakeDamage(this, e.OtherPlayer as Player,
-                e.Amount, (int)e.Weapon, (int)e.BodyPart);
+            WeaponConfigService.HandleTakeDamage(this, e.OtherPlayer as Player, e.Amount, (int)e.Weapon, (int)e.BodyPart);
             base.OnTakeDamage(e);
         }
 

@@ -3,6 +3,7 @@ using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
+using SampSharp.GameMode.Events;
 using SampSharp.GameMode.World;
 using System;
 using System.Threading.Tasks;
@@ -33,6 +34,18 @@ namespace ProjectSMP
 
             // Initialize Database Manager
             Task.Run(DatabaseManager.InitAsync).GetAwaiter().GetResult();
+        }
+
+        private void OnVehicleSpawned(object sender, EventArgs e)
+        {
+            if (sender is BaseVehicle vehicle)
+                WeaponConfigService.OnVehicleSpawn(vehicle.Id);
+        }
+
+        private void OnVehicleDeath(object sender, PlayerEventArgs e)
+        {
+            if (sender is BaseVehicle vehicle)
+                WeaponConfigService.OnVehicleDeath(vehicle.Id);
         }
 
         protected override void OnExited(EventArgs e) {

@@ -1,5 +1,7 @@
-﻿using SampSharp.GameMode;
+﻿#nullable enable
+using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
+using System;
 
 namespace ProjectSMP.Plugins.WeaponConfig
 {
@@ -150,5 +152,40 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static float WcGetLastDamageArmour(this Player p)
             => WeaponConfigWrappers.GetLastDamageArmour(p);
+        public static void WcEnableHealthBar(this Player p, bool enable)
+            => WeaponConfigWrappers.EnableHealthBarForPlayer(p, enable);
+
+        public static void WcSetDamageFeed(this Player p, bool enable)
+            => WeaponConfigWrappers.SetDamageFeedForPlayer(p, enable);
+
+        public static string WcGetBodypartName(this int bodypart)
+            => WeaponConfigWrappers.GetBodypartName(bodypart);
+
+        public static string WcGetWeaponNameStatic(this int weaponId)
+            => WeaponConfigWrappers.GetWeaponName(weaponId);
+
+        public static bool WcIsBullet(this int weaponId)
+            => WeaponConfigWrappers.IsBulletWeapon(weaponId);
+
+        public static bool WcIsMelee(this int weaponId)
+            => WeaponConfigWrappers.IsMeleeWeapon(weaponId);
+
+        public static bool WcIsShotgun(this int weaponId)
+            => WeaponConfigWrappers.IsShotgunWeapon(weaponId);
+
+        public static bool WcIsHighRate(this int weaponId)
+            => WeaponConfigWrappers.IsHighRateWeapon(weaponId);
+
+        public static WeaponEntry WcGetEntry(this int weaponId)
+            => WeaponConfigWrappers.GetWeaponEntry(weaponId);
+
+        public static void WcModifyEntry(this int weaponId, Action<WeaponEntry> modifier)
+            => WeaponConfigWrappers.ModifyWeaponEntry(weaponId, modifier);
+
+        public static string WcGetRejectedHitRaw(this Player p, int index)
+            => WeaponConfigWrappers.GetRejectedHit(p, index);
+
+        public static string WcGetPreviousHitRaw(this Player p, int index)
+            => WeaponConfigWrappers.GetPreviousHit(p, index);
     }
 }

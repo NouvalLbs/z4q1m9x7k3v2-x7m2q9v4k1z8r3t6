@@ -130,6 +130,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static int GetMaxHitRateSamples()
             => WeaponConfigService.GetMaxHitRateSamples();
 
+        public static PreviousHitInfo GetPreviousHitRaw(Player p, int index)
+            => WeaponConfigService.GetPreviousHit(p, index);
+
+        public static RejectedHit GetRejectedHitRaw(Player p, int index)
+            => WeaponConfigService.GetRejectedHit(p, index);
+
         public static void SetPlayerStreamDistance(float distance)
             => WeaponConfigService.SetPlayerStreamDistance(distance);
 
@@ -210,10 +216,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
         {
             if (p.IsDisposed || WeaponConfigService.IsPlayerDying(p)) return;
 
-            if (p.Position.Z > z)
-                p.Position = new SampSharp.GameMode.Vector3(x, y, p.Position.Z);
+            var currentZ = p.Position.Z;
+            if (currentZ > z)
+                p.Position = new Vector3(x, y, currentZ);
             else
-                p.Position = new SampSharp.GameMode.Vector3(x, y, z);
+                p.Position = new Vector3(x, y, z);
         }
 
         public static void SetWeaponName(int weaponId, string name)
@@ -271,66 +278,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static void SetCbugDeathDelay(bool toggle)
             => WeaponConfigService.SetCbugDeathDelay(toggle);
 
-        public static int CreateVehicle(int modelid, float x, float y, float z, float rotation, int color1, int color2, int respawnDelay, bool addSiren = false)
-        {
-            var vehicle = BaseVehicle.Create(
-                (VehicleModelType)modelid,
-                new Vector3(x, y, z), rotation, color1, color2, respawnDelay, addSiren);
-
-            if (vehicle != null)
-            {
-                WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-                vehicle.Spawned += (s, e) => WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-                vehicle.Death += (s, e) => WeaponConfigService.OnVehicleDeath(vehicle.Id);
-            }
-
-            return vehicle?.Id ?? -1;
-        }
-
-        public static void DestroyVehicle(int vehicleid)
-        {
-            var vehicle = BaseVehicle.Find(vehicleid);
-            if (vehicle != null)
-            {
-                WeaponConfigService.OnVehicleDestroy(vehicleid);
-                vehicle.Dispose();
-            }
-        }
-
-        public static int AddStaticVehicle(int modelid, float x, float y, float z, float rotation,
-            int color1, int color2)
-        {
-            var vehicle = BaseVehicle.Create(
-                (VehicleModelType)modelid,
-                new SampSharp.GameMode.Vector3(x, y, z), rotation, color1, color2);
-
-            if (vehicle != null)
-            {
-                WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-                vehicle.Spawned += (s, e) => WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-                vehicle.Death += (s, e) => WeaponConfigService.OnVehicleDeath(vehicle.Id);
-            }
-
-            return vehicle?.Id ?? -1;
-        }
-
-        public static int AddStaticVehicleEx(int modelid, float x, float y, float z, float rotation,
-            int color1, int color2, int respawnDelay, bool addSiren = false)
-        {
-            var vehicle = BaseVehicle.Create(
-                (VehicleModelType)modelid,
-                new SampSharp.GameMode.Vector3(x, y, z), rotation, color1, color2, respawnDelay, addSiren);
-
-            if (vehicle != null)
-            {
-                WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-                vehicle.Spawned += (s, e) => WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-                vehicle.Death += (s, e) => WeaponConfigService.OnVehicleDeath(vehicle.Id);
-            }
-
-            return vehicle?.Id ?? -1;
-        }
-
         public static int AddPlayerClass(int modelid, float spawnX, float spawnY, float spawnZ,
             float zAngle, Weapon weapon1 = Weapon.None, int weapon1Ammo = 0,
             Weapon weapon2 = Weapon.None, int weapon2Ammo = 0,
@@ -353,6 +300,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static SpawnClassInfo? GetSpawnClass(int classid)
             => WeaponConfigService.GetSpawnClass(classid);
+
+        public static bool GetSpawnClassInfo(int classid, out SpawnClassInfo info)
+        {
+            info = WeaponConfigService.GetSpawnClass(classid);
+            return info != null;
+        }
 
         public static int AverageShootRate(Player p, int shots)
             => WeaponConfigService.AverageShootRate(p, shots);
@@ -377,5 +330,142 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static LagCompMode GetLagCompMode()
             => WeaponConfigService.GetLagCompMode();
+
+        public static int CreateVehicle(int modelid, float x, float y, float z, float rotation, int color1, int color2, int respawnDelay, bool addSiren = false)
+        {
+            var vehicle = BaseVehicle.Create(
+                (VehicleModelType)modelid,
+                new Vector3(x, y, z), rotation, color1, color2, respawnDelay, addSiren);
+
+            if (vehicle != null)
+            {
+                WeaponConfigService.OnVehicleSpawn(vehicle.Id);
+                vehicle.Spawn += (s, e) => WeaponConfigService.OnVehicleSpawn(vehicle.Id);
+                vehicle.Died += (s, e) => WeaponConfigService.OnVehicleDeath(vehicle.Id);
+            }
+
+            return vehicle?.Id ?? -1;
+        }
+
+        public static void DestroyVehicle(int vehicleid)
+        {
+            var vehicle = BaseVehicle.Find(vehicleid);
+            if (vehicle != null)
+            {
+                WeaponConfigService.OnVehicleDestroy(vehicleid);
+                vehicle.Dispose();
+            }
+        }
+
+        public static int AddStaticVehicle(int modelid, float x, float y, float z, float rotation, int color1, int color2)
+        {
+            var vehicle = BaseVehicle.Create(
+                (VehicleModelType)modelid,
+                new Vector3(x, y, z), rotation, color1, color2);
+
+            if (vehicle != null)
+            {
+                WeaponConfigService.OnVehicleSpawn(vehicle.Id);
+                vehicle.Spawn += (s, e) => WeaponConfigService.OnVehicleSpawn(vehicle.Id);
+                vehicle.Died += (s, e) => WeaponConfigService.OnVehicleDeath(vehicle.Id);
+            }
+
+            return vehicle?.Id ?? -1;
+        }
+
+        public static int AddStaticVehicleEx(int modelid, float x, float y, float z, float rotation, int color1, int color2, int respawnDelay, bool addSiren = false)
+        {
+            var vehicle = BaseVehicle.Create(
+                (VehicleModelType)modelid,
+                new Vector3(x, y, z), rotation, color1, color2, respawnDelay, addSiren);
+
+            if (vehicle != null)
+            {
+                WeaponConfigService.OnVehicleSpawn(vehicle.Id);
+                vehicle.Spawn += (s, e) => WeaponConfigService.OnVehicleSpawn(vehicle.Id);
+                vehicle.Died += (s, e) => WeaponConfigService.OnVehicleDeath(vehicle.Id);
+            }
+
+            return vehicle?.Id ?? -1;
+        }
+
+        public static void EnableHealthBarForPlayer(Player p, bool enable)
+            => WeaponConfigHealthBar.SetEnabled(p, enable);
+
+        public static WeaponEntry GetWeaponEntry(int weaponId)
+            => WeaponConfigService.GetWeaponEntryPublic(weaponId);
+
+        public static void ModifyWeaponEntry(int weaponId, Action<WeaponEntry> modifier)
+            => WeaponConfigService.ModifyWeaponEntry(weaponId, modifier);
+
+        public static string GetBodypartName(int bodypart)
+            => WeaponConfigService.GetBodypartName(bodypart);
+
+        public static void SetVehiclePassengerDamage(bool toggle)
+            => WeaponConfigService.SetVehiclePassengerDamage(toggle);
+
+        public static void SetVehicleUnoccupiedDamage(bool toggle)
+            => WeaponConfigService.SetVehicleUnoccupiedDamage(toggle);
+
+        public static void SetCustomArmourRules(bool armourRules, bool torsoRules = false)
+            => WeaponConfigService.SetCustomArmourRules(armourRules, torsoRules);
+
+        public static void SetWeaponArmourRule(int weaponId, bool affectsArmour, bool torsoOnly = false)
+            => WeaponConfigService.SetWeaponArmourRule(weaponId, affectsArmour, torsoOnly);
+
+        public static void SetRespawnTime(int ms)
+            => WeaponConfigService.SetRespawnTime(ms);
+
+        public static int GetRespawnTime()
+            => WeaponConfigService.GetRespawnTime();
+
+        public static void SetDamageSounds(int taken, int given)
+            => WeaponConfigService.SetDamageSounds(taken, given);
+
+        public static void SetCbugAllowed(bool enabled, Player p = null)
+            => WeaponConfigService.SetCbugAllowed(enabled, p);
+
+        public static bool GetCbugAllowed(Player p = null)
+            => WeaponConfigService.GetCbugAllowed(p);
+
+        public static void SetCustomFallDamage(bool toggle, float multiplier = 25f, float deathVel = -0.6f)
+            => WeaponConfigService.SetCustomFallDamage(toggle, multiplier, deathVel);
+
+        public static void SetCustomVendingMachines(bool enable)
+            => WeaponConfigService.SetCustomVendingMachines(enable);
+
+        public static void SetDamageFeed(bool enable)
+            => WeaponConfigService.SetDamageFeed(enable);
+
+        public static void SetDamageFeedForPlayer(Player p, bool enable)
+            => WeaponConfigDamageFeed.SetEnabled(p, enable);
+
+        public static bool IsDamageFeedActive(Player p = null)
+            => WeaponConfigService.IsDamageFeedActive(p);
+
+        public static void SetWeaponDamage(int id, float dmg, DamageType type = DamageType.Static)
+            => WeaponConfigService.SetWeaponDamage(id, dmg, type);
+
+        public static float GetWeaponDamage(int id)
+            => WeaponConfigService.GetWeaponDamage(id);
+
+        public static void SetWeaponMaxRange(int id, float range)
+            => WeaponConfigService.SetWeaponMaxRange(id, range);
+
+        public static float GetWeaponMaxRange(int id)
+            => WeaponConfigService.GetWeaponMaxRange(id);
+
+        public static void SetWeaponShootRate(int id, int rate)
+            => WeaponConfigService.SetWeaponShootRate(id, rate);
+
+        public static int GetWeaponShootRate(int id)
+            => WeaponConfigService.GetWeaponShootRate(id);
+
+        public static string ReturnWeaponName(int weaponId)
+        {
+            var name = new char[32];
+            GetWeaponName(weaponId);
+            return GetWeaponName(weaponId);
+        }
     }
 }
