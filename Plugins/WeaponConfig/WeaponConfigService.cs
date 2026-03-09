@@ -53,6 +53,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public int SpawnClass = -2;
         public bool SpawnInfoModified;
+        public bool ForceClassSelection;
     }
 
     internal sealed class ShotInfo
@@ -77,6 +78,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
     public static partial class WeaponConfigService
     {
         private const int DeathWorld = 0x00DEAD00;
+        private static float _playerStreamDistance = 200f;
+        private static float _maxDistFromShot = 5f;
+        private static float _maxDistFromOrigin = 5f;
+        private static int _shotTimeoutMs = 1000;
+        private static int _deathSkipTimeout = 500;
+        private static int _maxPreviousHits = 10;
         private const int BodypartTorso = 3;
         private const int BodypartHead = 9;
 
@@ -117,6 +124,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
         {
             _cfg = cfg;
             _weapons = weapons;
+            _playerStreamDistance = cfg.PlayerStreamDistance;
+            _maxDistFromShot = cfg.MaxDistFromShot;
+            _maxDistFromOrigin = cfg.MaxDistFromOrigin;
+            _shotTimeoutMs = cfg.ShotTimeoutMs;
+            _deathSkipTimeout = cfg.DeathSkipTimeout;
+            _maxPreviousHits = cfg.MaxPreviousHits;
             WeaponConfigDamageFeed.Init(cfg.EnableDamageFeed, cfg.DamageFeedHideDelay);
             WeaponConfigHealthBar.Init();
             WeaponConfigVendingMachines.Init(cfg.CustomVendingMachines);
@@ -202,7 +215,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (s.IsDying && !s.TrueDeath) return;
 
             var now = Environment.TickCount;
-            if (now - s.LastDeathTick < _cfg.DeathSkipTimeout)
+            if (now - s.LastDeathTick < _deathSkipTimeout)
             {
                 s.DeathSkipCount++;
                 s.LastDeathSkipTick = now;
@@ -259,6 +272,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
         {
             if (!_states.TryGetValue(p.Id, out var s)) return;
             s.InClassSelection = true;
+            if (s.ForceClassSelection)
+            {
+                s.ForceClassSelection = false;
+                s.InClassSelection = true;
+                return;
+            }
             s.IsDying = false;
             s.DeathCts?.Cancel();
             s.DelayedDeathCts?.Cancel();
@@ -298,7 +317,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (_cfg.LagCompensation == LagCompMode.Disabled) return true;
 
             var distToTarget = Dist(issuer.Position, damaged.Position);
-            if (distToTarget > _cfg.PlayerStreamDistance)
+            if (distToTarget > _playerStreamDistance)
             {
                 Reject(issuer, weaponId, HitRejectReason.Unstreamed, distToTarget, targetName: damaged.Name);
                 return false;
@@ -309,14 +328,14 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 if (iState.LastShot == null) return false;
 
                 var hitDist = Dist(iState.LastShot.Origin, damaged.Position);
-                if (hitDist > _cfg.MaxDistFromShot)
+                if (hitDist > _maxDistFromShot)
                 {
                     Reject(issuer, weaponId, HitRejectReason.TooFarFromShot, hitDist, targetName: damaged.Name);
                     return false;
                 }
 
                 var originDist = Dist(iState.LastShot.Origin, issuer.Position);
-                if (originDist > _cfg.MaxDistFromOrigin)
+                if (originDist > _maxDistFromOrigin)
                 {
                     Reject(issuer, weaponId, HitRejectReason.TooFarFromOrigin, originDist, targetName: damaged.Name);
                     return false;
@@ -394,7 +413,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (IsBulletWeapon(weaponId))
             {
                 if (iState.LastShot == null || !iState.LastShot.Valid ||
-                    Environment.TickCount - iState.LastShot.Tick > _cfg.ShotTimeoutMs)
+                    Environment.TickCount - iState.LastShot.Tick > _shotTimeoutMs)
                 {
                     Reject(issuer, weaponId, HitRejectReason.LastShotInvalid, targetName: damaged.Name);
                     return;
@@ -568,7 +587,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         private static void TrackPreviousHit(PlayerWcState s, int issuerId, int weapon, float amount, int bodypart)
         {
-            var idx = s.PreviousHitIdx % _cfg.MaxPreviousHits;
+            var idx = s.PreviousHitIdx % _maxPreviousHits;
             s.PreviousHits[idx] = new PreviousHitInfo
             {
                 Tick = Environment.TickCount,
@@ -584,11 +603,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static PreviousHitInfo? GetPreviousHit(Player p, int index)
         {
-            if (!_states.TryGetValue(p.Id, out var s) || index >= _cfg.MaxPreviousHits)
+            if (!_states.TryGetValue(p.Id, out var s) || index >= _maxPreviousHits)
                 return null;
 
-            var realIdx = ((s.PreviousHitIdx - index - 1) % _cfg.MaxPreviousHits + _cfg.MaxPreviousHits)
-                % _cfg.MaxPreviousHits;
+            var realIdx = ((s.PreviousHitIdx - index - 1) % _maxPreviousHits + _maxPreviousHits)
+                % _maxPreviousHits;
             return s.PreviousHits[realIdx];
         }
 
@@ -634,7 +653,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             int bodypart = 0, bool cancelable = true)
         {
             var now = Environment.TickCount;
-            if (now - s.LastDeathTick < _cfg.DeathSkipTimeout)
+            if (now - s.LastDeathTick < _deathSkipTimeout)
             {
                 s.DeathSkipCount++;
                 s.LastDeathSkipTick = now;
@@ -1297,5 +1316,191 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static SpawnClassInfo? GetSpawnClass(int classId)
             => _spawnClasses.TryGetValue(classId, out var c) ? c : null;
+
+        public static string GetRejectedHitFormatted(Player p, int idx)
+        {
+            var hit = GetRejectedHit(p, idx);
+            if (hit == null) return string.Empty;
+
+            var weaponName = GetWeaponName((int)hit.Weapon);
+            var targetName = hit.TargetName;
+            var reason = FormatRejectedReason(hit.Reason, hit.Info1, hit.Info2, hit.Info3);
+
+            return $"[{hit.Hour:D2}:{hit.Minute:D2}:{hit.Second:D2}] ({weaponName} -> {targetName}) {reason}";
+        }
+
+        private static string FormatRejectedReason(HitRejectReason reason, float i1, float i2, float i3)
+        {
+            return reason switch
+            {
+                HitRejectReason.ShootRateTooFast =>
+                    $"Shooting rate too fast: {i1:F0} ({i2:F0} samples, max {i3:F0})",
+                HitRejectReason.HitRateTooFast =>
+                    $"Hit rate too fast: {i1:F0} ({i2:F0} samples, max {i3:F0})",
+                HitRejectReason.ShootRateTooFastMultiple =>
+                    $"Shooting rate too fast: {i1:F0} ({i2:F0} samples, multiple weapons)",
+                HitRejectReason.HitRateTooFastMultiple =>
+                    $"Hit rate too fast: {i1:F0} ({i2:F0} samples, multiple weapons)",
+                HitRejectReason.OutOfRange =>
+                    $"Hit out of range ({i1:F1} > {i2:F1})",
+                HitRejectReason.MultiplePlayers =>
+                    $"One bullet hit {i1:F0} players",
+                HitRejectReason.MultiplePlayersShotgun =>
+                    $"Hit too many players with shotgun: {i1:F0}",
+                HitRejectReason.InvalidHitType =>
+                    $"Invalid hit type: {i1:F0}",
+                HitRejectReason.TooFarFromShot =>
+                    $"Hit player too far from hit position (dist {i1:F1})",
+                HitRejectReason.TooFarFromOrigin =>
+                    $"Damage inflicted too far from current position (dist {i1:F1})",
+                HitRejectReason.InvalidDamage =>
+                    $"Invalid weapon damage ({i1:F4})",
+                HitRejectReason.InvalidVehicle =>
+                    $"Hit invalid vehicle: {i1:F0}",
+                HitRejectReason.Disconnected =>
+                    $"Hit a disconnected player ID: {i1:F0}",
+                HitRejectReason.NoIssuer => "None or invalid player shot",
+                HitRejectReason.InvalidWeapon => "Invalid weapon",
+                HitRejectReason.LastShotInvalid => "Last shot invalid",
+                HitRejectReason.DyingPlayer => "Hit a dying player",
+                HitRejectReason.SameTeam => "Hit a teammate",
+                HitRejectReason.Unstreamed => "Hit someone that can't see you (not streamed in)",
+                HitRejectReason.BeingResynced => "Hit while being resynced",
+                HitRejectReason.NotSpawned => "Hit when not spawned or dying",
+                HitRejectReason.SameVehicle => "Hit a player in the same vehicle",
+                HitRejectReason.OwnVehicle => "Hit the vehicle you're in",
+                _ => "Unknown reject reason"
+            };
+        }
+
+        public static string GetPreviousHitFormatted(Player p, int index)
+        {
+            var hit = GetPreviousHit(p, index);
+            if (hit == null) return string.Empty;
+
+            var issuerName = BasePlayer.Find(hit.Issuer)?.Name ?? "Unknown";
+            var weaponName = GetWeaponName(hit.Weapon);
+            var bodypartName = GetBodypartName(hit.Bodypart);
+
+            return $"[{hit.Tick}] {issuerName} -> {hit.Amount:F1} dmg ({weaponName}, {bodypartName}) | HP: {hit.Health:F1}, Armour: {hit.Armour:F1}";
+        }
+
+        private static string GetBodypartName(int bodypart)
+        {
+            return bodypart switch
+            {
+                3 => "Torso",
+                4 => "Groin",
+                5 => "Left Arm",
+                6 => "Right Arm",
+                7 => "Left Leg",
+                8 => "Right Leg",
+                9 => "Head",
+                _ => "Unknown"
+            };
+        }
+
+        public static void SetPlayerStreamDistance(float distance)
+        {
+            _playerStreamDistance = Math.Max(0f, distance);
+        }
+
+        public static float GetPlayerStreamDistance() => _playerStreamDistance;
+
+        public static void SetMaxDistFromShot(float distance)
+        {
+            _maxDistFromShot = Math.Max(0f, distance);
+        }
+
+        public static float GetMaxDistFromShot() => _maxDistFromShot;
+
+        public static void SetMaxDistFromOrigin(float distance)
+        {
+            _maxDistFromOrigin = Math.Max(0f, distance);
+        }
+
+        public static float GetMaxDistFromOrigin() => _maxDistFromOrigin;
+
+        public static void SetShotTimeout(int ms)
+        {
+            _shotTimeoutMs = Math.Max(0, ms);
+        }
+
+        public static int GetShotTimeout() => _shotTimeoutMs;
+
+        public static void SetDeathSkipTimeout(int ms)
+        {
+            _deathSkipTimeout = Math.Max(0, ms);
+        }
+
+        public static int GetDeathSkipTimeout() => _deathSkipTimeout;
+
+        public static void SetMaxPreviousHits(int count)
+        {
+            _maxPreviousHits = Math.Max(1, Math.Min(count, 50));
+        }
+
+        public static int GetMaxPreviousHits() => _maxPreviousHits;
+
+        public static void SetWeaponRangeDamage(int weaponId, DamageType damageType, params float[] values)
+        {
+            if (weaponId < 0 || weaponId >= _weapons.Length) return;
+            if (!IsBulletWeapon(weaponId)) return;
+            if (damageType != DamageType.Range && damageType != DamageType.RangeMultiplier) return;
+            if (values.Length == 0 || values.Length % 2 != 1) return;
+
+            var weapon = _weapons[weaponId];
+            weapon.Type = damageType;
+            weapon.RangeSteps.Clear();
+
+            weapon.Damage = values[0];
+
+            for (int i = 1; i < values.Length; i += 2)
+            {
+                weapon.RangeSteps.Add(new RangeDamageStep
+                {
+                    Range = values[i],
+                    Damage = values[i + 1]
+                });
+            }
+        }
+
+        public static WeaponEntry? GetWeaponEntryPublic(int weaponId)
+            => GetWeaponEntry(weaponId);
+
+        public static void ModifyWeaponEntry(int weaponId, Action<WeaponEntry> modifier)
+        {
+            var entry = GetWeaponEntry(weaponId);
+            if (entry != null) modifier(entry);
+        }
+
+        public static void ForcePlayerClassSelection(Player p)
+        {
+            if (!_states.TryGetValue(p.Id, out var s)) return;
+            s.ForceClassSelection = true;
+            s.InClassSelection = true;
+            p.ToggleSpectating(true);
+        }
+
+        public static bool IsPlayerInClassSelection(Player p)
+            => _states.TryGetValue(p.Id, out var s) && s.InClassSelection;
+
+        public static void SetDisableSyncBugs(bool toggle)
+        {
+            try
+            {
+                Plugins.SKY.SkyNatives.Instance.SetDisableSyncBugs(toggle ? 1 : 0);
+            }
+            catch { }
+        }
+
+        public static void SetKnifeSync(bool toggle)
+        {
+            try
+            {
+                Plugins.SKY.SkyNatives.Instance.SetKnifeSync(toggle ? 1 : 0);
+            }
+            catch { }
+        }
     }
 }

@@ -150,5 +150,15 @@ namespace ProjectSMP
             PreviewModelDialog.HandleCancel(this);
             base.OnCancelClickTextDraw(e);
         }
+
+        public override void OnEnterVehicle(EnterVehicleEventArgs e)
+        {
+            base.OnEnterVehicle(e);
+        }
+
+        public override void OnExitVehicle(PlayerVehicleEventArgs e)
+        {
+            base.OnExitVehicle(e);
+        }
     }
 }

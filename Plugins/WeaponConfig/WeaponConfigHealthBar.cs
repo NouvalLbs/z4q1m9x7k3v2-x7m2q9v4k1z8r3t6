@@ -16,6 +16,13 @@ namespace ProjectSMP.Plugins.WeaponConfig
         private const float MaxWidth = 33.5f;
         private const float BarH = 6.5f;
         private const float BorderPad = 0.5f;
+        private static bool _isInitialized = false;
+
+        internal static bool IsInternalTextDraw(TextDraw td)
+            => _isInitialized && (td == _border || td == _background);
+
+        internal static bool IsInternalPlayerTextDraw(PlayerTextDraw ptd, int playerId)
+            => _isInitialized && _bars.TryGetValue(playerId, out var bar) && ptd == bar;
 
         private static readonly Color FgColor = new(0xB4, 0x19, 0x1D, 0xFF);
         private static readonly Color BgColor = new(0x5A, 0x0C, 0x0E, 0xFF);
@@ -57,12 +64,15 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 Outline = 0,
                 Proportional = true
             };
+
+            _isInitialized = true;
         }
 
         public static void Dispose()
         {
             _border?.Dispose();
             _background?.Dispose();
+            _isInitialized = false;
         }
 
         public static void OnConnect(BasePlayer player)

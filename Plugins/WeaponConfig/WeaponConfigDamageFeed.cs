@@ -30,7 +30,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public int GivenIdx;
         public int LastRenderTick;
         public CancellationTokenSource? HideCts;
-        /// <summary>Player ID being spectated, or -1 if not spectating.</summary>
         public int SpectatingId = -1;
     }
 
@@ -44,6 +43,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
         private const float LineH = 10f;
 
         private static int _hideDelayMs = 3000;
+        private static bool _isInitialized = false;
 
         private static readonly Color TakenColor = new(0x33, 0xCC, 0xFF, 0xFF);
         private static readonly Color GivenColor = new(0x30, 0xFF, 0x50, 0xFF);
@@ -52,12 +52,17 @@ namespace ProjectSMP.Plugins.WeaponConfig
         private static readonly Dictionary<int, PlayerFeedState> _feeds = new();
         private static bool _globalEnabled = true;
 
-        // ── Init / lifecycle ────────────────────────────────────────────
+        internal static bool IsInternalPlayerTextDraw(PlayerTextDraw? ptd, int playerId)
+        {
+            if (!_isInitialized || !_feeds.TryGetValue(playerId, out var s)) return false;
+            return ptd == s.TakenTD || ptd == s.GivenTD;
+        }
 
         public static void Init(bool globalEnabled, int hideDelayMs = 3000)
         {
             _globalEnabled = globalEnabled;
             _hideDelayMs = hideDelayMs;
+            _isInitialized = true;
         }
 
         public static void OnConnect(BasePlayer player)
@@ -103,21 +108,16 @@ namespace ProjectSMP.Plugins.WeaponConfig
             s.TakenTD?.Dispose();
             s.GivenTD?.Dispose();
             _feeds.Remove(player.Id);
+
+            if (_feeds.Count == 0) _isInitialized = false;
         }
 
-        // ── Spectate support ────────────────────────────────────────────
-
-        /// <summary>
-        /// Call when a player begins spectating another.
-        /// Their feed will mirror the target's damage feed.
-        /// </summary>
         public static void SetSpectating(BasePlayer spectator, int targetPlayerId)
         {
             if (_feeds.TryGetValue(spectator.Id, out var s))
                 s.SpectatingId = targetPlayerId;
         }
 
-        /// <summary>Call when a player stops spectating.</summary>
         public static void ClearSpectating(BasePlayer spectator)
         {
             if (!_feeds.TryGetValue(spectator.Id, out var s)) return;
@@ -125,8 +125,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
             s.TakenTD?.Hide();
             s.GivenTD?.Hide();
         }
-
-        // ── Feed updates ────────────────────────────────────────────────
 
         public static void AddTaken(BasePlayer player, string issuerName, float amount, int weapon)
         {
@@ -181,8 +179,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static bool IsEnabled(BasePlayer player)
             => _feeds.TryGetValue(player.Id, out var s) && s.Enabled;
 
-        // ── Private helpers ─────────────────────────────────────────────
-
         private static void RenderFeed(PlayerFeedState s)
         {
             s.TakenTD!.Text = BuildText(s.Taken, s.TakenIdx);
@@ -191,10 +187,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
             s.GivenTD.Show();
         }
 
-        /// <summary>
-        /// For every spectator watching <paramref name="targetId"/>,
-        /// push the target's feed data to that spectator's TextDraws.
-        /// </summary>
         private static void PushFeedToSpectators(int targetId, PlayerFeedState targetState)
         {
             foreach (var (spectId, spectState) in _feeds)

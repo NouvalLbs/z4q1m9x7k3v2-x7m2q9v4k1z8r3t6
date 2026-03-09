@@ -123,6 +123,18 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public int Bodypart;
     }
 
+    public class RejectedHitFormatted
+    {
+        public string FormattedString { get; set; } = "";
+        public long Time { get; set; }
+        public int Hour { get; set; }
+        public int Minute { get; set; }
+        public int Second { get; set; }
+        public int Weapon { get; set; }
+        public HitRejectReason Reason { get; set; }
+        public string TargetName { get; set; } = "";
+    }
+
     public class PlayerDamageArgs : EventArgs
     {
         public Player Player { get; init; } = null!;

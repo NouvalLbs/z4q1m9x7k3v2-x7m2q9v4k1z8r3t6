@@ -3,6 +3,7 @@ using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
+using SampSharp.GameMode.World;
 using System;
 using System.Threading.Tasks;
 
