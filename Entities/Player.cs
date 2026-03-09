@@ -58,7 +58,9 @@ namespace ProjectSMP
             base.OnRequestClass(e);
             if (!IsCharLoaded) return;
 
-            SetSpawnInfo(0, CharSkin, new SampSharp.GameMode.Vector3(CharSpawnPos.X, CharSpawnPos.Y, CharSpawnPos.Z), CharSpawnPos.A);
+            SetSpawnInfo(0, CharSkin,
+                new SampSharp.GameMode.Vector3(CharSpawnPos.X, CharSpawnPos.Y, CharSpawnPos.Z),
+                CharSpawnPos.A);
             Spawn();
         }
 
@@ -76,7 +78,16 @@ namespace ProjectSMP
 
         public override void OnGiveDamage(DamageEventArgs e)
         {
-            WeaponConfigService.HandleGiveDamage(this, e.OtherPlayer as Player, e.Amount, (int)e.Weapon, (int)e.BodyPart);
+            if (e.OtherPlayer == null)
+            {
+                var vid = WeaponConfigService.GetLastShotVehicleId(this);
+                if (vid >= 0)
+                    WeaponConfigService.HandleVehicleDamage(this, vid, e.Amount, (int)e.Weapon);
+            }
+            else
+            {
+                WeaponConfigService.HandleGiveDamage(this, e.OtherPlayer as Player, e.Amount, (int)e.Weapon, (int)e.BodyPart);
+            }
             base.OnGiveDamage(e);
         }
 
@@ -88,7 +99,17 @@ namespace ProjectSMP
 
         public override void OnWeaponShot(WeaponShotEventArgs e)
         {
-            WeaponConfigService.HandleWeaponShot(this, (int)e.Weapon);
+            WeaponConfigService.HandleWeaponShot(
+                this,
+                (int)e.Weapon,
+                (int)e.BulletHitType,
+                e.HitId,
+                Position,
+                e.Position);
+
+            if (WeaponConfigService.IsBulletWeapon((int)e.Weapon))
+                e.PreventDamage = true;
+
             base.OnWeaponShot(e);
         }
 

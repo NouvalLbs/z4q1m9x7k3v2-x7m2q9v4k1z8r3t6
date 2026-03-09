@@ -33,22 +33,26 @@ namespace ProjectSMP.Plugins.WeaponConfig
     internal static class WeaponConfigDamageFeed
     {
         private const int FeedHeight = 5;
-        private const int HideDelayMs = 3000;
         private const int MaxUpdateRateMs = 250;
         private const float TakenX = 551f;
         private const float GivenX = 551f;
         private const float StartY = 340f;
         private const float LineH = 10f;
 
+        private static int _hideDelayMs = 3000;
+
         private static readonly Color TakenColor = new(0x33, 0xCC, 0xFF, 0xFF);
         private static readonly Color GivenColor = new(0x30, 0xFF, 0x50, 0xFF);
         private static readonly Color Black = new(0x00, 0x00, 0x00, 0xFF);
 
         private static readonly Dictionary<int, PlayerFeedState> _feeds = new();
-
         private static bool _globalEnabled = true;
 
-        public static void Init(bool globalEnabled) => _globalEnabled = globalEnabled;
+        public static void Init(bool globalEnabled, int hideDelayMs = 3000)
+        {
+            _globalEnabled = globalEnabled;
+            _hideDelayMs = hideDelayMs;
+        }
 
         public static void OnConnect(BasePlayer player)
         {
@@ -68,7 +72,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 Height = 480f
             };
 
-            state.GivenTD = new PlayerTextDraw(player, new Vector2(GivenX, StartY + LineH * FeedHeight + 2f), "_")
+            state.GivenTD = new PlayerTextDraw(player,
+                new Vector2(GivenX, StartY + LineH * FeedHeight + 2f), "_")
             {
                 Font = TextDrawFont.Slim,
                 LetterSize = new Vector2(0.14f, 0.9f),
@@ -97,24 +102,20 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static void AddTaken(BasePlayer player, string issuerName, float amount, int weapon)
         {
             if (!_feeds.TryGetValue(player.Id, out var s) || !s.Enabled) return;
-
             var idx = s.TakenIdx % FeedHeight;
             s.Taken[idx] = new FeedEntry { Name = issuerName, Amount = amount, Weapon = weapon, Tick = Environment.TickCount };
             s.TakenIdx++;
-
-            RenderFeed(s, player);
+            RenderFeed(s);
             ScheduleHide(s, player);
         }
 
         public static void AddGiven(BasePlayer player, string targetName, float amount, int weapon)
         {
             if (!_feeds.TryGetValue(player.Id, out var s) || !s.Enabled) return;
-
             var idx = s.GivenIdx % FeedHeight;
             s.Given[idx] = new FeedEntry { Name = targetName, Amount = amount, Weapon = weapon, Tick = Environment.TickCount };
             s.GivenIdx++;
-
-            RenderFeed(s, player);
+            RenderFeed(s);
             ScheduleHide(s, player);
         }
 
@@ -133,7 +134,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static bool IsEnabled(BasePlayer player)
             => _feeds.TryGetValue(player.Id, out var s) && s.Enabled;
 
-        private static void RenderFeed(PlayerFeedState s, BasePlayer player)
+        private static void RenderFeed(PlayerFeedState s)
         {
             s.TakenTD!.Text = BuildText(s.Taken, s.TakenIdx);
             s.GivenTD!.Text = BuildText(s.Given, s.GivenIdx);
@@ -151,16 +152,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 var idx = ((headIdx - i - 1) % FeedHeight + FeedHeight) % FeedHeight;
                 var entry = entries[idx];
 
-                if (entry == null || now - entry.Tick > HideDelayMs)
+                if (entry == null || now - entry.Tick > _hideDelayMs)
                 {
                     lines[FeedHeight - 1 - i] = " ";
                     continue;
                 }
 
-                var age = now - entry.Tick;
-                var alpha = (int)(255 * (1f - (float)age / HideDelayMs));
-                var r = alpha.ToString("X2");
-                // SA-MP textdraw color format is {RRGGBB}, no alpha support — fade not possible via color
                 lines[FeedHeight - 1 - i] = $"{entry.Name}: -{entry.Amount:F1}";
             }
 
@@ -175,11 +172,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
             _ = HideAfterAsync(s, player, cts.Token);
         }
 
-        private static async Task HideAfterAsync(PlayerFeedState s, BasePlayer player, CancellationToken ct)
+        private static async Task HideAfterAsync(PlayerFeedState s, BasePlayer player,
+            CancellationToken ct)
         {
             try
             {
-                await Task.Delay(HideDelayMs + 200, ct);
+                await Task.Delay(_hideDelayMs + 200, ct);
                 if (player.IsDisposed) return;
                 s.TakenTD?.Hide();
                 s.GivenTD?.Hide();

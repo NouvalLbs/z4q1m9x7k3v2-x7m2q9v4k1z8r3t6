@@ -8,14 +8,29 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
     public enum HitRejectReason
     {
-        NoIssuer, InvalidWeapon, LastShotInvalid,
-        MultiplePlayers, MultiplePlayersShotgun,
-        DyingPlayer, SameTeam, Unstreamed, InvalidHitType,
-        BeingResynced, NotSpawned, OutOfRange, TooFarFromShot,
-        ShootRateTooFast, ShootRateTooFastMultiple,
-        HitRateTooFast, HitRateTooFastMultiple,
-        TooFarFromOrigin, InvalidDamage,
-        SameVehicle, OwnVehicle, InvalidVehicle, Disconnected
+        NoIssuer,
+        InvalidWeapon,
+        LastShotInvalid,
+        MultiplePlayers,
+        MultiplePlayersShotgun,
+        DyingPlayer,
+        SameTeam,
+        Unstreamed,
+        InvalidHitType,
+        BeingResynced,
+        NotSpawned,
+        OutOfRange,
+        TooFarFromShot,
+        ShootRateTooFast,
+        ShootRateTooFastMultiple,
+        HitRateTooFast,
+        HitRateTooFastMultiple,
+        TooFarFromOrigin,
+        InvalidDamage,
+        SameVehicle,
+        OwnVehicle,
+        InvalidVehicle,
+        Disconnected
     }
 
     public class RangeDamageStep
