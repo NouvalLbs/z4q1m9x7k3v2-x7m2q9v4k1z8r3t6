@@ -24,12 +24,19 @@ namespace ProjectSMP
             // Initialize Weapon Config
             var (wcCfg, wcWeapons) = WeaponConfigLoader.Load();
             WeaponConfigService.Init(wcCfg, wcWeapons);
+            WeaponConfigHealthBar.Init();
 
             // Initialize Database Manager
             _ = DatabaseManager.InitAsync();
 
             // Initialize Garage Blocker
             GarageBlockerService.Init();
+        }
+
+        protected override void OnExited(EventArgs e) {
+            WeaponConfigHealthBar.Dispose();
+            PreviewModelDialog.Dispose();
+            base.OnExited(e);
         }
     }
 }
