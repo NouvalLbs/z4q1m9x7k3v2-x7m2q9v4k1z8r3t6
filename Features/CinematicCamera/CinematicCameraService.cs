@@ -83,17 +83,21 @@ namespace ProjectSMP.Feature.CinematicCamera {
             Sessions.Remove(player.Id);
         }
 
-        private static async void RunLoopAsync(BasePlayer player, CancellationToken ct) {
-            try {
+        private static async void RunLoopAsync(BasePlayer player, CancellationToken ct)
+        {
+            try
+            {
                 await Task.Delay(InitialDelay, ct);
                 Apply(player, Locations[0]);
 
-                while (!ct.IsCancellationRequested) {
+                while (!ct.IsCancellationRequested)
+                {
                     await Task.Delay(CycleInterval, ct);
                     Apply(player, Locations[Rng.Next(Locations.Length)]);
                 }
             }
             catch (OperationCanceledException) { }
+            catch (Exception ex) { Console.WriteLine($"[CinematicCamera] RunLoop: {ex.Message}"); }
         }
 
         private static void Apply(BasePlayer player, CameraLocation loc) {

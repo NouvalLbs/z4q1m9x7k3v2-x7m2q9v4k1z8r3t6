@@ -3,6 +3,7 @@ using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Account.Data;
 using ProjectSMP.Entities.Players.Character;
 using SampSharp.GameMode.Definitions;
+using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
@@ -28,46 +29,50 @@ namespace ProjectSMP.Entities.Players.Account
 
         public static async void InitAsync(Player player)
         {
-            await Task.Delay(InitDelayMs);
-            if (player.IsDisposed) return;
-
-            ResetSession(player);
-
-            if (player.Name.Contains('_'))
+            try
             {
-                ShowInvalidNameDialog(player);
-                ScheduleKick(player, 3_000);
-                return;
+                await Task.Delay(InitDelayMs);
+                if (player.IsDisposed) return;
+
+                ResetSession(player);
+
+                if (player.Name.Contains('_'))
+                {
+                    ShowInvalidNameDialog(player);
+                    ScheduleKick(player, 3_000);
+                    return;
+                }
+
+                var data = await DatabaseManager.QueryFirstAsync<PlayerUcpData>(
+                    $"SELECT `ucp` AS UCP, `password` AS Password, " +
+                    $"`discordId` AS DiscordId, `verifycode` AS VerifyCode " +
+                    $"FROM `{Table}` WHERE `ucp` = @Ucp LIMIT 1",
+                    new { Ucp = player.Name });
+
+                if (player.IsDisposed) return;
+
+                if (data is null)
+                {
+                    ShowNotRegisteredDialog(player);
+                    ScheduleKick(player, 1_000);
+                    return;
+                }
+
+                var session = _sessions[player.Id];
+                session.UCP = data.UCP;
+                session.Password = data.Password;
+                session.DiscordId = data.DiscordId;
+                session.VerifyCode = data.VerifyCode;
+                session.LoginAttempt = MaxAttempts;
+
+                ScheduleKick(player, LoginTimeoutMs);
+
+                if (string.IsNullOrEmpty(data.Password))
+                    ShowActivateDialog(player);
+                else
+                    ShowLoginDialog(player);
             }
-
-            var data = await DatabaseManager.QueryFirstAsync<PlayerUcpData>(
-                $"SELECT `ucp` AS UCP, `password` AS Password, " +
-                $"`discordId` AS DiscordId, `verifycode` AS VerifyCode " +
-                $"FROM `{Table}` WHERE `ucp` = @Ucp LIMIT 1",
-                new { Ucp = player.Name });
-
-            if (player.IsDisposed) return;
-
-            if (data is null)
-            {
-                ShowNotRegisteredDialog(player);
-                ScheduleKick(player, 1_000);
-                return;
-            }
-
-            var session = _sessions[player.Id];
-            session.UCP = data.UCP;
-            session.Password = data.Password;
-            session.DiscordId = data.DiscordId;
-            session.VerifyCode = data.VerifyCode;
-            session.LoginAttempt = MaxAttempts;
-
-            ScheduleKick(player, LoginTimeoutMs);
-
-            if (string.IsNullOrEmpty(data.Password))
-                ShowActivateDialog(player);
-            else
-                ShowLoginDialog(player);
+            catch (Exception ex) { Console.WriteLine($"[UserControl] InitAsync: {ex.Message}"); }
         }
 
         public static void Cleanup(Player player)

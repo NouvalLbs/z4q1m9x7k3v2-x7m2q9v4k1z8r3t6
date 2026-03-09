@@ -1,4 +1,5 @@
-﻿using SampSharp.GameMode;
+﻿#nullable enable
+using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Display;
 using SampSharp.GameMode.SAMP;
@@ -27,6 +28,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public readonly FeedEntry[] Given = new FeedEntry[5];
         public int TakenIdx;
         public int GivenIdx;
+        public int LastRenderTick;
         public CancellationTokenSource? HideCts;
     }
 
@@ -72,8 +74,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 Height = 480f
             };
 
-            state.GivenTD = new PlayerTextDraw(player,
-                new Vector2(GivenX, StartY + LineH * FeedHeight + 2f), "_")
+            state.GivenTD = new PlayerTextDraw(player, new Vector2(GivenX, StartY + LineH * FeedHeight + 2f), "_")
             {
                 Font = TextDrawFont.Slim,
                 LetterSize = new Vector2(0.14f, 0.9f),
@@ -105,7 +106,13 @@ namespace ProjectSMP.Plugins.WeaponConfig
             var idx = s.TakenIdx % FeedHeight;
             s.Taken[idx] = new FeedEntry { Name = issuerName, Amount = amount, Weapon = weapon, Tick = Environment.TickCount };
             s.TakenIdx++;
-            RenderFeed(s);
+
+            var now = Environment.TickCount;
+            if (now - s.LastRenderTick >= MaxUpdateRateMs)
+            {
+                s.LastRenderTick = now;
+                RenderFeed(s);
+            }
             ScheduleHide(s, player);
         }
 
@@ -115,7 +122,13 @@ namespace ProjectSMP.Plugins.WeaponConfig
             var idx = s.GivenIdx % FeedHeight;
             s.Given[idx] = new FeedEntry { Name = targetName, Amount = amount, Weapon = weapon, Tick = Environment.TickCount };
             s.GivenIdx++;
-            RenderFeed(s);
+
+            var now = Environment.TickCount;
+            if (now - s.LastRenderTick >= MaxUpdateRateMs)
+            {
+                s.LastRenderTick = now;
+                RenderFeed(s);
+            }
             ScheduleHide(s, player);
         }
 
@@ -152,13 +165,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 var idx = ((headIdx - i - 1) % FeedHeight + FeedHeight) % FeedHeight;
                 var entry = entries[idx];
 
-                if (entry == null || now - entry.Tick > _hideDelayMs)
-                {
-                    lines[FeedHeight - 1 - i] = " ";
-                    continue;
-                }
-
-                lines[FeedHeight - 1 - i] = $"{entry.Name}: -{entry.Amount:F1}";
+                lines[FeedHeight - 1 - i] = entry == null || now - entry.Tick > _hideDelayMs
+                    ? " "
+                    : $"{entry.Name}: -{entry.Amount:F1}";
             }
 
             return string.Join("~n~", lines);
@@ -172,8 +181,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             _ = HideAfterAsync(s, player, cts.Token);
         }
 
-        private static async Task HideAfterAsync(PlayerFeedState s, BasePlayer player,
-            CancellationToken ct)
+        private static async Task HideAfterAsync(PlayerFeedState s, BasePlayer player, CancellationToken ct)
         {
             try
             {

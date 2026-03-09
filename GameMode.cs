@@ -4,6 +4,7 @@ using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
 using System;
+using System.Threading.Tasks;
 
 namespace ProjectSMP
 {
@@ -26,11 +27,11 @@ namespace ProjectSMP
             WeaponConfigService.Init(wcCfg, wcWeapons);
             WeaponConfigHealthBar.Init();
 
-            // Initialize Database Manager
-            _ = DatabaseManager.InitAsync();
-
             // Initialize Garage Blocker
             GarageBlockerService.Init();
+
+            // Initialize Database Manager
+            Task.Run(DatabaseManager.InitAsync).GetAwaiter().GetResult();
         }
 
         protected override void OnExited(EventArgs e) {

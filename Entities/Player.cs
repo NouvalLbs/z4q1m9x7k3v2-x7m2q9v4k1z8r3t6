@@ -1,4 +1,5 @@
-﻿using ProjectSMP.Entities.Players.Account;
+﻿#nullable enable
+using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Character;
 using ProjectSMP.Feature.CinematicCamera;
 using ProjectSMP.Features.Bank;
@@ -8,6 +9,7 @@ using SampSharp.GameMode.Events;
 using SampSharp.GameMode.Pools;
 using SampSharp.GameMode.World;
 using System;
+using System.Threading.Tasks;
 
 namespace ProjectSMP
 {
@@ -27,11 +29,16 @@ namespace ProjectSMP
         {
             WeaponConfigService.PlayerDeathFinished -= OnDeathFinished;
             CinematicCameraService.Stop(this);
-            _ = CharacterService.SaveAsync(this);
+            _ = SaveOnDisconnectAsync();
             UserControlService.Cleanup(this);
             CharacterService.Cleanup(this);
             WeaponConfigService.OnDisconnect(this);
             base.OnDisconnected(e);
+        }
+        private async Task SaveOnDisconnectAsync()
+        {
+            try { await CharacterService.SaveAsync(this); }
+            catch (Exception ex) { Console.WriteLine($"[Player] Save failed for {Name}: {ex.Message}"); }
         }
 
         public override void OnSpawned(SpawnEventArgs e)
@@ -39,7 +46,7 @@ namespace ProjectSMP
             base.OnSpawned(e);
             WeaponConfigService.OnSpawn(this);
             CharacterService.HandleSpawn(this);
-            _ = BankService.LoadAsync(this);
+            if (IsCharLoaded) _ = BankService.LoadAsync(this);
         }
 
         public override void OnDeath(DeathEventArgs e)

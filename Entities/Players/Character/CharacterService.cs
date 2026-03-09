@@ -151,15 +151,19 @@ namespace ProjectSMP.Entities.Players.Character
 
         public static async void CheckPlayerCharAsync(Player player)
         {
-            var rows = await DatabaseManager.QueryAsync<CharListItem>(
-                $"SELECT citizen_id, username, level, last_login FROM `{Table}` WHERE ucp = @Ucp LIMIT {MaxChars}",
-                new { Ucp = player.Name });
+            try
+            {
+                var rows = await DatabaseManager.QueryAsync<CharListItem>(
+                    $"SELECT citizen_id, username, level, last_login FROM `{Table}` WHERE ucp = @Ucp LIMIT {MaxChars}",
+                    new { Ucp = player.Name });
 
-            if (player.IsDisposed) return;
+                if (player.IsDisposed) return;
 
-            var list = new List<CharListItem>(rows);
-            _lists[player.Id] = list;
-            ShowCharListDialog(player, list);
+                var list = new List<CharListItem>(rows);
+                _lists[player.Id] = list;
+                ShowCharListDialog(player, list);
+            }
+            catch (Exception ex) { Console.WriteLine($"[Character] CheckPlayerChar: {ex.Message}"); }
         }
 
         public static void HandleSpawn(Player player)
@@ -273,21 +277,25 @@ namespace ProjectSMP.Entities.Players.Character
 
         private static async void HandleCreateNameAsync(Player player, string name)
         {
-            if (name.Length < 1 || name.Length > 24 || !_rpName.IsMatch(name))
+            try
             {
-                ShowCreateNameDialog(player);
-                return;
+                if (name.Length < 1 || name.Length > 24 || !_rpName.IsMatch(name))
+                {
+                    ShowCreateNameDialog(player);
+                    return;
+                }
+
+                var taken = await DatabaseManager.ExistsAsync(
+                    $"SELECT COUNT(*) FROM `{Table}` WHERE username = @Name", new { Name = name });
+
+                if (player.IsDisposed) return;
+                if (taken) { ShowCreateNameDialog(player, taken: true); return; }
+
+                _creations[player.Id] = new CharCreationData { Name = name };
+                EnterCreationScene(player);
+                ShowSettingsDialog(player);
             }
-
-            var taken = await DatabaseManager.ExistsAsync(
-                $"SELECT COUNT(*) FROM `{Table}` WHERE username = @Name", new { Name = name });
-
-            if (player.IsDisposed) return;
-            if (taken) { ShowCreateNameDialog(player, taken: true); return; }
-
-            _creations[player.Id] = new CharCreationData { Name = name };
-            EnterCreationScene(player);
-            ShowSettingsDialog(player);
+            catch (Exception ex) { Console.WriteLine($"[Character] HandleCreateName: {ex.Message}"); }
         }
 
         private static void EnterCreationScene(Player player)
@@ -486,98 +494,106 @@ namespace ProjectSMP.Entities.Players.Character
 
         private static async void RegisterNewCharAsync(Player player)
         {
-            if (!_creations.TryGetValue(player.Id, out var c)) return;
+            try
+            {
+                if (!_creations.TryGetValue(player.Id, out var c)) return;
 
-            string cid;
-            do { cid = GenCitizenId(); }
-            while (await DatabaseManager.ExistsAsync(
-                $"SELECT COUNT(*) FROM `{Table}` WHERE citizen_id = @Id", new { Id = cid }));
+                string cid;
+                do { cid = GenCitizenId(); }
+                while (await DatabaseManager.ExistsAsync(
+                    $"SELECT COUNT(*) FROM `{Table}` WHERE citizen_id = @Id", new { Id = cid }));
 
-            if (player.IsDisposed) return;
+                if (player.IsDisposed) return;
 
-            var pos = c.WhichSpawn == 0
-                ? new CharPosition { X = 1685.602172f, Y = -2239.236572f, Z = 13.546875f, A = 182.176986f }
-                : new CharPosition { X = 1773.370117f, Y = -1936.799072f, Z = 13.552585f, A = 322.835693f };
+                var pos = c.WhichSpawn == 0
+                    ? new CharPosition { X = 1685.602172f, Y = -2239.236572f, Z = 13.546875f, A = 182.176986f }
+                    : new CharPosition { X = 1773.370117f, Y = -1936.799072f, Z = 13.552585f, A = 322.835693f };
 
-            var maskId = new Random().Next(111111, 988888);
+                var maskId = new Random().Next(111111, 988888);
 
-            await DatabaseManager.ExecuteAsync(
-                $"INSERT INTO `{Table}` " +
-                "(citizen_id,ucp,ip,username,skin,gender,birth_date,height,hair,eye,mask_id," +
-                "position,vitals,playtime,backpack,phone,jail_info,ban_info,`condition`,`settings`,jobs) " +
-                "VALUES (@Cid,@Ucp,@Ip,@Username,@Skin,@Gender,@BirthDate,@Height,@Hair,@Eye,@MaskId," +
-                "@Pos,@Vitals,@Playtime,@Backpack,@Phone,@JailInfo,@BanInfo,@Condition,@Settings,@Jobs)",
-                new
+                await DatabaseManager.ExecuteAsync(
+                    $"INSERT INTO `{Table}` " +
+                    "(citizen_id,ucp,ip,username,skin,gender,birth_date,height,hair,eye,mask_id," +
+                    "position,vitals,playtime,backpack,phone,jail_info,ban_info,`condition`,`settings`,jobs) " +
+                    "VALUES (@Cid,@Ucp,@Ip,@Username,@Skin,@Gender,@BirthDate,@Height,@Hair,@Eye,@MaskId," +
+                    "@Pos,@Vitals,@Playtime,@Backpack,@Phone,@JailInfo,@BanInfo,@Condition,@Settings,@Jobs)",
+                    new
+                    {
+                        Cid = cid,
+                        Ucp = player.Name,
+                        Ip = player.IP,
+                        Username = c.Name,
+                        Skin = c.Skin,
+                        Gender = c.Gender,
+                        BirthDate = c.BirthDate,
+                        Height = c.Height,
+                        Hair = c.Hair,
+                        Eye = c.Eye,
+                        MaskId = maskId,
+                        Pos = Ser(pos),
+                        Vitals = Ser(new CharVitals()),
+                        Playtime = Ser(new CharPlaytime()),
+                        Backpack = Ser(new CharBackpack()),
+                        Phone = Ser(new CharPhone()),
+                        JailInfo = Ser(new CharJailInfo()),
+                        BanInfo = Ser(new CharBanInfo()),
+                        Condition = Ser(new CharCondition()),
+                        Settings = Ser(new CharSettings()),
+                        Jobs = Ser(new List<CharJob>())
+                    });
+
+                if (player.IsDisposed) return;
+
+                ApplyToPlayer(player, new RawCharRow
                 {
-                    Cid = cid,
-                    Ucp = player.Name,
-                    Ip = player.IP,
-                    Username = c.Name,
-                    Skin = c.Skin,
-                    Gender = c.Gender,
-                    BirthDate = c.BirthDate,
-                    Height = c.Height,
-                    Hair = c.Hair,
-                    Eye = c.Eye,
-                    MaskId = maskId,
-                    Pos = Ser(pos),
-                    Vitals = Ser(new CharVitals()),
-                    Playtime = Ser(new CharPlaytime()),
-                    Backpack = Ser(new CharBackpack()),
-                    Phone = Ser(new CharPhone()),
-                    JailInfo = Ser(new CharJailInfo()),
-                    BanInfo = Ser(new CharBanInfo()),
-                    Condition = Ser(new CharCondition()),
-                    Settings = Ser(new CharSettings()),
-                    Jobs = Ser(new List<CharJob>())
+                    citizen_id = cid,
+                    ucp = player.Name,
+                    ip = player.IP,
+                    username = c.Name,
+                    skin = c.Skin,
+                    gender = c.Gender,
+                    birth_date = c.BirthDate,
+                    height = c.Height,
+                    hair = c.Hair,
+                    eye = c.Eye,
+                    mask_id = maskId,
+                    position = Ser(pos),
+                    level = 1,
+                    last_login = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                 });
 
-            if (player.IsDisposed) return;
-
-            ApplyToPlayer(player, new RawCharRow
-            {
-                citizen_id = cid,
-                ucp = player.Name,
-                ip = player.IP,
-                username = c.Name,
-                skin = c.Skin,
-                gender = c.Gender,
-                birth_date = c.BirthDate,
-                height = c.Height,
-                hair = c.Hair,
-                eye = c.Eye,
-                mask_id = maskId,
-                position = Ser(pos),
-                level = 1,
-                last_login = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-            });
-
-            _creations.Remove(player.Id);
-            SpawnCharacter(player);
+                _creations.Remove(player.Id);
+                SpawnCharacter(player);
+            }
+            catch (Exception ex) { Console.WriteLine($"[Character] RegisterNewChar: {ex.Message}"); }
         }
 
         private static async void LoadExistingCharAsync(Player player, string citizenId)
         {
-            var raw = await DatabaseManager.QueryFirstAsync<RawCharRow>(
-                $"SELECT * FROM `{Table}` WHERE citizen_id = @Id LIMIT 1", new { Id = citizenId });
-
-            if (player.IsDisposed) return;
-
-            if (raw is null)
+            try
             {
-                _lists.TryGetValue(player.Id, out var l);
-                ShowCharListDialog(player, l ?? new());
-                return;
+                var raw = await DatabaseManager.QueryFirstAsync<RawCharRow>(
+                    $"SELECT * FROM `{Table}` WHERE citizen_id = @Id LIMIT 1", new { Id = citizenId });
+
+                if (player.IsDisposed) return;
+
+                if (raw is null)
+                {
+                    _lists.TryGetValue(player.Id, out var l);
+                    ShowCharListDialog(player, l ?? new());
+                    return;
+                }
+
+                ApplyToPlayer(player, raw);
+
+                await DatabaseManager.ExecuteAsync(
+                    $"UPDATE `{Table}` SET ip=@Ip, last_login=CURRENT_TIMESTAMP() WHERE citizen_id=@Id",
+                    new { Ip = player.IP, Id = raw.citizen_id });
+
+                if (player.IsDisposed) return;
+                SpawnCharacter(player);
             }
-
-            ApplyToPlayer(player, raw);
-
-            await DatabaseManager.ExecuteAsync(
-                $"UPDATE `{Table}` SET ip=@Ip, last_login=CURRENT_TIMESTAMP() WHERE citizen_id=@Id",
-                new { Ip = player.IP, Id = raw.citizen_id });
-
-            if (player.IsDisposed) return;
-            SpawnCharacter(player);
+            catch (Exception ex) { Console.WriteLine($"[Character] LoadExistingChar: {ex.Message}"); }
         }
         private static void SpawnCharacter(Player player)
         {
@@ -642,10 +658,10 @@ namespace ProjectSMP.Entities.Players.Character
         private static string GenCitizenId()
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            var rng = new Random();
-            var r = new char[8];
-            for (var i = 0; i < 8; i++) r[i] = chars[rng.Next(chars.Length)];
-            return new string(r);
+            var buf = new char[8];
+            for (var i = 0; i < 8; i++)
+                buf[i] = chars[System.Security.Cryptography.RandomNumberGenerator.GetInt32(chars.Length)];
+            return new string(buf);
         }
 
         private static T? Des<T>(string? json) where T : class
