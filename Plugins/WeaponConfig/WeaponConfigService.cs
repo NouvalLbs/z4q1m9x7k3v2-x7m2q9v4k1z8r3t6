@@ -9,12 +9,6 @@ using SampSharp.GameMode.World;
 
 namespace ProjectSMP.Plugins.WeaponConfig
 {
-    internal sealed class ResyncSnapshot
-    {
-        public float Health;
-        public float Armour;
-    }
-
     internal sealed class PlayerWcState
     {
         public float Health = 100f, Armour = 0f;
@@ -43,7 +37,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public ShotInfo? LastShot;
         public readonly int[] LastHitIssuers = new int[10];
         public readonly int[] LastHitWeaponsPerTarget = new int[10];
-        // public int LastHitIdx;
 
         public ResyncSnapshot? ResyncSnap;
 
@@ -69,14 +62,23 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
     public static class WeaponConfigService
     {
+        // ── Constants ────────────────────────────────────────────────────
+
         private const int DeathWorld = 0x00DEAD00;
         private const int BodypartTorso = 1;
+        private const int BodypartHead = 9;
         private const float MaxDistFromShot = 5f;
         private const float MaxDistFromOrigin = 5f;
+        private const float PlayerStreamDistance = 200f;
+        private const int ShotTimeoutMs = 1000;
+
+        // ── State ────────────────────────────────────────────────────────
 
         private static WeaponConfig _cfg = new();
         private static WeaponEntry[] _weapons = Array.Empty<WeaponEntry>();
         private static readonly Dictionary<int, PlayerWcState> _states = new();
+
+        // ── Public events ────────────────────────────────────────────────
 
         public static event EventHandler<PlayerDamageArgs>? PlayerDamage;
         public static event EventHandler<PlayerDamageArgs>? PlayerDamageDone;
@@ -84,8 +86,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static event EventHandler<PrepareDeathArgs>? PlayerPrepareDeath;
         public static event EventHandler<DeathFinishedArgs>? PlayerDeathFinished;
         public static event EventHandler<InvalidWeaponDamageArgs>? InvalidWeaponDamage;
+        public static event EventHandler<VendingMachineArgs>? PlayerUseVendingMachine;
 
-        private static readonly int[] _validTaken = {
+        // ── Valid-weapon lookup tables ────────────────────────────────────
+
+        private static readonly int[] _validTaken =
+        {
             1,1,1,1,1,1,1,1,1,1,
             1,1,1,1,1,1,0,0,0,0,
             0,0,1,1,1,1,1,1,1,1,
@@ -94,26 +100,44 @@ namespace ProjectSMP.Plugins.WeaponConfig
             2,2,0,2,2
         };
 
-        private static readonly bool[] _validGiven = {
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, false,false,false,false,
-            false,false,true, true, true, true, true, true, true, true,
-            true, true, true, true, true, false,false,false,true, false,
-            false,true, true, false,false,false,true, false,true
+        private static readonly bool[] _validGiven =
+        {
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+            true,  true,  true,  true,  true,  true,  false, false, false, false,
+            false, false, true,  true,  true,  true,  true,  true,  true,  true,
+            true,  true,  true,  true,  true,  false, false, false, true,  false,
+            false, true,  true,  false, false, false, true,  false, true
         };
+
+        // ── Init ─────────────────────────────────────────────────────────
 
         public static void Init(WeaponConfig cfg, WeaponEntry[] weapons)
         {
             _cfg = cfg;
             _weapons = weapons;
             WeaponConfigDamageFeed.Init(cfg.EnableDamageFeed, cfg.DamageFeedHideDelay);
+            WeaponConfigHealthBar.Init();
+            WeaponConfigVendingMachines.Init(cfg.CustomVendingMachines);
+
+            // Forward vending machine event so callers can subscribe via the service
+            WeaponConfigVendingMachines.PlayerUseVendingMachine += (s, e)
+                => PlayerUseVendingMachine?.Invoke(s, e);
         }
+
+        public static void Shutdown()
+        {
+            WeaponConfigHealthBar.Dispose();
+            WeaponConfigVendingMachines.Dispose();
+        }
+
+        // ── Lifecycle ────────────────────────────────────────────────────
 
         public static void OnConnect(Player p)
         {
             _states[p.Id] = new PlayerWcState { CbugAllowed = _cfg.CbugAllowed };
             WeaponConfigHealthBar.OnConnect(p);
             WeaponConfigDamageFeed.OnConnect(p);
+            WeaponConfigVendingMachines.OnConnect(p);
 
             if (!_cfg.EnableHealthBar) WeaponConfigHealthBar.SetEnabled(p, false);
             if (!_cfg.EnableDamageFeed) WeaponConfigDamageFeed.SetEnabled(p, false);
@@ -129,6 +153,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             _states.Remove(p.Id);
             WeaponConfigHealthBar.OnDisconnect(p);
             WeaponConfigDamageFeed.OnDisconnect(p);
+            WeaponConfigVendingMachines.OnDisconnect(p);
         }
 
         public static void OnSpawn(Player p)
@@ -141,6 +166,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
             if (snap != null)
             {
+                // Restore health/armour only; weapons are handled by the game-mode spawn logic.
                 s.Health = snap.Health;
                 s.Armour = snap.Armour;
             }
@@ -168,13 +194,15 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (!_states.TryGetValue(p.Id, out var s)) return;
             s.IsDying = true;
             s.IntendedWorld = p.VirtualWorld;
-            if (_cfg.CbugDeathDelay && !s.CbugAllowed) s.CbugFrozeTick = Environment.TickCount;
+            if (_cfg.CbugDeathDelay && !s.CbugAllowed)
+                s.CbugFrozeTick = Environment.TickCount;
 
+            var (lib, anim) = GetDeathAnim(reason, 0); // bodypart not available from OnPlayerDeath
             var prep = new PrepareDeathArgs
             {
                 Player = p,
-                AnimLib = "PED",
-                AnimName = GetDeathAnim(reason),
+                AnimLib = lib,
+                AnimName = anim,
                 AnimLock = true,
                 RespawnTime = _cfg.RespawnTime
             };
@@ -185,21 +213,34 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
             var cts = new CancellationTokenSource();
             s.DeathCts = cts;
-            _ = RunDeathAsync(p, s, prep.RespawnTime, cts.Token)
-                .ContinueWith(t => Console.WriteLine($"[WeaponConfig] RunDeath: {t.Exception?.InnerException?.Message}"),
-                              TaskContinuationOptions.OnlyOnFaulted);
+            _ = RunDeathAsync(p, s, prep.RespawnTime, cts.Token, cancelable: false)
+                .ContinueWith(t => Console.WriteLine(
+                    $"[WeaponConfig] RunDeath: {t.Exception?.InnerException?.Message}"),
+                    TaskContinuationOptions.OnlyOnFaulted);
         }
 
         public static void OnUpdate(Player p)
         {
             if (!_states.TryGetValue(p.Id, out var s)) return;
             s.LastUpdateTick = Environment.TickCount;
-            if (_cfg.CustomFallDamage && !s.IsDying)
-                CheckFallDamage(p, s);
+            if (_cfg.CustomFallDamage && !s.IsDying) CheckFallDamage(p, s);
+            if (_cfg.CustomVendingMachines) WeaponConfigVendingMachines.OnUpdate(p);
         }
 
-        private const float PlayerStreamDistance = 200f;
-        private const int ShotTimeoutMs = 1000;
+        // ── Spectate ─────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Call when a player starts spectating another.
+        /// Their on-screen damage feed will mirror the spectated player's feed.
+        /// </summary>
+        public static void OnStartSpectating(Player spectator, Player target)
+            => WeaponConfigDamageFeed.SetSpectating(spectator, target.Id);
+
+        /// <summary>Call when a player stops spectating.</summary>
+        public static void OnStopSpectating(Player spectator)
+            => WeaponConfigDamageFeed.ClearSpectating(spectator);
+
+        // ── Weapon shot & damage handlers ────────────────────────────────
 
         public static void HandleWeaponShot(Player p, int weaponId, int hitType, int hitId,
             Vector3 origin, Vector3 hitPos)
@@ -217,7 +258,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 HitPos = hitPos,
                 Valid = hitType == 1 || !IsBulletWeapon(weaponId)
             };
-
             TrackShot(s, weaponId);
         }
 
@@ -355,7 +395,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
                     var dist = Dist(issuer.Position, damaged.Position);
                     if (dist > w.Range * 1.5f)
                     {
-                        Reject(issuer, weaponId, HitRejectReason.OutOfRange, dist, w.Range * 1.5f, targetName: damaged.Name);
+                        Reject(issuer, weaponId, HitRejectReason.OutOfRange,
+                            dist, w.Range * 1.5f, targetName: damaged.Name);
                         return;
                     }
                 }
@@ -403,9 +444,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (!_cfg.VehicleUnoccupiedDamage && !IsVehicleOccupied(vehicle)) return;
             if (!_cfg.VehiclePassengerDamage && issuer.Vehicle?.Id == vehicleId) return;
 
-            foreach (var basePlayer in BasePlayer.All)
+            foreach (var bp in BasePlayer.All)
             {
-                if (basePlayer is not Player target || target.IsDisposed || target.Id == issuer.Id) continue;
+                if (bp is not Player target || target.IsDisposed || target.Id == issuer.Id) continue;
                 if (target.Vehicle?.Id != vehicleId) continue;
                 if (!_states.TryGetValue(target.Id, out var tState) || tState.IsDying) continue;
                 if (iState.Team != 255 && iState.Team == tState.Team) continue;
@@ -435,7 +476,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static void HandleTakeDamage(Player damaged, Player? issuer, float amount,
             int weaponId, int bodypart)
         {
-            if (issuer != null && weaponId >= 0 && weaponId < _validGiven.Length && _validGiven[weaponId])
+            if (issuer != null && weaponId >= 0 && weaponId < _validGiven.Length
+                && _validGiven[weaponId])
                 return;
 
             if (!_states.TryGetValue(damaged.Id, out var s) || s.IsDying) return;
@@ -469,6 +511,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
             }
             PlayerDamageDone?.Invoke(null, args);
         }
+
+        // ── Core damage application ───────────────────────────────────────
 
         private static void Inflict(Player p, PlayerWcState s, float amount, int weaponId,
             int bodypart, Player? issuer = null, bool ignoreArmour = false)
@@ -505,10 +549,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
             WeaponConfigHealthBar.Update(p, s.Health, s.MaxHealth);
 
             if (s.Health <= 0 && !s.IsDying)
-                TriggerDeath(p, s, weaponId);
+                TriggerDeath(p, s, weaponId, bodypart, cancelable: true);
         }
 
-        private static void TriggerDeath(Player p, PlayerWcState s, int weaponId)
+        private static void TriggerDeath(Player p, PlayerWcState s, int weaponId,
+            int bodypart = 0, bool cancelable = true)
         {
             s.IsDying = true;
             s.Armour = 0;
@@ -518,25 +563,63 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
             try { Plugins.SKY.SkyNatives.Instance.SendDeath(p.Id); } catch { }
 
+            var (lib, anim) = GetDeathAnim(weaponId, bodypart);
             var prep = new PrepareDeathArgs
             {
                 Player = p,
-                AnimLib = "PED",
-                AnimName = GetDeathAnim(weaponId),
+                AnimLib = lib,
+                AnimName = anim,
                 AnimLock = true,
                 RespawnTime = _cfg.RespawnTime
             };
             PlayerPrepareDeath?.Invoke(null, prep);
             if (prep.Cancel) return;
 
-            p.ApplyAnimation(prep.AnimLib, prep.AnimName, 4.0f, false, false, false, prep.AnimLock, 0, true);
+            p.ApplyAnimation(prep.AnimLib, prep.AnimName, 4.0f, false, false, false,
+                prep.AnimLock, 0, true);
 
             var cts = new CancellationTokenSource();
             s.DeathCts = cts;
-            _ = RunDeathAsync(p, s, prep.RespawnTime, cts.Token)
-                .ContinueWith(t => Console.WriteLine($"[WeaponConfig] RunDeath: {t.Exception?.InnerException?.Message}"),
-                              TaskContinuationOptions.OnlyOnFaulted);
+            _ = RunDeathAsync(p, s, prep.RespawnTime, cts.Token, cancelable)
+                .ContinueWith(t => Console.WriteLine(
+                    $"[WeaponConfig] RunDeath: {t.Exception?.InnerException?.Message}"),
+                    TaskContinuationOptions.OnlyOnFaulted);
         }
+
+        // ── Death animation selection ─────────────────────────────────────
+
+        /// <summary>
+        /// Returns the (animLib, animName) pair for a death.
+        /// Respects bodypart for headshots and uses appropriate animations
+        /// for explosions, falls, heli kills, and shotgun kills.
+        /// </summary>
+        private static (string Lib, string Name) GetDeathAnim(int wid, int bodypart)
+        {
+            // Explosive / grenade deaths
+            if (wid is 16 or 18 or 35 or 36 or 39 or 51)
+                return ("PED", "DEAD_SKYDIVE");
+
+            // Fall / splat
+            if (wid == 54)
+                return ("PED", "DEAD_SKYDIVE");
+
+            // Helicopter blades
+            if (wid == 50)
+                return ("PED", "KD_SKYDIVE_DIVE");
+
+            // Headshot — fall backward with hands on face
+            if (bodypart == BodypartHead)
+                return ("PED", "KD_WEAPON_FALL");
+
+            // Shotgun — fly back like GTA:VC
+            if (wid is 25 or 26 or 27)
+                return ("PED", "KD_WEAPON_FALL");
+
+            // Default ground death
+            return ("PED", "CRACK_DEAD_FLOOR");
+        }
+
+        // ── Fall damage ───────────────────────────────────────────────────
 
         private static void CheckFallDamage(Player p, PlayerWcState s)
         {
@@ -545,6 +628,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 Inflict(p, s, MathF.Abs(zVelo) * _cfg.FallDamageMultiplier, 54, 0);
             s.LastZVelo = zVelo;
         }
+
+        // ── Shoot / hit rate checks ───────────────────────────────────────
 
         private static bool CheckShootRate(Player p, PlayerWcState s, int weaponId)
         {
@@ -564,14 +649,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 if (s.ShotWeapons[ai] != s.ShotWeapons[bi]) multi = true;
             }
             var avg = total / (n - 1);
-            if (avg < w.MaxShootRate)
-            {
-                Reject(p, weaponId,
-                    multi ? HitRejectReason.ShootRateTooFastMultiple : HitRejectReason.ShootRateTooFast,
-                    avg, n, multi ? 0 : w.MaxShootRate);
-                return false;
-            }
-            return true;
+            if (avg >= w.MaxShootRate) return true;
+
+            Reject(p, weaponId,
+                multi ? HitRejectReason.ShootRateTooFastMultiple : HitRejectReason.ShootRateTooFast,
+                avg, n, multi ? 0 : w.MaxShootRate);
+            return false;
         }
 
         private static bool CheckHitRate(Player p, PlayerWcState s, int weaponId)
@@ -592,14 +675,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 if (s.HitWeapons[ai] != s.HitWeapons[bi]) multi = true;
             }
             var avg = total / (n - 1);
-            if (avg < w.MaxShootRate)
-            {
-                Reject(p, weaponId,
-                    multi ? HitRejectReason.HitRateTooFastMultiple : HitRejectReason.HitRateTooFast,
-                    avg, n, multi ? 0 : w.MaxShootRate);
-                return false;
-            }
-            return true;
+            if (avg >= w.MaxShootRate) return true;
+
+            Reject(p, weaponId,
+                multi ? HitRejectReason.HitRateTooFastMultiple : HitRejectReason.HitRateTooFast,
+                avg, n, multi ? 0 : w.MaxShootRate);
+            return false;
         }
 
         private static void TrackShot(PlayerWcState s, int wid)
@@ -618,7 +699,10 @@ namespace ProjectSMP.Plugins.WeaponConfig
             s.HitsIssued++;
         }
 
-        private static async Task RunDeathAsync(Player p, PlayerWcState s, int delayMs, CancellationToken ct)
+        // ── Death async runner ────────────────────────────────────────────
+
+        private static async Task RunDeathAsync(Player p, PlayerWcState s, int delayMs,
+            CancellationToken ct, bool cancelable)
         {
             try
             {
@@ -631,10 +715,93 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 s.Armour = 0;
                 p.VirtualWorld = s.IntendedWorld;
 
-                PlayerDeathFinished?.Invoke(null, new DeathFinishedArgs { Player = p, Cancelable = true });
+                PlayerDeathFinished?.Invoke(null,
+                    new DeathFinishedArgs { Player = p, Cancelable = cancelable });
             }
             catch (OperationCanceledException) { }
         }
+
+        // ── Resync – full state save & restore ────────────────────────────
+
+        /// <summary>
+        /// Captures the player's full in-game state (health, armour, skin, position,
+        /// facing angle, all 13 weapon slots) into a <see cref="ResyncSnapshot"/>.
+        /// </summary>
+        private static ResyncSnapshot CaptureSnapshot(Player p, PlayerWcState s)
+        {
+            var snap = new ResyncSnapshot
+            {
+                Health = s.Health,
+                Armour = s.Armour,
+                Skin = p.Skin,
+                Team = s.Team,
+                Position = p.Position,
+                FacingAngle = p.Angle
+            };
+            for (var slot = 0; slot < 13; slot++)
+            {
+                p.GetWeaponData(slot, out var wep, out var ammo);
+                snap.Weapons[slot] = (wep, ammo);
+            }
+            return snap;
+        }
+
+        /// <summary>
+        /// Restores health/armour and optionally all weapons from a snapshot.
+        /// </summary>
+        private static void RestoreFromSnapshot(Player p, PlayerWcState s,
+            ResyncSnapshot snap, bool restoreWeapons)
+        {
+            s.Health = snap.Health;
+            s.Armour = snap.Armour;
+
+            if (restoreWeapons)
+            {
+                p.ResetWeapons();
+                foreach (var (wep, ammo) in snap.Weapons)
+                    if (ammo > 0 && wep != Weapon.None)
+                        p.GiveWeapon(wep, ammo);
+            }
+
+            SyncFakeVitals(p, s);
+            WeaponConfigHealthBar.Update(p, s.Health, s.MaxHealth);
+        }
+
+        public static void ResyncPlayer(Player p)
+        {
+            if (!_states.TryGetValue(p.Id, out var s)) return;
+            s.ResyncCts?.Cancel();
+            s.BeingResynced = true;
+            s.ResyncSnap = CaptureSnapshot(p, s);
+            p.Position = p.Position; // force re-stream
+            var cts = new CancellationTokenSource();
+            s.ResyncCts = cts;
+            _ = ClearResyncAsync(p, s, cts.Token);
+        }
+
+        private static async Task ClearResyncAsync(Player p, PlayerWcState s, CancellationToken ct)
+        {
+            try
+            {
+                await Task.Delay(500, ct);
+                if (p.IsDisposed) return;
+
+                s.BeingResynced = false;
+                var snap = s.ResyncSnap;
+                s.ResyncSnap = null;
+
+                if (snap == null) return;
+
+                // Full restore: health, armour, skin, position, facing angle, all weapons
+                p.Skin = snap.Skin;
+                p.Position = snap.Position;
+                p.Angle = snap.FacingAngle;
+                RestoreFromSnapshot(p, s, snap, restoreWeapons: true);
+            }
+            catch (OperationCanceledException) { }
+        }
+
+        // ── Reject / invalid helpers ──────────────────────────────────────
 
         private static void Reject(Player p, int wid, HitRejectReason r,
             float i1 = 0, float i2 = 0, float i3 = 0, string targetName = "")
@@ -669,7 +836,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
             });
         }
 
-        private static void FireInvalid(Player p, Player? damaged, float amt, int wid, int bp, int err, bool given)
+        private static void FireInvalid(Player p, Player? damaged, float amt,
+            int wid, int bp, int err, bool given)
             => InvalidWeaponDamage?.Invoke(null, new InvalidWeaponDamageArgs
             {
                 Player = p,
@@ -681,15 +849,21 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 Given = given
             });
 
+        // ── Sync helpers ──────────────────────────────────────────────────
+
         private static void SyncFakeVitals(Player p, PlayerWcState s)
         {
             try
             {
-                Plugins.SKY.SkyNatives.Instance.SetFakeHealth(p.Id, (int)MathF.Round(MathF.Min(s.Health, 100f)));
-                Plugins.SKY.SkyNatives.Instance.SetFakeArmour(p.Id, (int)MathF.Round(MathF.Min(s.Armour, 100f)));
+                Plugins.SKY.SkyNatives.Instance
+                    .SetFakeHealth(p.Id, (int)MathF.Round(MathF.Min(s.Health, 100f)));
+                Plugins.SKY.SkyNatives.Instance
+                    .SetFakeArmour(p.Id, (int)MathF.Round(MathF.Min(s.Armour, 100f)));
             }
             catch { }
         }
+
+        // ── Damage calculation ────────────────────────────────────────────
 
         private static float CalcDamage(WeaponEntry w, float given, Vector3 a, Vector3 b)
             => w.Type switch
@@ -711,6 +885,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
             }
             return dmg;
         }
+
+        // ── Misc helpers ──────────────────────────────────────────────────
 
         private static bool IsVehicleOccupied(BaseVehicle vehicle)
         {
@@ -736,13 +912,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             return MathF.Sqrt(dx * dx + dy * dy + dz * dz);
         }
 
-        private static string GetDeathAnim(int wid) => wid switch
-        {
-            50 => "KD_SKYDIVE_DIVE",
-            54 => "DEAD_SKYDIVE",
-            16 or 18 or 35 or 36 or 39 or 51 => "DEAD_SKYDIVE",
-            _ => "CRACK_DEAD_FLOOR"
-        };
+        // ── Public API ────────────────────────────────────────────────────
 
         public static int GetLastShotVehicleId(Player p)
         {
@@ -777,6 +947,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
             BasePlayer.SendDeathMessageToAll(killer, killee, (Weapon)mapped);
         }
 
+        // ── Health / armour setters ────────────────────────────────────────
+
         public static void SetPlayerHealth(Player p, float health)
         {
             if (!_states.TryGetValue(p.Id, out var s) || s.IsDying) return;
@@ -784,7 +956,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             p.Health = 99999f;
             SyncFakeVitals(p, s);
             WeaponConfigHealthBar.Update(p, s.Health, s.MaxHealth);
-            if (s.Health <= 0) TriggerDeath(p, s, 55);
+            if (s.Health <= 0) TriggerDeath(p, s, 55, 0, cancelable: true);
         }
 
         public static void SetPlayerArmour(Player p, float armour)
@@ -793,6 +965,19 @@ namespace ProjectSMP.Plugins.WeaponConfig
             s.Armour = MathF.Max(0, MathF.Min(armour, s.MaxArmour));
             p.Armour = MathF.Min(s.Armour, 100f);
             SyncFakeVitals(p, s);
+        }
+
+        /// <summary>
+        /// Adds health to a player (used by the vending machine subsystem and external calls).
+        /// Clamped to MaxHealth. Does not trigger death.
+        /// </summary>
+        public static void HealPlayer(Player p, float amount)
+        {
+            if (!_states.TryGetValue(p.Id, out var s) || s.IsDying) return;
+            s.Health = MathF.Min(s.Health + amount, s.MaxHealth);
+            p.Health = 99999f;
+            SyncFakeVitals(p, s);
+            WeaponConfigHealthBar.Update(p, s.Health, s.MaxHealth);
         }
 
         public static float GetWcHealth(Player p) => _states.TryGetValue(p.Id, out var s) ? s.Health : 0f;
@@ -805,6 +990,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
             Inflict(p, s, amount, weapon, bodypart, issuer, ignoreArmour);
         }
 
+        // ── Damage feed ────────────────────────────────────────────────────
+
         public static void SetDamageFeed(bool enable)
         {
             _cfg.EnableDamageFeed = enable;
@@ -816,36 +1003,30 @@ namespace ProjectSMP.Plugins.WeaponConfig
         }
 
         public static bool IsDamageFeedActive(Player? p = null)
-        {
-            if (p != null) return WeaponConfigDamageFeed.IsEnabled(p);
-            return _cfg.EnableDamageFeed;
-        }
+            => p != null ? WeaponConfigDamageFeed.IsEnabled(p) : _cfg.EnableDamageFeed;
+
+        // ── Weapon data ────────────────────────────────────────────────────
 
         public static void SetWeaponDamage(int id, float dmg, DamageType type = DamageType.Static)
         {
-            if (id >= 0 && id < _weapons.Length) { _weapons[id].Damage = dmg; _weapons[id].Type = type; }
+            if (id >= 0 && id < _weapons.Length)
+            { _weapons[id].Damage = dmg; _weapons[id].Type = type; }
         }
         public static float GetWeaponDamage(int id)
             => id >= 0 && id < _weapons.Length ? _weapons[id].Damage : 0f;
 
         public static void SetWeaponMaxRange(int id, float range)
-        {
-            if (id >= 0 && id < _weapons.Length) _weapons[id].Range = range;
-        }
+        { if (id >= 0 && id < _weapons.Length) _weapons[id].Range = range; }
         public static float GetWeaponMaxRange(int id)
             => id >= 0 && id < _weapons.Length ? _weapons[id].Range : 0f;
 
         public static void SetWeaponShootRate(int id, int rate)
-        {
-            if (id >= 0 && id < _weapons.Length) _weapons[id].MaxShootRate = rate;
-        }
+        { if (id >= 0 && id < _weapons.Length) _weapons[id].MaxShootRate = rate; }
         public static int GetWeaponShootRate(int id)
             => id >= 0 && id < _weapons.Length ? _weapons[id].MaxShootRate : 0;
 
         public static void SetWeaponName(int id, string name)
-        {
-            if (id >= 0 && id < _weapons.Length) _weapons[id].Name = name;
-        }
+        { if (id >= 0 && id < _weapons.Length) _weapons[id].Name = name; }
         public static string GetWeaponName(int id)
             => id >= 0 && id < _weapons.Length ? _weapons[id].Name : $"Weapon {id}";
 
@@ -854,6 +1035,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (id >= 0 && id < _weapons.Length)
             { _weapons[id].AffectsArmour = affectsArmour; _weapons[id].TorsoOnly = torsoOnly; }
         }
+
         public static void SetCustomArmourRules(bool armourRules, bool torsoRules = false)
         {
             _cfg.GlobalArmourRules = armourRules;
@@ -862,6 +1044,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static WeaponEntry? GetWeaponEntry(int id)
             => id >= 0 && id < _weapons.Length ? _weapons[id] : null;
+
+        // ── Player max health/armour ───────────────────────────────────────
 
         public static void SetPlayerMaxHealth(Player p, float v)
         { if (_states.TryGetValue(p.Id, out var s)) s.MaxHealth = v; }
@@ -877,10 +1061,15 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static float GetLastDamageArmour(Player p)
             => _states.TryGetValue(p.Id, out var s) ? s.LastDamageArmour : 0f;
 
+        // ── Status queries ─────────────────────────────────────────────────
+
         public static bool IsPlayerDying(Player p)
             => _states.TryGetValue(p.Id, out var s) && s.IsDying;
         public static bool IsPlayerPaused(Player p)
-            => _states.TryGetValue(p.Id, out var s) && Environment.TickCount - s.LastUpdateTick > 2000;
+            => _states.TryGetValue(p.Id, out var s)
+            && Environment.TickCount - s.LastUpdateTick > 2000;
+
+        // ── Team / cbug ────────────────────────────────────────────────────
 
         public static void SetPlayerTeam(Player p, int team)
         {
@@ -904,8 +1093,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
         }
         public static void SetCbugDeathDelay(bool v) => _cfg.CbugDeathDelay = v;
 
+        // ── Vehicle damage settings ────────────────────────────────────────
+
         public static void SetVehiclePassengerDamage(bool v) => _cfg.VehiclePassengerDamage = v;
         public static void SetVehicleUnoccupiedDamage(bool v) => _cfg.VehicleUnoccupiedDamage = v;
+
+        // ── Fall damage ────────────────────────────────────────────────────
 
         public static void SetCustomFallDamage(bool toggle, float mult = 25f, float deathVel = -0.6f)
         {
@@ -915,8 +1108,27 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (toggle && 54 < _weapons.Length) _weapons[54].Damage = mult;
         }
 
+        // ── Vending machines ───────────────────────────────────────────────
+
+        public static void SetCustomVendingMachines(bool enable)
+        {
+            _cfg.CustomVendingMachines = enable;
+            // Objects are created at Init; toggling at runtime disposes/recreates them.
+            WeaponConfigVendingMachines.Dispose();
+            WeaponConfigVendingMachines.Init(enable);
+            // Re-remove buildings for all currently connected players.
+            if (enable)
+                foreach (var bp in BasePlayer.All)
+                    if (bp is Player p)
+                        WeaponConfigVendingMachines.OnConnect(p);
+        }
+
+        // ── Respawn ────────────────────────────────────────────────────────
+
         public static void SetRespawnTime(int ms) => _cfg.RespawnTime = Math.Max(0, ms);
         public static int GetRespawnTime() => _cfg.RespawnTime;
+
+        // ── Sounds ────────────────────────────────────────────────────────
 
         public static void SetDamageSounds(int taken, int given)
         {
@@ -924,78 +1136,82 @@ namespace ProjectSMP.Plugins.WeaponConfig
             _cfg.DamageGivenSound = given;
         }
 
+        // ── Per-player UI toggles ──────────────────────────────────────────
+
         public static void EnableHealthBarForPlayer(Player p, bool enable)
             => WeaponConfigHealthBar.SetEnabled(p, enable);
         public static void SetDamageFeedForPlayer(Player p, bool enable)
             => WeaponConfigDamageFeed.SetEnabled(p, enable);
 
+        // ── Shot / hit rate stats ──────────────────────────────────────────
+
+        /// <summary>
+        /// Average milliseconds between the last <paramref name="shots"/> shots.
+        /// Returns -1 if there is not enough data.
+        /// </summary>
         public static int AverageShootRate(Player p, int shots)
+            => AverageShootRate(p, shots, out _);
+
+        /// <summary>
+        /// Overload that also returns whether different weapons were used in the sampled window.
+        /// </summary>
+        public static int AverageShootRate(Player p, int shots, out bool multipleWeapons)
         {
+            multipleWeapons = false;
             if (!_states.TryGetValue(p.Id, out var s) || s.ShotsFired < shots) return -1;
+
             var n = Math.Min(shots, s.ShotTicks.Length);
             if (n < 2) return 1;
+
             var total = 0;
             for (var i = 0; i < n - 1; i++)
             {
                 var ai = (s.ShotIdx - i - 1 + s.ShotTicks.Length) % s.ShotTicks.Length;
                 var bi = (s.ShotIdx - i - 2 + s.ShotTicks.Length) % s.ShotTicks.Length;
                 total += s.ShotTicks[ai] - s.ShotTicks[bi];
+                if (s.ShotWeapons[ai] != s.ShotWeapons[bi]) multipleWeapons = true;
             }
             return total / (n - 1);
         }
 
+        /// <summary>
+        /// Average milliseconds between the last <paramref name="hits"/> hits given.
+        /// Returns -1 if there is not enough data.
+        /// </summary>
         public static int AverageHitRate(Player p, int hits)
+            => AverageHitRate(p, hits, out _);
+
+        /// <summary>
+        /// Overload that also returns whether different weapons were used in the sampled window.
+        /// </summary>
+        public static int AverageHitRate(Player p, int hits, out bool multipleWeapons)
         {
+            multipleWeapons = false;
             if (!_states.TryGetValue(p.Id, out var s) || s.HitsIssued < hits) return -1;
+
             var n = Math.Min(hits, s.HitTicks.Length);
             if (n < 2) return 1;
+
             var total = 0;
             for (var i = 0; i < n - 1; i++)
             {
                 var ai = (s.HitIdx - i - 1 + s.HitTicks.Length) % s.HitTicks.Length;
                 var bi = (s.HitIdx - i - 2 + s.HitTicks.Length) % s.HitTicks.Length;
                 total += s.HitTicks[ai] - s.HitTicks[bi];
+                if (s.HitWeapons[ai] != s.HitWeapons[bi]) multipleWeapons = true;
             }
             return total / (n - 1);
         }
 
+        // ── Rejected hits ──────────────────────────────────────────────────
+
         public static RejectedHit? GetRejectedHit(Player p, int idx)
         {
-            if (!_states.TryGetValue(p.Id, out var s) || idx >= PlayerWcState.MaxRejectedHits) return null;
+            if (!_states.TryGetValue(p.Id, out var s) || idx >= PlayerWcState.MaxRejectedHits)
+                return null;
             var realIdx = ((s.RejectedHitIdx - idx - 1) % PlayerWcState.MaxRejectedHits
                 + PlayerWcState.MaxRejectedHits) % PlayerWcState.MaxRejectedHits;
             return s.RejectedHits[realIdx];
-        }
-
-        public static void ResyncPlayer(Player p)
-        {
-            if (!_states.TryGetValue(p.Id, out var s)) return;
-            s.ResyncCts?.Cancel();
-            s.BeingResynced = true;
-            s.ResyncSnap = new ResyncSnapshot { Health = s.Health, Armour = s.Armour };
-            p.Position = p.Position;
-            var cts = new CancellationTokenSource();
-            s.ResyncCts = cts;
-            _ = ClearResyncAsync(p, s, cts.Token);
-        }
-
-        private static async Task ClearResyncAsync(Player p, PlayerWcState s, CancellationToken ct)
-        {
-            try
-            {
-                await Task.Delay(500, ct);
-                s.BeingResynced = false;
-
-                var snap = s.ResyncSnap;
-                s.ResyncSnap = null;
-
-                if (snap == null || p.IsDisposed) return;
-                s.Health = snap.Health;
-                s.Armour = snap.Armour;
-                SyncFakeVitals(p, s);
-                WeaponConfigHealthBar.Update(p, s.Health, s.MaxHealth);
-            }
-            catch (OperationCanceledException) { }
         }
     }
 }

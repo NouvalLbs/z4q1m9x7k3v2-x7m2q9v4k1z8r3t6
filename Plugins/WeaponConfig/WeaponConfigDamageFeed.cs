@@ -30,6 +30,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public int GivenIdx;
         public int LastRenderTick;
         public CancellationTokenSource? HideCts;
+        /// <summary>Player ID being spectated, or -1 if not spectating.</summary>
+        public int SpectatingId = -1;
     }
 
     internal static class WeaponConfigDamageFeed
@@ -49,6 +51,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         private static readonly Dictionary<int, PlayerFeedState> _feeds = new();
         private static bool _globalEnabled = true;
+
+        // ── Init / lifecycle ────────────────────────────────────────────
 
         public static void Init(bool globalEnabled, int hideDelayMs = 3000)
         {
@@ -74,7 +78,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 Height = 480f
             };
 
-            state.GivenTD = new PlayerTextDraw(player, new Vector2(GivenX, StartY + LineH * FeedHeight + 2f), "_")
+            state.GivenTD = new PlayerTextDraw(player,
+                new Vector2(GivenX, StartY + LineH * FeedHeight + 2f), "_")
             {
                 Font = TextDrawFont.Slim,
                 LetterSize = new Vector2(0.14f, 0.9f),
@@ -100,11 +105,36 @@ namespace ProjectSMP.Plugins.WeaponConfig
             _feeds.Remove(player.Id);
         }
 
+        // ── Spectate support ────────────────────────────────────────────
+
+        /// <summary>
+        /// Call when a player begins spectating another.
+        /// Their feed will mirror the target's damage feed.
+        /// </summary>
+        public static void SetSpectating(BasePlayer spectator, int targetPlayerId)
+        {
+            if (_feeds.TryGetValue(spectator.Id, out var s))
+                s.SpectatingId = targetPlayerId;
+        }
+
+        /// <summary>Call when a player stops spectating.</summary>
+        public static void ClearSpectating(BasePlayer spectator)
+        {
+            if (!_feeds.TryGetValue(spectator.Id, out var s)) return;
+            s.SpectatingId = -1;
+            s.TakenTD?.Hide();
+            s.GivenTD?.Hide();
+        }
+
+        // ── Feed updates ────────────────────────────────────────────────
+
         public static void AddTaken(BasePlayer player, string issuerName, float amount, int weapon)
         {
             if (!_feeds.TryGetValue(player.Id, out var s) || !s.Enabled) return;
+
             var idx = s.TakenIdx % FeedHeight;
-            s.Taken[idx] = new FeedEntry { Name = issuerName, Amount = amount, Weapon = weapon, Tick = Environment.TickCount };
+            s.Taken[idx] = new FeedEntry
+            { Name = issuerName, Amount = amount, Weapon = weapon, Tick = Environment.TickCount };
             s.TakenIdx++;
 
             var now = Environment.TickCount;
@@ -112,6 +142,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             {
                 s.LastRenderTick = now;
                 RenderFeed(s);
+                PushFeedToSpectators(player.Id, s);
             }
             ScheduleHide(s, player);
         }
@@ -119,8 +150,10 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static void AddGiven(BasePlayer player, string targetName, float amount, int weapon)
         {
             if (!_feeds.TryGetValue(player.Id, out var s) || !s.Enabled) return;
+
             var idx = s.GivenIdx % FeedHeight;
-            s.Given[idx] = new FeedEntry { Name = targetName, Amount = amount, Weapon = weapon, Tick = Environment.TickCount };
+            s.Given[idx] = new FeedEntry
+            { Name = targetName, Amount = amount, Weapon = weapon, Tick = Environment.TickCount };
             s.GivenIdx++;
 
             var now = Environment.TickCount;
@@ -128,6 +161,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             {
                 s.LastRenderTick = now;
                 RenderFeed(s);
+                PushFeedToSpectators(player.Id, s);
             }
             ScheduleHide(s, player);
         }
@@ -147,12 +181,33 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static bool IsEnabled(BasePlayer player)
             => _feeds.TryGetValue(player.Id, out var s) && s.Enabled;
 
+        // ── Private helpers ─────────────────────────────────────────────
+
         private static void RenderFeed(PlayerFeedState s)
         {
             s.TakenTD!.Text = BuildText(s.Taken, s.TakenIdx);
             s.GivenTD!.Text = BuildText(s.Given, s.GivenIdx);
             s.TakenTD.Show();
             s.GivenTD.Show();
+        }
+
+        /// <summary>
+        /// For every spectator watching <paramref name="targetId"/>,
+        /// push the target's feed data to that spectator's TextDraws.
+        /// </summary>
+        private static void PushFeedToSpectators(int targetId, PlayerFeedState targetState)
+        {
+            foreach (var (spectId, spectState) in _feeds)
+            {
+                if (spectState.SpectatingId != targetId) continue;
+                if (BasePlayer.Find(spectId) is not BasePlayer spec) continue;
+
+                spectState.TakenTD!.Text = BuildText(targetState.Taken, targetState.TakenIdx);
+                spectState.GivenTD!.Text = BuildText(targetState.Given, targetState.GivenIdx);
+                spectState.TakenTD.Show();
+                spectState.GivenTD.Show();
+                ScheduleHide(spectState, spec);
+            }
         }
 
         private static string BuildText(FeedEntry[] entries, int headIdx)
@@ -164,12 +219,10 @@ namespace ProjectSMP.Plugins.WeaponConfig
             {
                 var idx = ((headIdx - i - 1) % FeedHeight + FeedHeight) % FeedHeight;
                 var entry = entries[idx];
-
                 lines[FeedHeight - 1 - i] = entry == null || now - entry.Tick > _hideDelayMs
                     ? " "
                     : $"{entry.Name}: -{entry.Amount:F1}";
             }
-
             return string.Join("~n~", lines);
         }
 
@@ -181,7 +234,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
             _ = HideAfterAsync(s, player, cts.Token);
         }
 
-        private static async Task HideAfterAsync(PlayerFeedState s, BasePlayer player, CancellationToken ct)
+        private static async Task HideAfterAsync(PlayerFeedState s, BasePlayer player,
+            CancellationToken ct)
         {
             try
             {
