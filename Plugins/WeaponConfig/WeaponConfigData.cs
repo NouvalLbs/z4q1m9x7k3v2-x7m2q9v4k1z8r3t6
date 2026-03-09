@@ -60,6 +60,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public int DamageGivenSound { get; set; } = 17802;
         public bool CustomVendingMachines { get; set; } = true;
         public int DeathSkipTimeout { get; set; } = 500;
+        public int MaxPreviousHits { get; set; } = 10;
+        public float PlayerStreamDistance { get; set; } = 200f;
+        public float MaxDistFromShot { get; set; } = 5f;
+        public float MaxDistFromOrigin { get; set; } = 5f;
+        public int ShotTimeoutMs { get; set; } = 1000;
     }
 
     public class WeaponConfigRoot
@@ -105,6 +110,17 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public int Ammo2 { get; set; }
         public Weapon Weapon3 { get; set; }
         public int Ammo3 { get; set; }
+    }
+
+    public sealed class PreviousHitInfo
+    {
+        public int Tick;
+        public int Issuer;
+        public int Weapon;
+        public float Amount;
+        public float Health;
+        public float Armour;
+        public int Bodypart;
     }
 
     public class PlayerDamageArgs : EventArgs

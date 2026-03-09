@@ -44,6 +44,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public readonly RejectedHit?[] RejectedHits = new RejectedHit?[MaxRejectedHits];
         public int RejectedHitIdx;
 
+        public readonly PreviousHitInfo?[] PreviousHits = new PreviousHitInfo?[10];
+        public int PreviousHitIdx;
+
         public CancellationTokenSource? DeathCts;
         public CancellationTokenSource? DelayedDeathCts;
         public CancellationTokenSource? ResyncCts;
@@ -71,15 +74,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public CancellationTokenSource? RespawnCts;
     }
 
-    public static class WeaponConfigService
+    public static partial class WeaponConfigService
     {
         private const int DeathWorld = 0x00DEAD00;
         private const int BodypartTorso = 3;
         private const int BodypartHead = 9;
-        private const float MaxDistFromShot = 5f;
-        private const float MaxDistFromOrigin = 5f;
-        private const float PlayerStreamDistance = 200f;
-        private const int ShotTimeoutMs = 1000;
 
         private static WeaponConfig _cfg = new();
         private static WeaponEntry[] _weapons = Array.Empty<WeaponEntry>();
@@ -294,6 +293,39 @@ namespace ProjectSMP.Plugins.WeaponConfig
             }
         }
 
+        private static bool ApplyLagCompensation(Player issuer, PlayerWcState iState, Player damaged, PlayerWcState dState, int weaponId)
+        {
+            if (_cfg.LagCompensation == LagCompMode.Disabled) return true;
+
+            var distToTarget = Dist(issuer.Position, damaged.Position);
+            if (distToTarget > _cfg.PlayerStreamDistance)
+            {
+                Reject(issuer, weaponId, HitRejectReason.Unstreamed, distToTarget, targetName: damaged.Name);
+                return false;
+            }
+
+            if (_cfg.LagCompensation == LagCompMode.Strict)
+            {
+                if (iState.LastShot == null) return false;
+
+                var hitDist = Dist(iState.LastShot.Origin, damaged.Position);
+                if (hitDist > _cfg.MaxDistFromShot)
+                {
+                    Reject(issuer, weaponId, HitRejectReason.TooFarFromShot, hitDist, targetName: damaged.Name);
+                    return false;
+                }
+
+                var originDist = Dist(iState.LastShot.Origin, issuer.Position);
+                if (originDist > _cfg.MaxDistFromOrigin)
+                {
+                    Reject(issuer, weaponId, HitRejectReason.TooFarFromOrigin, originDist, targetName: damaged.Name);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         public static void HandleGiveDamage(Player issuer, Player? damaged, float amount,
             int weaponId, int bodypart)
         {
@@ -362,7 +394,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (IsBulletWeapon(weaponId))
             {
                 if (iState.LastShot == null || !iState.LastShot.Valid ||
-                    Environment.TickCount - iState.LastShot.Tick > ShotTimeoutMs)
+                    Environment.TickCount - iState.LastShot.Tick > _cfg.ShotTimeoutMs)
                 {
                     Reject(issuer, weaponId, HitRejectReason.LastShotInvalid, targetName: damaged.Name);
                     return;
@@ -383,12 +415,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
                     return;
                 }
 
-                var distToTarget = Dist(issuer.Position, damaged.Position);
-                if (distToTarget > PlayerStreamDistance)
-                {
-                    Reject(issuer, weaponId, HitRejectReason.Unstreamed, distToTarget, targetName: damaged.Name);
+                if (!ApplyLagCompensation(issuer, iState, damaged, dState, weaponId))
                     return;
-                }
 
                 iState.LastShot.Hits++;
 
@@ -405,20 +433,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
                     iState.LastShot.Valid = false;
                     Reject(issuer, weaponId, HitRejectReason.MultiplePlayers,
                         iState.LastShot.Hits, targetName: damaged.Name);
-                    return;
-                }
-
-                var hitDist = Dist(iState.LastShot.Origin, damaged.Position);
-                if (hitDist > MaxDistFromShot)
-                {
-                    Reject(issuer, weaponId, HitRejectReason.TooFarFromShot, hitDist, targetName: damaged.Name);
-                    return;
-                }
-
-                var originDist = Dist(iState.LastShot.Origin, issuer.Position);
-                if (originDist > MaxDistFromOrigin)
-                {
-                    Reject(issuer, weaponId, HitRejectReason.TooFarFromOrigin, originDist, targetName: damaged.Name);
                     return;
                 }
 
@@ -448,6 +462,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 Reject(issuer, weaponId, HitRejectReason.InvalidDamage, amount, targetName: damaged.Name);
                 return;
             }
+
+            TrackPreviousHit(dState, issuer.Id, weaponId, actual, bodypart);
 
             var args = new PlayerDamageArgs
             {
@@ -488,6 +504,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 var actual = CalcDamage(entry, amount, issuer.Position, target.Position);
                 if (actual <= 0) continue;
 
+                TrackPreviousHit(tState, issuer.Id, weaponId, actual, 0);
+
                 var args = new PlayerDamageArgs
                 {
                     Player = target,
@@ -525,6 +543,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
             var actual = w.Type == DamageType.Static ? w.Damage : amount * w.Damage;
             if (actual < 0) { FireInvalid(damaged, issuer, amount, weaponId, bodypart, 3, false); return; }
 
+            if (issuer != null)
+                TrackPreviousHit(s, issuer.Id, weaponId, actual, bodypart);
+
             var args = new PlayerDamageArgs
             {
                 Player = damaged,
@@ -543,6 +564,32 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 WeaponConfigDamageFeed.AddTaken(damaged, issuer.Name, args.Amount, weaponId);
             }
             PlayerDamageDone?.Invoke(null, args);
+        }
+
+        private static void TrackPreviousHit(PlayerWcState s, int issuerId, int weapon, float amount, int bodypart)
+        {
+            var idx = s.PreviousHitIdx % _cfg.MaxPreviousHits;
+            s.PreviousHits[idx] = new PreviousHitInfo
+            {
+                Tick = Environment.TickCount,
+                Issuer = issuerId,
+                Weapon = weapon,
+                Amount = amount,
+                Health = s.Health,
+                Armour = s.Armour,
+                Bodypart = bodypart
+            };
+            s.PreviousHitIdx++;
+        }
+
+        public static PreviousHitInfo? GetPreviousHit(Player p, int index)
+        {
+            if (!_states.TryGetValue(p.Id, out var s) || index >= _cfg.MaxPreviousHits)
+                return null;
+
+            var realIdx = ((s.PreviousHitIdx - index - 1) % _cfg.MaxPreviousHits + _cfg.MaxPreviousHits)
+                % _cfg.MaxPreviousHits;
+            return s.PreviousHits[realIdx];
         }
 
         private static void Inflict(Player p, PlayerWcState s, float amount, int weaponId,
@@ -810,6 +857,34 @@ namespace ProjectSMP.Plugins.WeaponConfig
             catch (OperationCanceledException) { }
         }
 
+        private static float CalcDamage(WeaponEntry w, float given, Vector3 a, Vector3 b)
+        {
+            return w.Type switch
+            {
+                DamageType.Static => w.Damage,
+                DamageType.Multiplier => given * w.Damage,
+                DamageType.Range => CalcRangeDamage(w, Dist(a, b)),
+                DamageType.RangeMultiplier => CalcRangeDamage(w, Dist(a, b)) * given,
+                _ => w.Damage
+            };
+        }
+
+        private static float CalcRangeDamage(WeaponEntry w, float dist)
+        {
+            if (w.RangeSteps == null || w.RangeSteps.Count == 0)
+                return w.Damage;
+
+            var damage = w.Damage;
+            foreach (var step in w.RangeSteps)
+            {
+                if (dist > step.Range)
+                    damage = step.Damage;
+                else
+                    break;
+            }
+            return damage;
+        }
+
         private static void Reject(Player p, int wid, HitRejectReason r,
             float i1 = 0, float i2 = 0, float i3 = 0, string targetName = "")
         {
@@ -866,27 +941,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
                     .SetFakeArmour(p.Id, (int)MathF.Round(MathF.Min(s.Armour, 100f)));
             }
             catch { }
-        }
-
-        private static float CalcDamage(WeaponEntry w, float given, Vector3 a, Vector3 b)
-            => w.Type switch
-            {
-                DamageType.Static => w.Damage,
-                DamageType.Multiplier => given * w.Damage,
-                DamageType.Range => CalcRange(w, Dist(a, b)),
-                DamageType.RangeMultiplier => CalcRange(w, Dist(a, b)) * given,
-                _ => w.Damage
-            };
-
-        private static float CalcRange(WeaponEntry w, float dist)
-        {
-            var dmg = w.Damage;
-            foreach (var step in w.RangeSteps)
-            {
-                if (dist > step.Range) dmg = step.Damage;
-                else break;
-            }
-            return dmg;
         }
 
         private static bool IsVehicleOccupied(BaseVehicle vehicle)
@@ -1109,6 +1163,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static void SetLagCompMode(LagCompMode mode) => _cfg.LagCompensation = mode;
         public static LagCompMode GetLagCompMode() => _cfg.LagCompensation;
+
+        public static void SetMaxShootRateSamples(int samples) => _cfg.MaxShootRateSamples = Math.Max(1, samples);
+        public static int GetMaxShootRateSamples() => _cfg.MaxShootRateSamples;
+
+        public static void SetMaxHitRateSamples(int samples) => _cfg.MaxHitRateSamples = Math.Max(1, samples);
+        public static int GetMaxHitRateSamples() => _cfg.MaxHitRateSamples;
 
         public static void EnableHealthBarForPlayer(Player p, bool enable)
             => WeaponConfigHealthBar.SetEnabled(p, enable);
