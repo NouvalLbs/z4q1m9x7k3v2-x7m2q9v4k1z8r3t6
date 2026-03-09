@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using ProjectSMP;
 using ProjectSMP.Core;
 using ProjectSMP.Feature.CinematicCamera;
 using ProjectSMP.Features.PreviewModelDialog;
@@ -15,8 +14,6 @@ using System.Threading.Tasks;
 
 namespace ProjectSMP.Entities.Players.Character
 {
-    // ── JSON Column Models ────────────────────────────────────────────────────
-
     public class CharPosition { public float X, Y, Z, A; public int Interior, World; }
     public class CharVitals { public float MaxHealth = 100, Health = 100, Armour, Hunger = 100, Energy = 100; }
     public class CharPlaytime { public int Hours, Minutes, Seconds; }
@@ -25,7 +22,51 @@ namespace ProjectSMP.Entities.Players.Character
     public class CharJailInfo { public int Jailed, Time; public string Reason = ""; }
     public class CharBanInfo { public int Banned, Time, Expire; public string Reason = "", Admin = ""; }
 
-    // ── Internal Helpers ──────────────────────────────────────────────────────
+    public class CharCondition
+    {
+        public int DyingTime, RespawnTime, Hospital, Injured;
+        public int Cough, CoughTime;
+        public int Migrain, MigrainTime, MigrainUsed;
+        public int Fever, FeverTime, FeverUsed;
+        public int DrugTime, DrugUsed;
+    }
+
+    public class CharSettings
+    {
+        public Language Language { get; set; } = Language.ID;
+        public int EnterExit = 4;
+        public int DynamicObjectsPriority = 1;
+        public int HBEMode;
+        public bool ShowHealth;
+        public bool ShowArmour;
+        public bool ShowHunger = true;
+        public bool ShowThirst = true;
+        public bool ShowStress = true;
+        public bool ShowTime = true;
+        public bool ToggleJoinLog;
+        public bool ToggleNews = true;
+        public bool ToggleQuiz;
+        public bool ToggleAdvertise = true;
+        public bool ToggleUppercase = true;
+        public bool ToggleStreamerMode;
+        public bool ToggleChatOOC;
+        public bool ToggleFamilyChat;
+        public bool ToggleWTChat = true;
+        public bool ToggleFacRadioChat;
+        public bool TogglePrivateMessage = true;
+        public bool ToggleAdminCmdLog = true;
+        public bool ToggleAutoLowChat;
+        public bool ToggleAutoHandbrake;
+        public bool ToggleAutoChatAnimation;
+        public bool ToggleSeatbeltHelmet;
+        public bool ToggleAutoMaskLoggedIn;
+    }
+
+    public class CharJob
+    {
+        public string JobName = "";
+        public string RegisterDate = "";
+    }
 
     internal sealed class CharCreationData
     {
@@ -69,6 +110,9 @@ namespace ProjectSMP.Entities.Players.Character
         public string? phone { get; set; }
         public string? jail_info { get; set; }
         public string? ban_info { get; set; }
+        public string? condition { get; set; }
+        public string? settings { get; set; }
+        public string? jobs { get; set; }
     }
 
     internal sealed class CharListItem
@@ -78,8 +122,6 @@ namespace ProjectSMP.Entities.Players.Character
         public int level { get; set; }
         public string last_login { get; set; } = "";
     }
-
-    // ── Service ───────────────────────────────────────────────────────────────
 
     internal static class CharacterService
     {
@@ -100,11 +142,12 @@ namespace ProjectSMP.Entities.Players.Character
 
         private static readonly Regex _rpName = new(@"^[A-Z][a-z]+_[A-Z][a-z]+$", RegexOptions.Compiled);
         private static readonly JsonSerializerOptions _jOpts = new() { PropertyNameCaseInsensitive = true, IncludeFields = true };
-
         private static readonly Dictionary<int, List<CharListItem>> _lists = new();
         private static readonly Dictionary<int, CharCreationData> _creations = new();
 
-        // ── Public API ────────────────────────────────────────────────────────
+        private static Language Lang(Player p) => p.IsCharLoaded ? p.Settings.Language : Language.ID;
+        private static string L(Player p, string s, string k) => LocalizationManager.Get(Lang(p), s, k);
+        private static string L(Player p, string s, string k, params object[] a) => LocalizationManager.Get(Lang(p), s, k, a);
 
         public static async void CheckPlayerCharAsync(Player player)
         {
@@ -127,10 +170,10 @@ namespace ProjectSMP.Entities.Players.Character
             player.Score = player.Level;
 
             for (var i = 0; i < 50; i++) player.SendClientMessage(Color.White, "");
-            player.SendClientMessage(Color.White, "{ffea00}<!> {bdff66}Selamat datang di Prestige World!");
-            player.SendClientMessage(Color.White, $"{{ffea00}}(!) {{ffffff}}Hai {{bdff66}}{player.Username}{{ffffff}}, semoga kamu menikmati roleplay dan jangan lupa untuk mengikuti aturan!");
-            player.SendClientMessage(Color.White, "{ffea00}(!) {ffffff}Jangan lupa untuk memeriksa {949494}'/help'{ffffff} untuk petunjuk lebih lanjut dan pengalaman roleplay yang seru.");
-            player.SendClientMessage(Color.White, $"{{ffea00}}(!) {{ffffff}}Login Terakhir: {{bdff66}}{player.LastLogin}");
+            player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_1"));
+            player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_2", player.Username));
+            player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_3"));
+            player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_LAST_LOGIN", player.LastLogin));
         }
 
         public static async Task SaveAsync(Player player)
@@ -156,7 +199,8 @@ namespace ProjectSMP.Entities.Players.Character
                 "money=@Money, admin=@Admin, mask_id=@MaskId, warn=@Warn, paycheck=@Paycheck, " +
                 "ip=@Ip, last_login=CURRENT_TIMESTAMP(), " +
                 "position=@Pos, vitals=@Vitals, playtime=@Playtime, " +
-                "backpack=@Backpack, phone=@Phone, jail_info=@JailInfo, ban_info=@BanInfo " +
+                "backpack=@Backpack, phone=@Phone, jail_info=@JailInfo, ban_info=@BanInfo, " +
+                "`condition`=@Condition, `settings`=@Settings, jobs=@Jobs " +
                 "WHERE citizen_id=@CitizenId",
                 new
                 {
@@ -176,6 +220,9 @@ namespace ProjectSMP.Entities.Players.Character
                     Phone = Ser(player.Phone),
                     JailInfo = Ser(player.JailInfo),
                     BanInfo = Ser(player.BanInfo),
+                    Condition = Ser(player.Condition),
+                    Settings = Ser(player.Settings),
+                    Jobs = Ser(player.Jobs),
                     CitizenId = player.CitizenId
                 });
         }
@@ -187,19 +234,19 @@ namespace ProjectSMP.Entities.Players.Character
             player.IsCharLoaded = false;
         }
 
-        // ── Character List ────────────────────────────────────────────────────
-
         private static void ShowCharListDialog(Player player, List<CharListItem> list)
         {
             var rows = new List<string[]>();
             foreach (var c in list)
                 rows.Add(new[] { $"{{ffffff}}{c.username}", c.level.ToString(), c.last_login });
             if (list.Count < MaxChars)
-                rows.Add(new[] { "{15D4ED}Create Character", "", "" });
+                rows.Add(new[] { L(player, "CHAR", "LIST_CREATE_BTN"), "", "" });
 
-            DialogManager.ShowTabList(player, "Character List",
-                new[] { "Character Name", "Level", "Last Login" },
-                rows.ToArray(), "Select", "Quit",
+            DialogManager.ShowTabList(player,
+                L(player, "CHAR", "LIST_TITLE"),
+                new[] { L(player, "CHAR", "LIST_COL_NAME"), L(player, "CHAR", "LIST_COL_LEVEL"), L(player, "CHAR", "LIST_COL_LOGIN") },
+                rows.ToArray(),
+                L(player, "GENERAL", "BTN_SELECT"), L(player, "GENERAL", "BTN_QUIT"),
                 e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { player.Kick(); return; }
@@ -209,15 +256,14 @@ namespace ProjectSMP.Entities.Players.Character
                 });
         }
 
-        // ── Create Character Flow ─────────────────────────────────────────────
-
         private static void ShowCreateNameDialog(Player player, bool taken = false)
         {
             var body = taken
-                ? "Masukkan Nama Karakter baru Kamu\n\nContoh: Finn_Xanderz, Javier_Cooper, dll.\nNama ini sudah digunakan oleh orang lain!"
-                : "Masukkan Nama Karakter baru Kamu\n\nContoh: Finn_Xanderz, Javier_Cooper, dll.";
+                ? L(player, "CHAR", "CREATE_NAME_TAKEN_MSG")
+                : L(player, "CHAR", "CREATE_NAME_MSG");
 
-            DialogManager.ShowInput(player, "Create Character", body, btnLeft: "Create", btnRight: "Exit",
+            DialogManager.ShowInput(player, L(player, "CHAR", "CREATE_NAME_TITLE"), body,
+                btnLeft: L(player, "GENERAL", "BTN_CREATE"), btnRight: L(player, "GENERAL", "BTN_EXIT"),
                 onResponse: e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { player.Kick(); return; }
@@ -263,19 +309,21 @@ namespace ProjectSMP.Entities.Players.Character
         private static void ShowSettingsDialog(Player player)
         {
             if (!_creations.TryGetValue(player.Id, out var c)) return;
-            DialogManager.ShowTabList(player, "Character Settings",
-                new[] { "Data", "Value" },
+
+            DialogManager.ShowTabList(player,
+                L(player, "CHAR", "SETTINGS_TITLE"),
+                new[] { L(player, "CHAR", "SETTINGS_COL_DATA"), L(player, "CHAR", "SETTINGS_COL_VALUE") },
                 new[]
                 {
-                    new[] { "{28b3d0}Nama",            $"{{ffffff}}{c.Name}" },
-                    new[] { "{28b3d0}Tanggal Lahir",   $"{{ffffff}}{c.BirthDate}" },
-                    new[] { "{28b3d0}Jenis Kelamin",   $"{{ffffff}}{FmtGender(c.Gender)}" },
-                    new[] { "{28b3d0}Tinggi Karakter", $"{{ffffff}}{c.Height} cm" },
-                    new[] { "{28b3d0}Warna Rambut",    $"{{ffffff}}{c.Hair}" },
-                    new[] { "{28b3d0}Warna Mata",      $"{{ffffff}}{c.Eye}" },
-                    new[] { "{79d324}Create Character!", "" }
+                    new[] { L(player, "CHAR", "SETTINGS_ROW_NAME"),      $"{{ffffff}}{c.Name}" },
+                    new[] { L(player, "CHAR", "SETTINGS_ROW_BIRTHDATE"), $"{{ffffff}}{c.BirthDate}" },
+                    new[] { L(player, "CHAR", "SETTINGS_ROW_GENDER"),    $"{{ffffff}}{FmtGender(player, c.Gender)}" },
+                    new[] { L(player, "CHAR", "SETTINGS_ROW_HEIGHT"),    $"{{ffffff}}{c.Height} cm" },
+                    new[] { L(player, "CHAR", "SETTINGS_ROW_HAIR"),      $"{{ffffff}}{c.Hair}" },
+                    new[] { L(player, "CHAR", "SETTINGS_ROW_EYE"),       $"{{ffffff}}{c.Eye}" },
+                    new[] { L(player, "CHAR", "SETTINGS_ROW_CREATE"),    "" }
                 },
-                "Select", "Cancel",
+                L(player, "GENERAL", "BTN_SELECT"), L(player, "GENERAL", "BTN_CANCEL"),
                 e =>
                 {
                     if (e.DialogButton != DialogButton.Left)
@@ -294,32 +342,34 @@ namespace ProjectSMP.Entities.Players.Character
             switch (item)
             {
                 case 0:
-                    player.SendClientMessage(Color.White, "{C6E2FF}<Error> {FFFFFF}Nama tidak dapat diubah lagi.");
+                    player.SendClientMessage(Color.White, L(player, "CHAR", "SETTINGS_ERR_NAME"));
                     ShowSettingsDialog(player);
                     break;
                 case 1: ShowBirthDateDialog(player); break;
                 case 2: ShowGenderDialog(player); break;
                 case 3: ShowHeightDialog(player); break;
                 case 4:
-                    player.SendClientMessage(Color.White, "{C6E2FF}<Error> {FFFFFF}Kamu tidak dapat mengubah Warna Rambut! (Berdasarkan Skin Karakter).");
+                    player.SendClientMessage(Color.White, L(player, "CHAR", "SETTINGS_ERR_HAIR"));
                     ShowSettingsDialog(player);
                     break;
                 case 5: ShowEyeColorDialog(player); break;
                 case 6:
                     if (c.BirthDate is "-" or { Length: <= 1 })
-                    { player.SendClientMessage(Color.White, "{C6E2FF}<Error> {FFFFFF}Tanggal Lahir Kamu tidak valid."); ShowSettingsDialog(player); return; }
+                    { player.SendClientMessage(Color.White, L(player, "CHAR", "SETTINGS_ERR_BIRTHDATE")); ShowSettingsDialog(player); return; }
                     if (string.IsNullOrWhiteSpace(c.Eye))
-                    { player.SendClientMessage(Color.White, "{C6E2FF}<Error> {FFFFFF}Silakan pilih Warna Mata Kamu."); ShowSettingsDialog(player); return; }
+                    { player.SendClientMessage(Color.White, L(player, "CHAR", "SETTINGS_ERR_EYE")); ShowSettingsDialog(player); return; }
                     ShowSpawnSelectorDialog(player);
                     break;
             }
         }
 
-        private static void ShowBirthDateDialog(Player player, string? err = null)
+        private static void ShowBirthDateDialog(Player player, string? errKey = null)
         {
-            var body = "Masukkan Tanggal Lahir\n(Tanggal/Bulan/Tahun): 15/04/1998" +
-                       (err != null ? $"\n{{ff0000}}(!) {err}" : "");
-            DialogManager.ShowInput(player, "Tanggal Lahir", body, btnLeft: "Select", btnRight: "Cancel",
+            var body = L(player, "CHAR", "BIRTHDATE_MSG");
+            if (errKey != null) body += $"\n{{ff0000}}(!) " + L(player, "CHAR", errKey);
+
+            DialogManager.ShowInput(player, L(player, "CHAR", "BIRTHDATE_TITLE"), body,
+                btnLeft: L(player, "GENERAL", "BTN_SELECT"), btnRight: L(player, "GENERAL", "BTN_CANCEL"),
                 onResponse: e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { ShowSettingsDialog(player); return; }
@@ -333,12 +383,12 @@ namespace ProjectSMP.Entities.Players.Character
             var parts = input.Split('/');
             if (parts.Length != 3 || !int.TryParse(parts[0], out var d) ||
                 !int.TryParse(parts[1], out var m) || !int.TryParse(parts[2], out var y))
-            { ShowBirthDateDialog(player, "Input Tidak Valid!"); return; }
+            { ShowBirthDateDialog(player, "BIRTHDATE_ERR_INVALID"); return; }
 
             int[] mDays = { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-            if (y < 1900 || y > DateTime.Now.Year) { ShowBirthDateDialog(player, "Input Tahun Tidak Valid!"); return; }
-            if (m < 1 || m > 12) { ShowBirthDateDialog(player, "Input Bulan Tidak Valid!"); return; }
-            if (d < 1 || d > mDays[m - 1]) { ShowBirthDateDialog(player, "Input Tanggal Tidak Valid!"); return; }
+            if (y < 1900 || y > DateTime.Now.Year) { ShowBirthDateDialog(player, "BIRTHDATE_ERR_YEAR"); return; }
+            if (m < 1 || m > 12) { ShowBirthDateDialog(player, "BIRTHDATE_ERR_MONTH"); return; }
+            if (d < 1 || d > mDays[m - 1]) { ShowBirthDateDialog(player, "BIRTHDATE_ERR_DAY"); return; }
 
             c.BirthDate = input;
             ShowSettingsDialog(player);
@@ -346,8 +396,10 @@ namespace ProjectSMP.Entities.Players.Character
 
         private static void ShowGenderDialog(Player player)
         {
-            DialogManager.ShowList(player, "Pilih Jenis Kelamin", new[] { "Pria", "Wanita" },
-                "Input", "Cancel",
+            DialogManager.ShowList(player,
+                L(player, "CHAR", "GENDER_TITLE"),
+                new[] { L(player, "CHAR", "GENDER_MALE"), L(player, "CHAR", "GENDER_FEMALE") },
+                L(player, "GENERAL", "BTN_INPUT"), L(player, "GENERAL", "BTN_CANCEL"),
                 e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { ShowSettingsDialog(player); return; }
@@ -365,7 +417,8 @@ namespace ProjectSMP.Entities.Players.Character
             foreach (var s in skinList)
                 items.Add(new PreviewModelItem { ModelId = s.Skin, Text = $"ID: {s.Skin}" });
 
-            PreviewModelDialog.Show(player, 0, FmtGender(c.Gender), items, "Select", "Cancel",
+            PreviewModelDialog.Show(player, 0, FmtGender(player, c.Gender), items,
+                L(player, "GENERAL", "BTN_SELECT"), L(player, "GENERAL", "BTN_CANCEL"),
                 args =>
                 {
                     if (!args.Accepted) { ShowGenderDialog(player); return; }
@@ -378,11 +431,13 @@ namespace ProjectSMP.Entities.Players.Character
                 });
         }
 
-        private static void ShowHeightDialog(Player player, string? err = null)
+        private static void ShowHeightDialog(Player player, string? errKey = null)
         {
-            var body = "Masukkan Tinggi Karakter Kamu! (Min/Maks: 130/195)" +
-                       (err != null ? $"\n{{ff0000}}(!) {err}" : "");
-            DialogManager.ShowInput(player, "Tinggi Karakter", body, btnLeft: "Input", btnRight: "Cancel",
+            var body = L(player, "CHAR", "HEIGHT_MSG");
+            if (errKey != null) body += $"\n{{ff0000}}(!) " + L(player, "CHAR", errKey);
+
+            DialogManager.ShowInput(player, L(player, "CHAR", "HEIGHT_TITLE"), body,
+                btnLeft: L(player, "GENERAL", "BTN_INPUT"), btnRight: L(player, "GENERAL", "BTN_CANCEL"),
                 onResponse: e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { ShowSettingsDialog(player); return; }
@@ -393,17 +448,18 @@ namespace ProjectSMP.Entities.Players.Character
         private static void HandleHeight(Player player, string input)
         {
             if (!_creations.TryGetValue(player.Id, out var c)) return;
-            if (!int.TryParse(input, out var h)) { ShowHeightDialog(player, "Input Tinggi Tidak Valid, harus berupa angka"); return; }
-            if (h < 130 || h > 195) { ShowHeightDialog(player, "Tinggi harus antara 130 dan 195"); return; }
+            if (!int.TryParse(input, out var h)) { ShowHeightDialog(player, "HEIGHT_ERR_NAN"); return; }
+            if (h < 130 || h > 195) { ShowHeightDialog(player, "HEIGHT_ERR_RANGE"); return; }
             c.Height = h;
             ShowSettingsDialog(player);
         }
 
         private static void ShowEyeColorDialog(Player player)
         {
-            DialogManager.ShowList(player, "Select Eye Color",
-                new[] { "Hitam", "Coklat", "Biru", "Abu-abu Muda" },
-                "Select", "Cancel",
+            DialogManager.ShowList(player,
+                L(player, "CHAR", "EYE_TITLE"),
+                new[] { L(player, "CHAR", "EYE_BLACK"), L(player, "CHAR", "EYE_BROWN"), L(player, "CHAR", "EYE_BLUE"), L(player, "CHAR", "EYE_GRAY") },
+                L(player, "GENERAL", "BTN_SELECT"), L(player, "GENERAL", "BTN_CANCEL"),
                 e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { ShowSettingsDialog(player); return; }
@@ -415,9 +471,10 @@ namespace ProjectSMP.Entities.Players.Character
 
         private static void ShowSpawnSelectorDialog(Player player)
         {
-            DialogManager.ShowList(player, "Spawn Selector",
-                new[] { "Los Santos International Airport", "Los Santos Train Station" },
-                "Spawn Me!", "",
+            DialogManager.ShowList(player,
+                L(player, "CHAR", "SPAWN_TITLE"),
+                new[] { L(player, "CHAR", "SPAWN_AIRPORT"), L(player, "CHAR", "SPAWN_STATION") },
+                L(player, "CHAR", "SPAWN_BTN"), "",
                 e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { ShowSpawnSelectorDialog(player); return; }
@@ -447,9 +504,9 @@ namespace ProjectSMP.Entities.Players.Character
             await DatabaseManager.ExecuteAsync(
                 $"INSERT INTO `{Table}` " +
                 "(citizen_id,ucp,ip,username,skin,gender,birth_date,height,hair,eye,mask_id," +
-                "position,vitals,playtime,backpack,phone,jail_info,ban_info) " +
+                "position,vitals,playtime,backpack,phone,jail_info,ban_info,`condition`,`settings`,jobs) " +
                 "VALUES (@Cid,@Ucp,@Ip,@Username,@Skin,@Gender,@BirthDate,@Height,@Hair,@Eye,@MaskId," +
-                "@Pos,@Vitals,@Playtime,@Backpack,@Phone,@JailInfo,@BanInfo)",
+                "@Pos,@Vitals,@Playtime,@Backpack,@Phone,@JailInfo,@BanInfo,@Condition,@Settings,@Jobs)",
                 new
                 {
                     Cid = cid,
@@ -469,7 +526,10 @@ namespace ProjectSMP.Entities.Players.Character
                     Backpack = Ser(new CharBackpack()),
                     Phone = Ser(new CharPhone()),
                     JailInfo = Ser(new CharJailInfo()),
-                    BanInfo = Ser(new CharBanInfo())
+                    BanInfo = Ser(new CharBanInfo()),
+                    Condition = Ser(new CharCondition()),
+                    Settings = Ser(new CharSettings()),
+                    Jobs = Ser(new List<CharJob>())
                 });
 
             if (player.IsDisposed) return;
@@ -496,8 +556,6 @@ namespace ProjectSMP.Entities.Players.Character
             SpawnCharacter(player);
         }
 
-        // ── Load Existing Character ───────────────────────────────────────────
-
         private static async void LoadExistingCharAsync(Player player, string citizenId)
         {
             var raw = await DatabaseManager.QueryFirstAsync<RawCharRow>(
@@ -513,7 +571,6 @@ namespace ProjectSMP.Entities.Players.Character
             }
 
             ApplyToPlayer(player, raw);
-            player.CitizenId = raw.citizen_id;
 
             await DatabaseManager.ExecuteAsync(
                 $"UPDATE `{Table}` SET ip=@Ip, last_login=CURRENT_TIMESTAMP() WHERE citizen_id=@Id",
@@ -529,11 +586,11 @@ namespace ProjectSMP.Entities.Players.Character
             player.ToggleSpectating(false);
             player.Interior = player.CharSpawnPos.Interior;
             player.VirtualWorld = player.CharSpawnPos.World;
-            player.SetSpawnInfo(0, player.Skin, new Vector3(player.CharSpawnPos.X, player.CharSpawnPos.Y, player.CharSpawnPos.Z), player.CharSpawnPos.A);
+            player.SetSpawnInfo(0, player.Skin,
+                new Vector3(player.CharSpawnPos.X, player.CharSpawnPos.Y, player.CharSpawnPos.Z),
+                player.CharSpawnPos.A);
             player.Spawn();
         }
-
-        // ── Map DB Row → Player Properties ───────────────────────────────────
 
         private static void ApplyToPlayer(Player player, RawCharRow r)
         {
@@ -564,12 +621,13 @@ namespace ProjectSMP.Entities.Players.Character
             player.JailInfo = Des<CharJailInfo>(r.jail_info) ?? new();
             player.BanInfo = Des<CharBanInfo>(r.ban_info) ?? new();
             player.CharSpawnPos = Des<CharPosition>(r.position) ?? new();
+            player.Condition = Des<CharCondition>(r.condition) ?? new();
+            player.Settings = Des<CharSettings>(r.settings) ?? new();
+            player.Jobs = Des<List<CharJob>>(r.jobs) ?? new();
             player.IsCharLoaded = true;
         }
 
-        // ── Utilities ─────────────────────────────────────────────────────────
-
-        private static string FmtGender(int g) => g == 0 ? "Pria" : "Wanita";
+        private static string FmtGender(Player p, int g) => g == 0 ? L(p, "CHAR", "GENDER_MALE") : L(p, "CHAR", "GENDER_FEMALE");
         private static string Ser<T>(T obj) => JsonSerializer.Serialize(obj, _jOpts);
 
         private static string GenCitizenId()

@@ -1,10 +1,11 @@
 ﻿using ProjectSMP.Entities.Players.Character;
+using ProjectSMP.Features.Bank;
+using System.Collections.Generic;
 
 namespace ProjectSMP
 {
     public partial class Player
     {
-        // ── Character Identity ────────────────────────────────────────────
         public string CitizenId { get; set; } = "";
         public string Ucp { get; set; } = "";
         public string RegDate { get; set; } = "";
@@ -12,7 +13,6 @@ namespace ProjectSMP
         public bool IsCharLoaded { get; set; }
         public long LoadTick { get; set; }
 
-        // ── Character Info ────────────────────────────────────────────────
         public string Username { get; set; } = "";
         public int Gender { get; set; }
         public string BirthDate { get; set; } = "";
@@ -21,7 +21,6 @@ namespace ProjectSMP
         public string Eye { get; set; } = "";
         public int VerifiedChar { get; set; }
 
-        // ── Stats ─────────────────────────────────────────────────────────
         public int Level { get; set; } = 1;
         public int LevelPoints { get; set; }
         public int LevelPointsExp { get; set; }
@@ -31,7 +30,6 @@ namespace ProjectSMP
         public int Warn { get; set; }
         public int Paycheck { get; set; }
 
-        // ── JSON Data ─────────────────────────────────────────────────────
         public CharPosition CharSpawnPos { get; set; } = new();
         public CharVitals Vitals { get; set; } = new();
         public CharPlaytime Playtime { get; set; } = new();
@@ -39,5 +37,10 @@ namespace ProjectSMP
         public CharPhone Phone { get; set; } = new();
         public CharJailInfo JailInfo { get; set; } = new();
         public CharBanInfo BanInfo { get; set; } = new();
+        public CharCondition Condition { get; set; } = new();
+        public CharSettings Settings { get; set; } = new();
+        public List<CharJob> Jobs { get; set; } = new();
+
+        public List<PlayerBankAccount> BankAccounts { get; set; } = new();
     }
 }

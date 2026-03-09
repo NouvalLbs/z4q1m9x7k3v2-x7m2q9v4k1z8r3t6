@@ -1,10 +1,8 @@
-﻿
-#nullable enable
+﻿#nullable enable
 using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Account.Data;
 using ProjectSMP.Entities.Players.Character;
 using SampSharp.GameMode.Definitions;
-using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
@@ -23,10 +21,10 @@ namespace ProjectSMP.Entities.Players.Account
 
         private static readonly Dictionary<int, PlayerUcpData> _sessions = new();
         private static readonly Dictionary<int, CancellationTokenSource> _kickTimers = new();
-        private static readonly Regex _passwordPattern =
-            new(@"^[A-Za-z0-9\[\]()\._@#]+$", RegexOptions.Compiled);
+        private static readonly Regex _passwordPattern = new(@"^[A-Za-z0-9\[\]()\._@#]+$", RegexOptions.Compiled);
 
-        // ── Public API ────────────────────────────────────────────────────────
+        private static string L(string s, string k) => LocalizationManager.Get(Language.ID, s, k);
+        private static string L(string s, string k, params object[] a) => LocalizationManager.Get(Language.ID, s, k, a);
 
         public static async void InitAsync(Player player)
         {
@@ -81,40 +79,30 @@ namespace ProjectSMP.Entities.Players.Account
         public static PlayerUcpData? GetSession(Player player)
             => _sessions.TryGetValue(player.Id, out var s) ? s : null;
 
-        // ── Dialog Presenters ─────────────────────────────────────────────────
-
         private static void ShowInvalidNameDialog(Player player)
         {
             DialogManager.ShowMessage(player,
-                "UCP - Invalid Account",
-                $"{{ffffff}}\nUCP: {{dec000}}{player.Name}\n" +
-                $"{{ffffff}}Status UCP: {{de0000}}UCP Tidak Valid\n\n" +
-                $"{{ffffff}}Silakan gunakan nama UCP Kamu, bukan nama Roleplay Kamu",
-                "OK");
+                L("AUTH", "INVALID_NAME_TITLE"),
+                L("AUTH", "INVALID_NAME_MSG", player.Name),
+                L("GENERAL", "BTN_OK"));
         }
 
         private static void ShowNotRegisteredDialog(Player player)
         {
             DialogManager.ShowMessage(player,
-                "UCP - Not Registered",
-                $"{{ffffff}}\nUCP: {{dec000}}{player.Name}\n" +
-                $"{{ffffff}}Status UCP: {{de0000}}Belum Terdaftar\n\n" +
-                $"{{ffffff}}Silakan daftarkan UCP Kamu terlebih dahulu.\n" +
-                $"Untuk mendaftar UCP Kamu, silakan kunjungi Discord kami",
-                "OK");
+                L("AUTH", "NOT_REGISTERED_TITLE"),
+                L("AUTH", "NOT_REGISTERED_MSG", player.Name),
+                L("GENERAL", "BTN_OK"));
         }
 
-        private static void ShowActivateDialog(Player player, string? error = null)
+        private static void ShowActivateDialog(Player player, string? errKey = null)
         {
             var session = _sessions[player.Id];
-            var body =
-                $"{{ffffff}}\nAkun Ini {{de0000}}Belum Aktif!{{ffffff}}\n" +
-                $"UCP: {{dec000}}{session.UCP}\n\n" +
-                $"{{ffffff}}Silakan masukkan PIN Kamu untuk mengaktifkan Akun" +
-                (error is not null ? $"\n{{FF0000}}{error}" : "");
+            var body = L("AUTH", "ACTIVATE_MSG", session.UCP);
+            if (errKey != null) body += $"\n{{FF0000}}" + L("AUTH", errKey);
 
-            DialogManager.ShowInput(player, "UCP - Account Activation", body,
-                btnLeft: "Input", btnRight: "Cancel",
+            DialogManager.ShowInput(player, L("AUTH", "ACTIVATE_TITLE"), body,
+                btnLeft: L("GENERAL", "BTN_INPUT"), btnRight: L("GENERAL", "BTN_CANCEL"),
                 onResponse: e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { KickDelayed(player); return; }
@@ -122,25 +110,12 @@ namespace ProjectSMP.Entities.Players.Account
                 });
         }
 
-        private static void ShowRegisterDialog(Player player, string? error = null)
+        private static void ShowRegisterDialog(Player player, string? errorType = null)
         {
-            var body = error switch
-            {
-                null =>
-                    "Sekarang, silakan masukkan password yang valid\n" +
-                    "Simbol Kata Sandi yang Valid: A-Z, a-z, 0-9, _, [ ], () dan Panjang Minimum Kata Sandi adalah 6 karakter",
-                "short" =>
-                    "Sekarang, silakan masukkan password yang valid\n" +
-                    "Simbol Kata Sandi yang Valid: A-Z, a-z, 0-9, _, [ ], ()\n" +
-                    "{FF0000}Panjang Minimum Kata Sandi adalah 6 karakter",
-                _ =>
-                    "Sekarang, silakan masukkan password yang valid\n" +
-                    "Simbol Kata Sandi yang Valid: A-Z, a-z, 0-9, _, [ ], () dan Panjang Minimum Kata Sandi adalah 6 karakter\n" +
-                    "{FF0000}Password yang Kamu gunakan mengandung karakter yang tidak valid"
-            };
+            var msgKey = errorType switch { null => "REGISTER_MSG", "short" => "REGISTER_MSG_SHORT", _ => "REGISTER_MSG_INVALID" };
 
-            DialogManager.ShowInput(player, "UCP - Account Registration", body,
-                isPassword: true, btnLeft: "Register", btnRight: "Abort",
+            DialogManager.ShowInput(player, L("AUTH", "REGISTER_TITLE"), L("AUTH", msgKey),
+                isPassword: true, btnLeft: L("GENERAL", "BTN_REGISTER"), btnRight: L("GENERAL", "BTN_ABORT"),
                 onResponse: e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { KickDelayed(player); return; }
@@ -151,14 +126,10 @@ namespace ProjectSMP.Entities.Players.Account
         private static void ShowLoginDialog(Player player)
         {
             var session = _sessions[player.Id];
-            var body =
-                $"{{ffffff}}\nAkun Ini {{8feb34}}Aktif!{{ffffff}}\n" +
-                $"UCP: {{34ebc0}}{session.UCP}\n\n" +
-                $"{{ffffff}}Kamu masih memiliki {{dec000}}{session.LoginAttempt} percobaan\n" +
-                $"{{ffffff}}Kamu memiliki 60 detik, jadi silakan masukkan password Kamu";
 
-            DialogManager.ShowInput(player, "Welcome to PrestigeSMP", body,
-                isPassword: true, btnLeft: "Login", btnRight: "Abort",
+            DialogManager.ShowInput(player, L("AUTH", "LOGIN_TITLE"),
+                L("AUTH", "LOGIN_MSG", session.UCP, session.LoginAttempt),
+                isPassword: true, btnLeft: L("GENERAL", "BTN_LOGIN"), btnRight: L("GENERAL", "BTN_ABORT"),
                 onResponse: e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { KickDelayed(player); return; }
@@ -166,24 +137,16 @@ namespace ProjectSMP.Entities.Players.Account
                 });
         }
 
-        // ── Dialog Handlers ───────────────────────────────────────────────────
-
         private static void HandleActivate(Player player, string pin)
         {
             var session = GetSession(player);
             if (session is null) return;
 
             if (string.IsNullOrWhiteSpace(pin) || !int.TryParse(pin, out var pinValue))
-            {
-                ShowActivateDialog(player, "PIN harus berisi 6 digit, bukan huruf");
-                return;
-            }
+            { ShowActivateDialog(player, "ACTIVATE_ERR_PIN_INVALID"); return; }
 
             if (pinValue != session.VerifyCode)
-            {
-                ShowActivateDialog(player, "PIN yang Kamu masukkan tidak benar");
-                return;
-            }
+            { ShowActivateDialog(player, "ACTIVATE_ERR_PIN_WRONG"); return; }
 
             ShowRegisterDialog(player);
         }
@@ -193,17 +156,8 @@ namespace ProjectSMP.Entities.Players.Account
             var session = GetSession(player);
             if (session is null) return;
 
-            if (password.Length < 6)
-            {
-                ShowRegisterDialog(player, "short");
-                return;
-            }
-
-            if (!_passwordPattern.IsMatch(password))
-            {
-                ShowRegisterDialog(player, "invalid");
-                return;
-            }
+            if (password.Length < 6) { ShowRegisterDialog(player, "short"); return; }
+            if (!_passwordPattern.IsMatch(password)) { ShowRegisterDialog(player, "invalid"); return; }
 
             var hashed = HashPassword(password);
 
@@ -226,13 +180,7 @@ namespace ProjectSMP.Entities.Players.Account
             if (HashPassword(password) != session.Password)
             {
                 session.LoginAttempt--;
-
-                if (session.LoginAttempt <= 0)
-                {
-                    KickDelayed(player);
-                    return;
-                }
-
+                if (session.LoginAttempt <= 0) { KickDelayed(player); return; }
                 ShowLoginDialog(player);
                 return;
             }
@@ -241,15 +189,11 @@ namespace ProjectSMP.Entities.Players.Account
             CharacterService.CheckPlayerCharAsync(player);
         }
 
-        // ── Session ───────────────────────────────────────────────────────────
-
         private static void ResetSession(Player player)
         {
             _sessions[player.Id] = new PlayerUcpData();
             CancelKickTimer(player);
         }
-
-        // ── Kick Helpers ──────────────────────────────────────────────────────
 
         private static void ScheduleKick(Player player, int delayMs)
         {
@@ -261,12 +205,8 @@ namespace ProjectSMP.Entities.Players.Account
 
         private static async void KickAfterAsync(Player player, int delayMs, CancellationToken ct)
         {
-            try
-            {
-                await Task.Delay(delayMs, ct);
-                if (!player.IsDisposed) player.Kick();
-            }
-            catch (OperationCanceledException) { }
+            try { await Task.Delay(delayMs, ct); if (!player.IsDisposed) player.Kick(); }
+            catch (System.OperationCanceledException) { }
         }
 
         private static void KickDelayed(Player player)
@@ -281,8 +221,6 @@ namespace ProjectSMP.Entities.Players.Account
             cts.Cancel();
             _kickTimers.Remove(player.Id);
         }
-
-        // ── Utilities ─────────────────────────────────────────────────────────
 
         private static string HashPassword(string raw)
         {
