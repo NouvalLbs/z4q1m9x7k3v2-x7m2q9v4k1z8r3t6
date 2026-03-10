@@ -9,15 +9,14 @@ namespace ProjectSMP.Plugins.Anticheat.Checks.AntiFlood;
 
 public class ConnectionFloodCheck
 {
-    private readonly ConcurrentDictionary<string, Queue<long>> _ipWindows = new();
     private const int WindowMs = 10_000;
     private const int MaxConnects = 5;
 
+    private readonly ConcurrentDictionary<string, Queue<long>> _ipWindows = new();
     private readonly AnticheatConfig _config;
     private readonly AcLogger _logger;
 
-    public ConnectionFloodCheck(AnticheatConfig c, AcLogger l)
-        => (_config, _logger) = (c, l);
+    public ConnectionFloodCheck(AnticheatConfig c, AcLogger l) => (_config, _logger) = (c, l);
 
     public bool OnPlayerConnected(BasePlayer player)
     {
@@ -32,7 +31,7 @@ public class ConnectionFloodCheck
             while (q.Count > 0 && now - q.Peek() > WindowMs) q.Dequeue();
             if (q.Count >= MaxConnects)
             {
-                _logger.Log($"ConnectionFlood: {ip} count={q.Count}");
+                _logger.LogKick(player.Id, $"ConnectionFlood ip={ip} count={q.Count}");
                 player.Kick();
                 return false;
             }

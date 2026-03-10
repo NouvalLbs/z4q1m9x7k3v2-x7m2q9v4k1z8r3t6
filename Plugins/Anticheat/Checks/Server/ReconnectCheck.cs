@@ -23,24 +23,19 @@ public class ReconnectCheck
 
         string ip = player.IP;
         long now = Environment.TickCount64;
+        long minMs = _config.MinReconnectSeconds * 1000L;
 
-        if (_lastDisconnect.TryGetValue(ip, out long lastTick))
+        if (_lastDisconnect.TryGetValue(ip, out long lastTick) && lastTick > 0)
         {
             long elapsed = now - lastTick;
-            long minMs = _config.MinReconnectSeconds * 1000L;
             if (elapsed < minMs)
             {
-                _logger.Log($"Reconnect block: {ip} elapsed={elapsed}ms");
+                _logger.LogKick(player.Id, $"Reconnect ip={ip} elapsed={elapsed}ms min={minMs}ms");
                 player.Kick();
-                return;
             }
         }
-
-        _lastDisconnect[ip] = 0;
     }
 
     public void OnPlayerDisconnected(BasePlayer player)
-    {
-        _lastDisconnect[player.IP] = Environment.TickCount64;
-    }
+        => _lastDisconnect[player.IP] = Environment.TickCount64;
 }

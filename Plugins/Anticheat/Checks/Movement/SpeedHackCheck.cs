@@ -16,6 +16,8 @@ public class SpeedHackCheck
     private const float MaxBoatSpeed = 0.50f;
     private const float MaxBikeSpeed = 0.65f;
     private const float MaxHelicopterSpeed = 0.80f;
+    private const float MaxAircraftSpeed = 1.90f;
+    private const float MaxPlaneSpeed = 1.50f;
 
     private readonly PlayerStateManager _players;
     private readonly WarningManager _warnings;
@@ -36,24 +38,22 @@ public class SpeedHackCheck
 
         var vel = player.Velocity;
         float spd = VectorMath.Speed(vel.X, vel.Y, vel.Z);
-        var pState = player.State;
 
-        if (pState == PlayerState.OnFoot)
+        if (player.State == PlayerState.OnFoot)
         {
             if (!_config.GetCheck("SpeedHackOnfoot").Enabled) return;
             float limit = player.SpecialAction == SpecialAction.Usejetpack
-                ? MaxOnfootJetpack
-                : MaxOnfootSpeed;
+                ? MaxOnfootJetpack : MaxOnfootSpeed;
             if (spd > limit)
                 _warnings.AddWarning(player.Id, "SpeedHackOnfoot", $"spd={spd:F3} lim={limit:F2}");
         }
-        else if (pState == PlayerState.Driving)
+        else if (player.State == PlayerState.Driving)
         {
             if (!_config.GetCheck("SpeedHackVehicle").Enabled) return;
             int model = player.Vehicle is not null ? (int)player.Vehicle.Model : -1;
             float limit = model >= 400 ? GetLimit(model) : MaxVehicleDefault;
             if (spd > limit)
-                _warnings.AddWarning(player.Id, "SpeedHackVehicle", $"spd={spd:F3} mdl={model}");
+                _warnings.AddWarning(player.Id, "SpeedHackVehicle", $"spd={spd:F3} lim={limit:F2} mdl={model}");
         }
     }
 
@@ -61,7 +61,10 @@ public class SpeedHackCheck
     {
         1 => MaxBoatSpeed,
         3 => MaxHelicopterSpeed,
+        4 => MaxAircraftSpeed,
         5 or 6 => MaxBikeSpeed,
-        _ => MaxVehicleDefault
+        _ => IsHighSpeedPlane(model) ? MaxPlaneSpeed : MaxVehicleDefault
     };
+
+    private static bool IsHighSpeedPlane(int model) => model is 592 or 577 or 511 or 512 or 593 or 520 or 553 or 476 or 519 or 460 or 513 or 548;
 }

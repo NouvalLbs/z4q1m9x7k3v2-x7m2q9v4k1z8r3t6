@@ -9,13 +9,12 @@ public class FloodRateLimiter
 {
     private readonly ConcurrentDictionary<string, Queue<long>> _windows = new();
 
-    // Maps callbackId (0-27) to (intervalMs, maxCalls) — mirrors ac_Mtfc[]
     public static readonly (int IntervalMs, int MaxCalls)[] CallbackLimits =
     {
         (120,8),(800,2),(150,8),(250,8),(50,11),(400,8),(50,8),(50,11),
         (50,11),(150,8),(120,8),(600,8),(450,2),(450,2),(450,2),(300,1),
         (450,8),(150,8),(150,8),(150,8),(120,8),(150,8),(150,8),(50,11),
-        (60,9),(150,8),(150,8),(50,11)
+        (60,9),(150,8),(150,8)
     };
 
     public bool Check(int playerId, int callbackId)

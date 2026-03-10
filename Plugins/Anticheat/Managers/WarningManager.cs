@@ -28,7 +28,8 @@ public class WarningManager
 
         var state = _players.GetOrCreate(playerId);
         var cfg = _config.GetCheck(checkName);
-        if (!cfg.Enabled) return CheckResult.Pass;
+
+        if (!cfg.Enabled || !state.IsCheckEnabled(checkName)) return CheckResult.Pass;
 
         int count = state.AddWarning(checkName);
         _logger.LogCheat(playerId, checkName, count, details);
@@ -53,6 +54,12 @@ public class WarningManager
         if (checkName is not null) state.ResetWarning(checkName);
         else state.ResetAllWarnings();
     }
+
+    public void DisableCheckForPlayer(int playerId, string checkName)
+        => _players.GetOrCreate(playerId).DisabledChecks.Add(checkName);
+
+    public void EnableCheckForPlayer(int playerId, string checkName)
+        => _players.Get(playerId)?.DisabledChecks.Remove(checkName);
 
     public int GetCount(int playerId, string checkName) =>
         _players.Get(playerId)?.GetWarning(checkName) ?? 0;

@@ -16,8 +16,7 @@ public class DosCheck
     private readonly AnticheatConfig _config;
     private readonly AcLogger _logger;
 
-    public DosCheck(AnticheatConfig c, AcLogger l)
-        => (_config, _logger) = (c, l);
+    public DosCheck(AnticheatConfig c, AcLogger l) => (_config, _logger) = (c, l);
 
     public bool OnPlayerUpdate(BasePlayer player)
     {
@@ -30,15 +29,12 @@ public class DosCheck
         {
             while (q.Count > 0 && now - q.Peek() > PacketWindowMs) q.Dequeue();
             q.Enqueue(now);
-
-            if (q.Count > MaxPacketsPerSec)
-            {
-                _logger.Log($"DoS detected: P:{player.Id} ip={player.IP} pps={q.Count}");
-                player.Kick();
-                return false;
-            }
+            if (q.Count <= MaxPacketsPerSec) return true;
         }
-        return true;
+
+        _logger.LogKick(player.Id, $"DoS pps={MaxPacketsPerSec} ip={player.IP}");
+        player.Kick();
+        return false;
     }
 
     public void OnPlayerDisconnected(int playerId) => _windows.TryRemove(playerId, out _);

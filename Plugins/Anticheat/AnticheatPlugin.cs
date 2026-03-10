@@ -7,6 +7,7 @@ using ProjectSMP.Plugins.Anticheat.Checks.Server;
 using ProjectSMP.Plugins.Anticheat.Checks.Spawn;
 using ProjectSMP.Plugins.Anticheat.Checks.Vehicle;
 using ProjectSMP.Plugins.Anticheat.Configuration;
+using ProjectSMP.Plugins.Anticheat.Events;
 using ProjectSMP.Plugins.Anticheat.Managers;
 using ProjectSMP.Plugins.Anticheat.Utilities;
 using SampSharp.GameMode;
@@ -24,10 +25,13 @@ public class AnticheatPlugin
 {
     private readonly PlayerStateManager _players;
     private readonly VehicleStateManager _vehicles;
+    private readonly PickupStateManager _pickups;
     private readonly WarningManager _warnings;
     private readonly FloodRateLimiter _flood;
     private readonly AcLogger _logger;
     private readonly AnticheatConfig _config;
+    private readonly AnticheatEvents _events;
+    private FileSystemWatcher? _watcher;
 
     private AirBreakCheck _airBreak = null!;
     private TeleportCheck _teleport = null!;
@@ -53,6 +57,7 @@ public class AnticheatPlugin
     private AfkGhostCheck _afkGhost = null!;
     private CarJackCheck _carJack = null!;
     private VehicleTeleportCheck _vehicleTeleport = null!;
+    private TuningHackCheck _tuningHack = null!;
     private ReconnectCheck _reconnect = null!;
     private PingCheck _ping = null!;
     private DialogHackCheck _dialogHack = null!;
@@ -60,7 +65,6 @@ public class AnticheatPlugin
     private SandboxProtection _sandbox = null!;
     private RconProtection _rcon = null!;
     private TuningCrasherCheck _tuningCrasher = null!;
-    private TuningHackCheck _tuningHack = null!;
     private InvalidSeatCrasherCheck _seatCrasher = null!;
     private DialogCrasherCheck _dialogCrasher = null!;
     private AttachedObjectCrasherCheck _attachCrasher = null!;
@@ -72,15 +76,17 @@ public class AnticheatPlugin
 
     public PlayerStateManager Players => _players;
     public VehicleStateManager Vehicles => _vehicles;
+    public PickupStateManager Pickups => _pickups;
     public WarningManager Warnings => _warnings;
     public AnticheatConfig Config => _config;
+    public AnticheatEvents Events => _events;
     public MoneyCheck Money => _money;
     public WeaponCheck Weapon => _weapon;
     public AmmoCheck Ammo => _ammo;
     public DialogHackCheck Dialog => _dialogHack;
     public CallbackFloodCheck CbFlood => _cbFlood;
-    public AttachedObjectCrasherCheck AttachCrasher => _attachCrasher;
     public SpecialActionCheck SpecialAction => _specialAction;
+    public AttachedObjectCrasherCheck AttachCrasher => _attachCrasher;
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -89,16 +95,17 @@ public class AnticheatPlugin
     };
 
     public AnticheatPlugin(
-        PlayerStateManager players, VehicleStateManager vehicles,
-        WarningManager warnings, FloodRateLimiter flood,
-        AcLogger logger, AnticheatConfig config)
+        PlayerStateManager players, VehicleStateManager vehicles, PickupStateManager pickups,
+        WarningManager warnings, FloodRateLimiter flood, AcLogger logger, AnticheatConfig config)
     {
         _players = players;
         _vehicles = vehicles;
+        _pickups = pickups;
         _warnings = warnings;
         _flood = flood;
         _logger = logger;
         _config = config;
+        _events = new AnticheatEvents();
     }
 
     private void InitChecks()
@@ -126,7 +133,8 @@ public class AnticheatPlugin
         _cjRun = new CjRunCheck(_players, _warnings, _config);
         _afkGhost = new AfkGhostCheck(_players, _warnings, _config);
         _carJack = new CarJackCheck(_players, _warnings, _config);
-        _vehicleTeleport = new VehicleTeleportCheck(_players, _warnings, _config);
+        _vehicleTeleport = new VehicleTeleportCheck(_players, _pickups, _warnings, _config);
+        _tuningHack = new TuningHackCheck(_players, _vehicles, _warnings, _config);
         _reconnect = new ReconnectCheck(_warnings, _config, _logger);
         _ping = new PingCheck(_warnings, _config, _logger);
         _dialogHack = new DialogHackCheck(_players, _warnings, _config);
@@ -134,7 +142,6 @@ public class AnticheatPlugin
         _sandbox = new SandboxProtection(_config, _logger);
         _rcon = new RconProtection(_warnings, _config, _logger);
         _tuningCrasher = new TuningCrasherCheck(_warnings, _config);
-        _tuningHack = new TuningHackCheck(_players, _vehicles, _warnings, _config);
         _seatCrasher = new InvalidSeatCrasherCheck(_warnings, _config);
         _dialogCrasher = new DialogCrasherCheck(_players, _warnings, _config);
         _attachCrasher = new AttachedObjectCrasherCheck(_warnings, _config);
@@ -145,15 +152,43 @@ public class AnticheatPlugin
         _dos = new DosCheck(_config, _logger);
     }
 
+    private void InitHotReload(string configPath)
+    {
+        string dir = Path.GetDirectoryName(Path.GetFullPath(configPath)) ?? ".";
+        string file = Path.GetFileName(configPath);
+        _watcher = new FileSystemWatcher(dir, file)
+        {
+            NotifyFilter = NotifyFilters.LastWrite,
+            EnableRaisingEvents = true
+        };
+        _watcher.Changed += (_, _) =>
+        {
+            try
+            {
+                var fresh = LoadConfig(configPath);
+                _config.Enabled = fresh.Enabled;
+                _config.MaxPing = fresh.MaxPing;
+                _config.MaxConnectsPerIp = fresh.MaxConnectsPerIp;
+                _config.MinReconnectSeconds = fresh.MinReconnectSeconds;
+                foreach (var (k, v) in fresh.Checks) _config.Checks[k] = v;
+                _logger.Log("anticheat.json reloaded.");
+            }
+            catch (Exception ex) { _logger.LogWarn($"Hot-reload failed: {ex.Message}"); }
+        };
+    }
+
     public static AnticheatPlugin Create(string configPath = "anticheat.json")
     {
         var cfg = LoadConfig(configPath);
         var players = new PlayerStateManager();
         var vehicles = new VehicleStateManager();
+        var pickups = new PickupStateManager();
         var logger = new AcLogger(cfg);
         var flood = new FloodRateLimiter();
         var warnings = new WarningManager(players, cfg, logger);
-        return new AnticheatPlugin(players, vehicles, warnings, flood, logger, cfg);
+        var plugin = new AnticheatPlugin(players, vehicles, pickups, warnings, flood, logger, cfg);
+        plugin.InitHotReload(configPath);
+        return plugin;
     }
 
     public static AnticheatConfig LoadConfig(string path = "anticheat.json")
@@ -168,7 +203,59 @@ public class AnticheatPlugin
                ?? new AnticheatConfig();
     }
 
-    // ── Public hooks for game script to call ─────────────────────────────
+    // ── Game Script Hooks ────────────────────────────────────────────────
+
+    public void OnGivePlayerMoney(int playerId, int amount)
+        => _money.AllowMoneyGain(playerId, amount);
+
+    public void OnGivePlayerWeapon(int playerId, int weaponId, int ammo)
+    {
+        _weapon.OnWeaponGiven(playerId, weaponId, ammo);
+        _ammo.OnAmmoGiven(playerId, weaponId, ammo);
+    }
+
+    public void OnResetPlayerWeapons(int playerId)
+        => _weapon.OnWeaponsReset(playerId);
+
+    public void OnShowPlayerDialog(int playerId, int dialogId)
+        => _dialogHack.OnDialogShown(playerId, dialogId);
+
+    public void OnSetPlayerSpecialAction(int playerId, int action)
+        => _specialAction.OnSpecialActionSet(playerId, action);
+
+    public void OnSetPlayerHealth(int playerId, float health)
+    {
+        var st = _players.Get(playerId);
+        if (st is null) return;
+        st.SetHealth = (int)health;
+        st.SetHealthTick = Environment.TickCount64;
+    }
+
+    public void OnSetPlayerArmour(int playerId, float armour)
+    {
+        var st = _players.Get(playerId);
+        if (st is null) return;
+        st.SetArmour = (int)armour;
+        st.SetArmourTick = Environment.TickCount64;
+    }
+
+    public void OnSetPlayerPos(int playerId, float x, float y, float z)
+    {
+        var st = _players.Get(playerId);
+        if (st is null) return;
+        st.SetX = x; st.SetY = y; st.SetZ = z;
+        st.SetPosTick = Environment.TickCount64;
+    }
+
+    public void OnPutPlayerInVehicle(int playerId, int vehicleId, int seat)
+    {
+        var st = _players.Get(playerId);
+        if (st is null) return;
+        st.SetVehicle = vehicleId;
+        st.SetSeat = seat;
+        st.VehicleId = vehicleId;
+        st.PutInVehicleTick = Environment.TickCount64;
+    }
 
     public void OnPlayerVelocitySet(int playerId)
     {
@@ -189,11 +276,24 @@ public class AnticheatPlugin
         if (p is not null) _attachCrasher.ValidateAttachedObject(p, slot, modelId);
     }
 
-    // ── RegisterEvents ────────────────────────────────────────────────────
+    public void OnRegisterPickup(int pickupId, float x, float y, float z, int type = 0, int weapon = 0)
+        => _pickups.Register(pickupId, x, y, z, type, weapon);
+
+    public void OnDestroyPickup(int pickupId)
+        => _pickups.Remove(pickupId);
+
+    public void OnSpawnPlayer(int playerId)
+    {
+        var st = _players.Get(playerId);
+        if (st is not null) st.SpawnSetFlag = 1;
+    }
+
+    // ── RegisterEvents ───────────────────────────────────────────────────
 
     public void RegisterEvents(BaseMode gm)
     {
         InitChecks();
+        _events.Wire(_warnings);
 
         gm.PlayerConnected += OnPlayerConnected;
         gm.PlayerDisconnected += OnPlayerDisconnected;
@@ -239,7 +339,7 @@ public class AnticheatPlugin
         timer.Start();
     }
 
-    // ── Event Handlers ────────────────────────────────────────────────────
+    // ── Event Handlers ───────────────────────────────────────────────────
 
     private void OnPlayerConnected(object? sender, EventArgs e)
     {
@@ -307,6 +407,7 @@ public class AnticheatPlugin
     private void OnPlayerDied(object? sender, DeathEventArgs e)
     {
         if (sender is not BasePlayer p) return;
+        _godMode.OnPlayerDied(p);
         _fakeKill.OnPlayerDied(p, e);
     }
 
@@ -336,7 +437,9 @@ public class AnticheatPlugin
         if (!_carJack.OnPlayerEnterVehicle(p, e)) return;
         _seatCrasher.OnPlayerEnterVehicle(p, e);
         var st = _players.Get(p.Id);
-        if (st is not null) st.EnterVehicleTick = Environment.TickCount64;
+        if (st is null) return;
+        st.VehicleId = e.Vehicle.Id;
+        st.EnterVehicleTick = Environment.TickCount64;
     }
 
     private void OnPlayerExitVehicle(object? sender, PlayerVehicleEventArgs e)
@@ -357,9 +460,15 @@ public class AnticheatPlugin
         var st = _players.Get(p.Id);
         if (st is null) return;
         if (e.NewState == PlayerState.OnFoot && e.OldState == PlayerState.Driving)
+        {
             st.RemoveFromVehicleTick = Environment.TickCount64;
+            st.VehicleId = -1;
+        }
         if (e.NewState == PlayerState.Driving)
+        {
             st.EnterVehicleTick = Environment.TickCount64;
+            if (p.Vehicle is not null) st.VehicleId = p.Vehicle.Id;
+        }
     }
 
     private void OnPlayerText(object? sender, TextEventArgs e)
@@ -415,6 +524,8 @@ public class AnticheatPlugin
     {
         if (sender is not BasePlayer p) return;
         _cbFlood.Check(p, 9);
+        var st = _players.Get(p.Id);
+        if (st is not null) st.PendingClassResult = true;
     }
 
     private void OnPlayerSelectedMenuRow(object? sender, MenuRowEventArgs e)
@@ -482,13 +593,12 @@ public class AnticheatPlugin
         if (sender is not BaseVehicle v) return;
         if (e.Player is not BasePlayer p) return;
         if (!_cbFlood.Check(p, 13)) return;
-        var vst = _vehicles.GetOrCreate(v.Id);
-        vst.PaintJob = e.PaintjobId;
+        _vehicles.GetOrCreate(v.Id).PaintJob = e.PaintjobId;
     }
 
     private void OnVehicleRespray(object? sender, VehicleResprayedEventArgs e)
     {
-        if (sender is not BaseVehicle v) return;
+        if (sender is not BaseVehicle) return;
         if (e.Player is not BasePlayer p) return;
         _cbFlood.Check(p, 14);
     }
@@ -498,18 +608,19 @@ public class AnticheatPlugin
         if (sender is not BaseVehicle v) return;
         if (e.Player is not BasePlayer p) return;
         _cbFlood.Check(p, 15);
+        _vehicles.Remove(v.Id);
     }
 
     private void OnVehicleDamageStatusUpdated(object? sender, PlayerEventArgs e)
     {
-        if (sender is not BaseVehicle v) return;
+        if (sender is not BaseVehicle) return;
         if (e.Player is not BasePlayer p) return;
         _cbFlood.Check(p, 24);
     }
 
     private void OnVehicleSirenStateChange(object? sender, SirenStateEventArgs e)
     {
-        if (sender is not BaseVehicle v) return;
+        if (sender is not BaseVehicle) return;
         if (e.Player is not BasePlayer p) return;
         _cbFlood.Check(p, 25);
     }
