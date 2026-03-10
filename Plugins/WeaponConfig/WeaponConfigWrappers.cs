@@ -313,10 +313,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
             p.SpecialAction = action;
         }
 
-        public static int GetLastAnimation(Player p)
-        {
-            if (!WeaponConfigService.IsPlayerSpawned(p)) return -1;
-            return p.AnimationIndex;
+        public static int GetLastAnimation(Player p) {
+            var state = WeaponConfigService.GetPlayerState(p);
+            return state?.LastAnim ?? -1;
         }
 
         public static int GetLastStopTick(Player p)
@@ -392,19 +391,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static LagCompMode GetLagCompMode()
             => WeaponConfigService.GetLagCompMode();
 
-        // Fixed: Added nullable parameter for Player p
         public static int CreateVehicle(int modelid, float x, float y, float z, float rotation, int color1, int color2, int respawnDelay, bool addSiren = false)
         {
             var vehicle = BaseVehicle.Create(
                 (VehicleModelType)modelid,
                 new Vector3(x, y, z), rotation, color1, color2, respawnDelay, addSiren);
-
-            if (vehicle != null)
-            {
-                WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-                vehicle.Spawn += (s, e) => WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-                vehicle.Died += (s, e) => WeaponConfigService.OnVehicleDeath(vehicle.Id);
-            }
 
             return vehicle?.Id ?? -1;
         }
@@ -412,11 +403,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static void DestroyVehicle(int vehicleid)
         {
             var vehicle = BaseVehicle.Find(vehicleid);
-            if (vehicle != null)
-            {
-                WeaponConfigService.OnVehicleDestroy(vehicleid);
-                vehicle.Dispose();
-            }
+            if (vehicle == null) return;
+            WeaponConfigService.OnVehicleDestroy(vehicleid);
+            vehicle.Dispose();
         }
 
         public static int AddStaticVehicle(int modelid, float x, float y, float z, float rotation, int color1, int color2)
@@ -424,13 +413,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
             var vehicle = BaseVehicle.Create(
                 (VehicleModelType)modelid,
                 new Vector3(x, y, z), rotation, color1, color2);
-
-            if (vehicle != null)
-            {
-                WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-                vehicle.Spawn += (s, e) => WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-                vehicle.Died += (s, e) => WeaponConfigService.OnVehicleDeath(vehicle.Id);
-            }
 
             return vehicle?.Id ?? -1;
         }
@@ -441,20 +423,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 (VehicleModelType)modelid,
                 new Vector3(x, y, z), rotation, color1, color2, respawnDelay, addSiren);
 
-            if (vehicle != null)
-            {
-                WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-                vehicle.Spawn += (s, e) => WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-                vehicle.Died += (s, e) => WeaponConfigService.OnVehicleDeath(vehicle.Id);
-            }
-
             return vehicle?.Id ?? -1;
         }
 
         public static void EnableHealthBarForPlayer(Player p, bool enable)
             => WeaponConfigHealthBar.SetEnabled(p, enable);
 
-        // Fixed: Added nullable return type
         public static WeaponEntry? GetWeaponEntry(int weaponId)
             => WeaponConfigService.GetWeaponEntryPublic(weaponId);
 
@@ -528,10 +502,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
             => WeaponConfigService.GetWeaponShootRate(id);
 
         public static string ReturnWeaponName(int weaponId)
-        {
-            var name = new char[32];
-            GetWeaponName(weaponId);
-            return GetWeaponName(weaponId);
-        }
+            => GetWeaponName(weaponId);
     }
 }

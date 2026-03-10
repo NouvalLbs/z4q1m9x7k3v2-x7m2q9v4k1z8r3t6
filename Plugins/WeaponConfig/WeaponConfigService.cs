@@ -32,6 +32,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public float LastDamageHealth;
         public float LastDamageArmour;
         public float LastZVelo;
+        public float LastZ;
         public int LastUpdateTick;
         public int CbugFrozeTick;
         public int LastDeathTick;
@@ -45,7 +46,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public readonly RejectedHit?[] RejectedHits = new RejectedHit?[MaxRejectedHits];
         public int RejectedHitIdx;
 
-        public readonly PreviousHitInfo?[] PreviousHits = new PreviousHitInfo?[10];
+        public readonly PreviousHitInfo?[] PreviousHits = new PreviousHitInfo?[50];
         public int PreviousHitIdx;
 
         public CancellationTokenSource? DeathCts;
@@ -62,11 +63,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public int LastVehicleTick;
         public bool SpawnForStreamedIn;
 
-        public int GogglesUsed;
-        public int GogglesTick;
-
         public int LastSentHealth = -1;
         public int LastSentArmour = -1;
+
+        public string DeathAnimLib = "PED";
+        public string DeathAnimName = "FLOOR_HIT";
     }
 
     internal sealed class ShotInfo
@@ -132,7 +133,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             true,  true,  true,  true,  true,  true,  false, false, false, false,
             false, false, true,  true,  true,  true,  true,  true,  true,  true,
             true,  true,  true,  true,  true,  false, false, false, true,  false,
-            true,  false, false,  false, false, false, true,  false, true
+            false, true,  true,  false, false, false, true,  false, true
         };
 
         public static void Init(WeaponConfig cfg, WeaponEntry[] weapons)
@@ -263,6 +264,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
             PlayerPrepareDeath?.Invoke(null, prep);
             if (prep.Cancel) return;
 
+            s.DeathAnimLib = prep.AnimLib;
+            s.DeathAnimName = prep.AnimName;
+
             p.ApplyAnimation(prep.AnimLib, prep.AnimName, 4.0f, false, false, false, prep.AnimLock, 0, true);
 
             p.ToggleControllable(false);
@@ -281,15 +285,15 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
             TrackLastAnimation(p, s);
             TrackVehicleState(p, s);
-            TrackGoggles(p, s);
             UpdateKnifeTimeout(s);
 
-            if (s.IsDying)
-            {
-                if (p.SpecialAction != SpecialAction.None || p.AnimationIndex == 0)
-                {
-                    var (lib, anim) = GetDeathAnim(0, 0);
-                    p.ApplyAnimation(lib, anim, 4.0f, false, false, false, true, 0, true);
+            if (s.IsDying) {
+                if (!p.IsNPC) {
+                    if (p.Health < 99999f)
+                        p.Health = 99999f;
+
+                    if (p.SpecialAction != SpecialAction.None || p.AnimationIndex == 0)
+                        p.ApplyAnimation(s.DeathAnimLib, s.DeathAnimName, 4.0f, false, false, false, true, 0, true);
                 }
                 return;
             }
@@ -326,8 +330,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
             }
         }
 
-        public static void OnStartSpectating(Player spectator, Player target)
-            => WeaponConfigDamageFeed.SetSpectating(spectator, target.Id);
+        public static void OnStartSpectating(Player spectator, Player target) {
+            WeaponConfigDamageFeed.SetSpectating(spectator, target.Id);
+            if (_cfg.CustomVendingMachines)
+                WeaponConfigVendingMachines.OnStartSpectating(spectator);
+        }
 
         public static void OnStopSpectating(Player spectator)
         {
@@ -510,12 +517,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
                     iState.LastShot.Valid = false;
                     Reject(issuer, weaponId, HitRejectReason.InvalidHitType,
                         iState.LastShot.HitType, targetName: damaged.Name);
-                    return;
-                }
-
-                if (iState.GogglesUsed != 0 && Environment.TickCount - iState.GogglesTick < 500)
-                {
-                    Reject(issuer, weaponId, HitRejectReason.InvalidWeapon, targetName: damaged.Name);
                     return;
                 }
 
@@ -742,7 +743,10 @@ namespace ProjectSMP.Plugins.WeaponConfig
             WeaponConfigHealthBar.Update(p, s.Health, s.MaxHealth);
 
             if (s.Health <= 0 && !s.IsDying) {
-                TriggerDeath(p, s, weaponId, bodypart, cancelable: true);
+                if (p.IsNPC)
+                    WeaponConfigHealthBar.Update(p, 0f, s.MaxHealth);
+                else
+                    TriggerDeath(p, s, weaponId, bodypart, cancelable: true);
             }
         }
 
@@ -777,6 +781,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
             };
             PlayerPrepareDeath?.Invoke(null, prep);
             if (prep.Cancel) return;
+
+            s.DeathAnimLib = prep.AnimLib;
+            s.DeathAnimName = prep.AnimName;
 
             p.ToggleControllable(false);
             p.ResetWeapons();
@@ -813,6 +820,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (zVelo < _cfg.FallDeathVelocity && s.LastZVelo >= _cfg.FallDeathVelocity)
                 Inflict(p, s, MathF.Abs(zVelo) * _cfg.FallDamageMultiplier, 54, 0);
             s.LastZVelo = zVelo;
+            s.LastZ = p.Position.Z;
         }
 
         private static bool CheckShootRate(Player p, PlayerWcState s, int weaponId)
@@ -888,17 +896,32 @@ namespace ProjectSMP.Plugins.WeaponConfig
             try
             {
                 p.VirtualWorld = DeathWorld;
+                p.ApplyAnimation(animLib, animName, 4.0f, false, false, false, animLock, 0, true);
 
                 var elapsed = 0;
                 while (elapsed < delayMs)
                 {
                     if (p.IsDisposed) return;
 
-                    p.ApplyAnimation(animLib, animName, 4.0f, false, false, false, animLock, 0, true);
+                    var animIndex = p.AnimationIndex;
+                    if (animIndex > 0)
+                    {
+                        if (p.GetAnimationName(out var currentLib, out var currentName))
+                        {
+                            if (!string.Equals(currentLib, animLib, StringComparison.OrdinalIgnoreCase) ||
+                                !string.Equals(currentName, animName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                p.ApplyAnimation(animLib, animName, 4.0f, false, false, false, animLock, 0, true);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        p.ApplyAnimation(animLib, animName, 4.0f, false, false, false, animLock, 0, true);
+                    }
 
-                    var waitTime = Math.Min(1000, delayMs - elapsed);
-                    await Task.Delay(waitTime, ct);
-                    elapsed += waitTime;
+                    await Task.Delay(1000, ct);
+                    elapsed += 1000;
                 }
 
                 if (p.IsDisposed) return;
@@ -1172,7 +1195,10 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (s.Health <= 0) {
                 s.Armour = 0;
                 SyncFakeVitals(p, s);
-                TriggerDeath(p, s, 55, 0, cancelable: true);
+                if (p.IsNPC)
+                    WeaponConfigHealthBar.Update(p, 0f, s.MaxHealth);
+                else
+                    TriggerDeath(p, s, 55, 0, cancelable: true);
             }
         }
 
@@ -1330,11 +1356,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static void SetLagCompMode(LagCompMode mode) => _cfg.LagCompensation = mode;
         public static LagCompMode GetLagCompMode() => _cfg.LagCompensation;
-
-        public static void SetMaxShootRateSamples(int samples) => _cfg.MaxShootRateSamples = Math.Max(1, samples);
+        public static void SetMaxShootRateSamples(int samples) => _cfg.MaxShootRateSamples = Math.Max(1, Math.Min(samples, 10));
         public static int GetMaxShootRateSamples() => _cfg.MaxShootRateSamples;
-
-        public static void SetMaxHitRateSamples(int samples) => _cfg.MaxHitRateSamples = Math.Max(1, samples);
+        public static void SetMaxHitRateSamples(int samples) => _cfg.MaxHitRateSamples = Math.Max(1, Math.Min(samples, 10));
         public static int GetMaxHitRateSamples() => _cfg.MaxHitRateSamples;
 
         public static void EnableHealthBarForPlayer(Player p, bool enable)
@@ -1387,12 +1411,14 @@ namespace ProjectSMP.Plugins.WeaponConfig
         }
 
         public static RejectedHit? GetRejectedHit(Player p, int idx)
-        {
-            if (!_states.TryGetValue(p.Id, out var s) || idx >= PlayerWcState.MaxRejectedHits)
-                return null;
-            var realIdx = ((s.RejectedHitIdx - idx) % PlayerWcState.MaxRejectedHits + PlayerWcState.MaxRejectedHits) % PlayerWcState.MaxRejectedHits;
-            return s.RejectedHits[realIdx];
-        }
+{
+    if (!_states.TryGetValue(p.Id, out var s) || idx >= PlayerWcState.MaxRejectedHits)
+        return null;
+    var realIdx = ((s.RejectedHitIdx - idx) % PlayerWcState.MaxRejectedHits + PlayerWcState.MaxRejectedHits) % PlayerWcState.MaxRejectedHits;
+    var hit = s.RejectedHits[realIdx];
+    if (hit == null || hit.Time == 0) return null;
+    return hit;
+}
 
         public static void OnVehicleSpawn(int vehicleId)
         {
@@ -1464,8 +1490,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static SpawnInfo? GetPlayerSpawnInfo(Player p)
             => _playerSpawnInfo.TryGetValue(p.Id, out var info) ? info : null;
 
-        public static void SetPlayerSpawnInfo(Player p, SpawnInfo info)
-            => _playerSpawnInfo[p.Id] = info;
+        public static void SetPlayerSpawnInfo(Player p, SpawnInfo info) {
+            _playerSpawnInfo[p.Id] = info;
+            if (_states.TryGetValue(p.Id, out var s))
+                s.SpawnClass = -1;
+        }
 
         public static SpawnInfo? GetPlayerFallbackSpawnInfo(Player p)
             => _playerFallbackSpawnInfo.TryGetValue(p.Id, out var info) ? info : null;
@@ -1661,20 +1690,5 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         internal static PlayerWcState? GetPlayerState(Player p)
             => _states.TryGetValue(p.Id, out var s) ? s : null;
-
-        private static void TrackGoggles(Player p, PlayerWcState s)
-        {
-            var weapon = (int)p.Weapon;
-            var now = Environment.TickCount;
-            if (weapon == 44 || weapon == 45)
-            {
-                if (s.GogglesUsed == 0) s.GogglesTick = now;
-                s.GogglesUsed = weapon;
-            }
-            else
-            {
-                s.GogglesUsed = 0;
-            }
-        }
     }
 }

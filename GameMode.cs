@@ -39,16 +39,16 @@ namespace ProjectSMP
             Task.Run(DatabaseManager.InitAsync).GetAwaiter().GetResult();
         }
 
-        private void OnVehicleSpawned(object sender, EventArgs e)
+        protected override void OnVehicleSpawned(BaseVehicle vehicle, EventArgs e)
         {
-            if (sender is BaseVehicle vehicle)
-                WeaponConfigService.OnVehicleSpawn(vehicle.Id);
+            base.OnVehicleSpawned(vehicle, e);
+            WeaponConfigService.OnVehicleSpawn(vehicle.Id);
         }
 
-        private void OnVehicleDeath(object sender, PlayerEventArgs e)
+        protected override void OnVehicleDied(BaseVehicle vehicle, PlayerEventArgs e)
         {
-            if (sender is BaseVehicle vehicle)
-                WeaponConfigService.OnVehicleDeath(vehicle.Id);
+            base.OnVehicleDied(vehicle, e);
+            WeaponConfigService.OnVehicleDeath(vehicle.Id);
         }
 
         protected override void OnExited(EventArgs e) {

@@ -1,7 +1,5 @@
 ﻿#nullable enable
-using SampSharp.Core.Natives.NativeObjects;
 using SampSharp.GameMode;
-using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using System;
 using System.Collections.Generic;
@@ -144,13 +142,14 @@ namespace ProjectSMP.Plugins.WeaponConfig
             foreach (var m in Machines)
             {
                 if (m.Interior == 0)
-                {
-                    // RemoveBuildingForPlayer(player.Id, m.Model, m.Position.X, m.Position.Y, m.Position.Z, RemoveRadius);
-                }
+                    GlobalObject.Remove(player, m.Model, new Vector3(m.Position.X, m.Position.Y, m.Position.Z), RemoveRadius);
             }
         }
 
         public static void OnDisconnect(BasePlayer player)
+            => _lastUsed.Remove(player.Id);
+
+        public static void OnStartSpectating(BasePlayer player)
             => _lastUsed.Remove(player.Id);
 
         public static void OnFirstSpawn(BasePlayer player)
@@ -160,16 +159,13 @@ namespace ProjectSMP.Plugins.WeaponConfig
             foreach (var m in Machines)
             {
                 if (m.Interior == 0)
-                {
-                    // RemoveBuildingForPlayer(player.Id, m.Model, m.Position.X, m.Position.Y, m.Position.Z, RemoveRadius);
-                }
+                    GlobalObject.Remove(player, m.Model, new Vector3(m.Position.X, m.Position.Y, m.Position.Z), RemoveRadius);
             }
         }
 
         public static void OnUpdate(Player player)
         {
             if (!_enabled) return;
-            if (player.Interior != GetExpectedInterior(player)) return;
 
             var now = Environment.TickCount;
             var playerPos = player.Position;
@@ -193,8 +189,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 break;
             }
         }
-
-        private static int GetExpectedInterior(Player p) => p.Interior;
 
         private static float Dist(Vector3 a, Vector3 b)
         {

@@ -114,8 +114,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
             _feeds.Remove(player.Id);
             TextDrawManager.CleanupPlayer(player.Id);
-
-            if (_feeds.Count == 0) _isInitialized = false;
         }
 
         public static void SetSpectating(BasePlayer spectator, int targetPlayerId)

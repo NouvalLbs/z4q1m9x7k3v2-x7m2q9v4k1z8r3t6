@@ -21,6 +21,7 @@ namespace ProjectSMP
         {
             base.OnConnected(e);
             WeaponConfigService.OnConnect(this);
+            WeaponConfigService.PlayerDamage += OnPlayerDamage;
             WeaponConfigService.PlayerDeathFinished += OnDeathFinished;
             CinematicCameraService.Start(this);
             UserControlService.InitAsync(this);
@@ -29,6 +30,7 @@ namespace ProjectSMP
         public override void OnDisconnected(DisconnectEventArgs e)
         {
             WeaponConfigService.PlayerDeathFinished -= OnDeathFinished;
+            WeaponConfigService.PlayerDamage -= OnPlayerDamage;
             CinematicCameraService.Stop(this);
             _ = SaveOnDisconnectAsync();
             UserControlService.Cleanup(this);
@@ -93,6 +95,17 @@ namespace ProjectSMP
         {
             if (e.Player != this || IsDisposed) return;
             CharacterService.RespawnCharacter(this);
+        }
+
+        private void OnPlayerDamage(object? sender, PlayerDamageArgs e)
+        {
+            if (e.Player != this) return;
+            // e.Player    → yang kena damage
+            // e.Issuer    → yang nyerang (nullable)
+            // e.Amount    → damage amount (bisa dimodifikasi)
+            // e.Weapon    → weapon id
+            // e.Bodypart  → bodypart
+            // e.Cancel = true → batalkan damage
         }
 
         public override void OnGiveDamage(DamageEventArgs e)
