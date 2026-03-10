@@ -44,6 +44,13 @@ public class AmmoCheck
                 _warnings.AddWarning(player.Id, "AmmoHackAdd",
                     $"slot={slot} +{gain} total={ammo}");
             }
+
+            var pos = player.Position;
+            if (WeaponData.IsNearAmmuNation(pos.X, pos.Y, pos.Z)) {
+                st.Ammo[slot] = ammo;
+                continue;
+            }
+
             // Check 17: ammo tidak berkurang setelah tembak
             else if (gain == 0 && stored > 0
                      && st.ShotTick > 0 && now - st.ShotTick < 2000

@@ -1,4 +1,5 @@
-﻿using ProjectSMP.Plugins.Anticheat.Checks.AntiCrash;
+﻿#nullable enable
+using ProjectSMP.Plugins.Anticheat.Checks.AntiCrash;
 using ProjectSMP.Plugins.Anticheat.Checks.AntiFlood;
 using ProjectSMP.Plugins.Anticheat.Checks.Combat;
 using ProjectSMP.Plugins.Anticheat.Checks.Movement;
@@ -7,6 +8,7 @@ using ProjectSMP.Plugins.Anticheat.Checks.Server;
 using ProjectSMP.Plugins.Anticheat.Checks.Spawn;
 using ProjectSMP.Plugins.Anticheat.Checks.Vehicle;
 using ProjectSMP.Plugins.Anticheat.Configuration;
+using ProjectSMP.Plugins.Anticheat.Data;
 using ProjectSMP.Plugins.Anticheat.Events;
 using ProjectSMP.Plugins.Anticheat.Managers;
 using ProjectSMP.Plugins.Anticheat.Utilities;
@@ -21,7 +23,7 @@ using System.Timers;
 
 namespace ProjectSMP.Plugins.Anticheat;
 
-public class AnticheatPlugin
+public class AnticheatPlugin : IDisposable
 {
     private readonly PlayerStateManager _players;
     private readonly VehicleStateManager _vehicles;
@@ -32,6 +34,7 @@ public class AnticheatPlugin
     private readonly AnticheatConfig _config;
     private readonly AnticheatEvents _events;
     private FileSystemWatcher? _watcher;
+    private Timer? _timer;
 
     private AirBreakCheck _airBreak = null!;
     private TeleportCheck _teleport = null!;
@@ -73,6 +76,9 @@ public class AnticheatPlugin
     private CallbackFloodCheck _cbFlood = null!;
     private SeatFloodCheck _seatFlood = null!;
     private DosCheck _dos = null!;
+    private ParkourModCheck _parkourMod = null!;
+    private UnFreezeCheck _unFreeze = null!;
+    private FakeNpcCheck _fakeNpc = null!;
 
     public PlayerStateManager Players => _players;
     public VehicleStateManager Vehicles => _vehicles;
@@ -150,6 +156,9 @@ public class AnticheatPlugin
         _cbFlood = new CallbackFloodCheck(_flood, _warnings, _config);
         _seatFlood = new SeatFloodCheck(_warnings, _config);
         _dos = new DosCheck(_config, _logger);
+        _parkourMod = new ParkourModCheck(_players, _warnings, _config);
+        _unFreeze = new UnFreezeCheck(_players, _warnings, _config);
+        _fakeNpc = new FakeNpcCheck(_config, _logger);
     }
 
     private void InitHotReload(string configPath)
@@ -207,6 +216,9 @@ public class AnticheatPlugin
 
     public void OnGivePlayerMoney(int playerId, int amount)
         => _money.AllowMoneyGain(playerId, amount);
+
+    public void OnResetPlayerMoney(int playerId)
+        => _money.OnResetPlayerMoney(playerId);
 
     public void OnGivePlayerWeapon(int playerId, int weaponId, int ammo)
     {
@@ -276,8 +288,8 @@ public class AnticheatPlugin
         if (p is not null) _attachCrasher.ValidateAttachedObject(p, slot, modelId);
     }
 
-    public void OnRegisterPickup(int pickupId, float x, float y, float z, int type = 0, int weapon = 0)
-        => _pickups.Register(pickupId, x, y, z, type, weapon);
+    public void OnRegisterPickup(int pickupId, float x, float y, float z, int type = 0, int weapon = 0, int amount = 0)
+        => _pickups.Register(pickupId, x, y, z, type, weapon, amount);
 
     public void OnDestroyPickup(int pickupId)
         => _pickups.Remove(pickupId);
@@ -287,6 +299,9 @@ public class AnticheatPlugin
         var st = _players.Get(playerId);
         if (st is not null) st.SpawnSetFlag = 1;
     }
+
+    public void OnTogglePlayerControllable(int playerId, bool toggle)
+        => _unFreeze.OnPlayerFrozen(playerId, !toggle);
 
     // ── RegisterEvents ───────────────────────────────────────────────────
 
@@ -333,10 +348,10 @@ public class AnticheatPlugin
 
         _warnings.PunishmentRequired += OnPunishment;
 
-        var timer = new Timer(5000);
-        timer.Elapsed += (_, _) => { _afkGhost.Tick(); _ping.Tick(); };
-        timer.AutoReset = true;
-        timer.Start();
+        _timer = new Timer(5000);
+        _timer.Elapsed += (_, _) => { _afkGhost.Tick(); _ping.Tick(); };
+        _timer.AutoReset = true;
+        _timer.Start();
     }
 
     // ── Event Handlers ───────────────────────────────────────────────────
@@ -346,6 +361,7 @@ public class AnticheatPlugin
         if (sender is not BasePlayer p) return;
         if (!_connFlood.OnPlayerConnected(p)) return;
         _sandbox.OnPlayerConnected(p);
+        if (!_fakeNpc.OnPlayerConnected(p)) return;
         _version.OnPlayerConnected(p);
         _reconnect.OnPlayerConnected(p);
         var st = _players.GetOrCreate(p.Id);
@@ -391,6 +407,8 @@ public class AnticheatPlugin
         _weaponCrasher.OnPlayerUpdate(p);
         _specialAction.OnPlayerUpdate(p);
         _invisible.OnPlayerUpdate(p);
+        _parkourMod.OnPlayerUpdate(p);
+        _unFreeze.OnPlayerUpdate(p);
     }
 
     private void OnPlayerSpawned(object? sender, SpawnEventArgs e)
@@ -518,6 +536,38 @@ public class AnticheatPlugin
         if (sender is not BasePlayer p) return;
         if (!_cbFlood.Check(p, 8)) return;
         _vehicleTeleport.OnPlayerPickUpPickup(p, e);
+        var pickup = _pickups.Get(e.Pickup.Id);
+        if (pickup is null) return;
+
+        switch (pickup.Type)
+        {
+            case 1: // Money
+                _money.AllowMoneyGain(p.Id, pickup.Amount);
+                break;
+            case 2: // Health
+                var hst = _players.Get(p.Id);
+                if (hst is not null) hst.SetHealthTick = Environment.TickCount64;
+                break;
+            case 3: // Armour
+                var ast = _players.Get(p.Id);
+                if (ast is not null) ast.SetArmourTick = Environment.TickCount64;
+                break;
+            case 4: // Weapon
+                _weapon.OnWeaponGiven(p.Id, pickup.Weapon,
+                    WeaponData.PickupAmmo[pickup.Weapon]);
+                _ammo.OnAmmoGiven(p.Id, pickup.Weapon,
+                    WeaponData.PickupAmmo[pickup.Weapon]);
+                break;
+        }
+    }
+
+    public void OnSetPlayerSpawnInfo(int playerId, int weapon1, int ammo1, int weapon2, int ammo2, int weapon3, int ammo3)
+    {
+        var st = _players.Get(playerId);
+        if (st is null) return;
+        st.SpawnWeapon1 = weapon1; st.SpawnAmmo1 = ammo1;
+        st.SpawnWeapon2 = weapon2; st.SpawnAmmo2 = ammo2;
+        st.SpawnWeapon3 = weapon3; st.SpawnAmmo3 = ammo3;
     }
 
     private void OnPlayerRequestClass(object? sender, RequestClassEventArgs e)
@@ -648,5 +698,12 @@ public class AnticheatPlugin
             case PunishAction.Kick: _logger.LogKick(playerId, checkName); p.Kick(); break;
             case PunishAction.Ban: _logger.LogBan(playerId, checkName); p.Ban(); break;
         }
+    }
+
+    public void Dispose() {
+        _timer?.Stop();
+        _timer?.Dispose();
+        _watcher?.Dispose();
+        _logger.Dispose();
     }
 }

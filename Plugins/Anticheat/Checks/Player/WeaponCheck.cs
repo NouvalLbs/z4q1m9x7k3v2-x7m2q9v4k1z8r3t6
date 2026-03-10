@@ -45,6 +45,14 @@ public class WeaponCheck
             long setTick = st.SetWeaponTick[slot];
             if (now - setTick < 1500) continue; // grace server GivePlayerWeapon
 
+            var pos = player.Position;
+            if (WeaponData.IsNearAmmuNation(pos.X, pos.Y, pos.Z))
+            {
+                st.Weapons[slot] = wid;
+                st.SetWeaponTick[slot] = now;
+                continue;
+            }
+
             _warnings.AddWarning(player.Id, "WeaponHack",
                 $"slot={slot} got={wid} expected={trackedWid}");
         }

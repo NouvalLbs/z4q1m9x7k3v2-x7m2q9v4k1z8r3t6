@@ -51,4 +51,10 @@ public class MoneyCheck
         var st = _players.Get(playerId);
         if (st is not null) st.Money += amount;
     }
+
+    public void OnResetPlayerMoney(int playerId)
+    {
+        var st = _players.Get(playerId);
+        if (st is not null) st.Money = 0;
+    }
 }

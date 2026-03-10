@@ -39,6 +39,7 @@ public class HealthCheck
         if (VehicleData.IsNearCasino(pos.X, pos.Y, pos.Z)) { st.Health = hp; return; }
         if (TuningData.IsNearVendingMachine(pos.X, pos.Y, pos.Z)) { st.Health = hp; return; }
         if (VehicleData.IsNearRestaurant(pos.X, pos.Y, pos.Z)) { st.Health = hp; return; }
+        if (VehicleData.IsNearHospital(pos.X, pos.Y, pos.Z)) { st.Health = hp; return; }
 
         string name = player.State == PlayerState.Driving ? "HealthHackVehicle" : "HealthHackOnfoot";
         if (!_config.GetCheck(name).Enabled) { st.Health = hp; return; }

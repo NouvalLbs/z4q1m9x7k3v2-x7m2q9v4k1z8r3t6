@@ -1,4 +1,5 @@
-﻿using ProjectSMP.Plugins.Anticheat.State;
+﻿#nullable enable
+using ProjectSMP.Plugins.Anticheat.State;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 

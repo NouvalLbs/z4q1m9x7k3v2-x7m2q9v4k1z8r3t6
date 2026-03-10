@@ -66,5 +66,8 @@ public class AnticheatConfig
         ["CallbackFlood"] = new(),
         ["SeatFlood"] = new(),
         ["DoS"] = new(),
+        ["ParkourMod"] = new() { Enabled = false },
+        ["UnFreeze"] = new() { Enabled = false },
+        ["FakeNpc"] = new() { Enabled = false },
     };
 }

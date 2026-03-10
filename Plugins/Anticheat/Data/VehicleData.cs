@@ -161,4 +161,22 @@ public static class VehicleData
         }
         return false;
     }
+
+    public static readonly (float X, float Y, float Z, float Radius)[] Hospitals =
+    {
+        (1174.7f,-1323.7f,13.6f,10f),   // LS Hospital
+        (-2642.4f,631.9f,14.1f,10f),    // SF Hospital
+        (2013.6f,1916.9f,12.3f,10f),    // LV Hospital
+        (1240.9f,-795.7f,1084.2f,10f),  // Verdant Meadows
+    };
+
+    public static bool IsNearHospital(float x, float y, float z)
+    {
+        foreach (var (hx, hy, hz, r) in Hospitals)
+        {
+            float r2 = r * r;
+            if ((x - hx) * (x - hx) + (y - hy) * (y - hy) + (z - hz) * (z - hz) < r2) return true;
+        }
+        return false;
+    }
 }

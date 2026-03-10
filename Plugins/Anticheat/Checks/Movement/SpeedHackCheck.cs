@@ -34,7 +34,6 @@ public class SpeedHackCheck
         long now = Environment.TickCount64;
         if (now - st.SpawnTick < 3000) return;
         if (now - st.PlayerVelocityTick < 2000) return;
-        if (now - st.VehicleVelocityTick < 2500) return;
 
         var vel = player.Velocity;
         float spd = VectorMath.Speed(vel.X, vel.Y, vel.Z);
@@ -50,6 +49,7 @@ public class SpeedHackCheck
         else if (player.State == PlayerState.Driving)
         {
             if (!_config.GetCheck("SpeedHackVehicle").Enabled) return;
+            if (now - st.VehicleVelocityTick < 2500) return;
             int model = player.Vehicle is not null ? (int)player.Vehicle.Model : -1;
             float limit = model >= 400 ? GetLimit(model) : MaxVehicleDefault;
             if (spd > limit)

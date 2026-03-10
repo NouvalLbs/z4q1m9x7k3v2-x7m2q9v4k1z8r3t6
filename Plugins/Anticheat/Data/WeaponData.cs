@@ -53,4 +53,32 @@ public static class WeaponData
         (200,30),(600,30),(1200,15),(600,15),(800,12),(1000,10),
         (500,60),(2000,90),(3500,120),(4500,150),(300,60)
     };
+
+    public static readonly (float X, float Y, float Z, float Radius)[] AmmuNationLocations =
+    {
+        (314.8f,-133.3f,999.6f,5f),        // LS interior
+        (237.7f,-50.0f,1003.6f,5f),        // LS interior 2
+        (-24.7f,-147.0f,1003.6f,5f),       // LS interior 3
+        (285.0f,-81.7f,1001.5f,5f),        // LS interior 4
+        (2154.6f,-1154.9f,23.9f,8f),       // LS exterior
+        (2156.7f,-1015.7f,62.2f,8f),       // LS exterior 2
+        (1704.7f,-1775.1f,13.4f,8f),       // LS exterior 3
+        (-333.6f,828.7f,13.3f,8f),         // SF exterior
+        (-2159.4f,642.5f,35.7f,8f),        // SF exterior 2
+        (-2350.5f,491.7f,28.4f,8f),        // SF exterior 3
+        (2529.7f,2079.3f,10.8f,8f),        // LV exterior
+        (2381.0f,1984.2f,10.8f,8f),        // LV exterior 2
+        (2647.7f,1128.5f,10.8f,8f),        // LV exterior 3
+        (1256.3f,-787.8f,1084.0f,8f),      // Verdant Meadows
+    };
+
+    public static bool IsNearAmmuNation(float x, float y, float z)
+    {
+        foreach (var (ax, ay, az, r) in AmmuNationLocations)
+        {
+            float r2 = r * r;
+            if ((x - ax) * (x - ax) + (y - ay) * (y - ay) + (z - az) * (z - az) < r2) return true;
+        }
+        return false;
+    }
 }

@@ -1,5 +1,4 @@
-﻿using ProjectSMP.Plugins.Anticheat.Managers;
-using SampSharp.GameMode.World;
+﻿using SampSharp.GameMode.World;
 using System.Collections.Generic;
 
 namespace ProjectSMP.Plugins.Anticheat;
@@ -58,6 +57,8 @@ public class AnticheatCommands
                 var fresh = AnticheatPlugin.LoadConfig();
                 _ac.Config.Enabled = fresh.Enabled;
                 _ac.Config.MaxPing = fresh.MaxPing;
+                _ac.Config.LogPath = fresh.LogPath;
+                _ac.Config.SpeedHackVehResetDelay = fresh.SpeedHackVehResetDelay;
                 _ac.Config.MaxConnectsPerIp = fresh.MaxConnectsPerIp;
                 _ac.Config.MinReconnectSeconds = fresh.MinReconnectSeconds;
                 foreach (var (k, v) in fresh.Checks) _ac.Config.Checks[k] = v;

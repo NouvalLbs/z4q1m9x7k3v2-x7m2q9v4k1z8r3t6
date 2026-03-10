@@ -20,8 +20,9 @@ public class FlyHackCheck
 
     public void OnPlayerUpdate(BasePlayer player)
     {
+        if (!_config.Enabled) return;
         var st = _players.Get(player.Id);
-        if (st is null || st.IsDead || !_config.Enabled) return;
+        if (st is null || st.IsDead) return;
 
         long now = Environment.TickCount64;
         if (now - st.SpawnTick < 3000) return;

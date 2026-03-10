@@ -9,8 +9,6 @@ public class PlayerAcState
     public float X { get; set; }
     public float Y { get; set; }
     public float Z { get; set; }
-    public float LastX { get; set; }
-    public float LastY { get; set; }
     public float SpawnX { get; set; }
     public float SpawnY { get; set; }
     public float SpawnZ { get; set; }
@@ -118,20 +116,17 @@ public class PlayerAcState
     public bool PendingDamageResult { get; set; }
     public bool PendingVehicleDamageResult { get; set; }
     public bool PendingClassResult { get; set; }
+    public bool IsFrozen { get; set; }
 
     private readonly ConcurrentDictionary<string, byte> _disabledChecks = new();
     public void DisableCheck(string name) => _disabledChecks.TryAdd(name, 0);
     public void EnableCheck(string name) => _disabledChecks.TryRemove(name, out _);
     public bool IsCheckEnabled(string name) => !_disabledChecks.ContainsKey(name);
 
-    public int[] CallbackCounts { get; } = new int[28];
-    public int[] FloodCounts { get; } = new int[28];
-    public long[] CallbackLastTick { get; } = new long[28];
-
-    public Dictionary<string, int> WarningCounts { get; } = new();
+    public ConcurrentDictionary<string, int> WarningCounts { get; } = new();
 
     public int GetWarning(string check) => WarningCounts.GetValueOrDefault(check);
-    public int AddWarning(string check) => WarningCounts[check] = GetWarning(check) + 1;
-    public void ResetWarning(string check) => WarningCounts.Remove(check);
+    public int AddWarning(string check) => WarningCounts.AddOrUpdate(check, 1, (_, v) => v + 1);
+    public void ResetWarning(string check) => WarningCounts.TryRemove(check, out _);
     public void ResetAllWarnings() => WarningCounts.Clear();
 }

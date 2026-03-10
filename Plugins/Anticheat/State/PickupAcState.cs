@@ -8,4 +8,5 @@ public class PickupAcState
     public float Z { get; set; }
     public int Type { get; set; }
     public int Weapon { get; set; }
+    public int Amount { get; set; }
 }

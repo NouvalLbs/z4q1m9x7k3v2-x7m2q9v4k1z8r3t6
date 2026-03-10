@@ -1,4 +1,5 @@
-﻿using ProjectSMP.Plugins.Anticheat.Configuration;
+﻿#nullable enable
+using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.Anticheat.Core;
 using ProjectSMP.Plugins.Anticheat.Events;
 using ProjectSMP.Plugins.Anticheat.Utilities;
@@ -56,10 +57,10 @@ public class WarningManager
     }
 
     public void DisableCheckForPlayer(int playerId, string checkName)
-        => _players.GetOrCreate(playerId).DisabledChecks.Add(checkName);
+        => _players.GetOrCreate(playerId).DisableCheck(checkName);
 
     public void EnableCheckForPlayer(int playerId, string checkName)
-        => _players.Get(playerId)?.DisabledChecks.Remove(checkName);
+        => _players.Get(playerId)?.EnableCheck(checkName);
 
     public int GetCount(int playerId, string checkName) =>
         _players.Get(playerId)?.GetWarning(checkName) ?? 0;

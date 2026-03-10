@@ -19,6 +19,7 @@ public class AirBreakCheck
 
     public void OnPlayerUpdate(BasePlayer player)
     {
+        if (!_config.Enabled) return;
         var st = _players.Get(player.Id);
         if (st is null || st.IsDead || st.IsSpectating) return;
 

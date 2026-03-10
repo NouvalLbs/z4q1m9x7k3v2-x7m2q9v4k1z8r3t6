@@ -1,4 +1,5 @@
-﻿using ProjectSMP.Plugins.Anticheat.Configuration;
+﻿#nullable enable
+using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.Anticheat.Managers;
 using System;
 
