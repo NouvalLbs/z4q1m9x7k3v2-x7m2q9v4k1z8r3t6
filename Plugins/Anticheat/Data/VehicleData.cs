@@ -4,8 +4,6 @@ namespace ProjectSMP.Plugins.Anticheat.Data;
 
 public static class VehicleData
 {
-    // Vehicle type per model offset (model - 400), mirrors ac_vType[]
-    // 0=car,1=boat,2=train,3=heli,4=plane,5=bike,6=moto,7=quad,8=rc,9=bm,10=trailer
     public static readonly byte[] Type =
     {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,
@@ -21,7 +19,6 @@ public static class VehicleData
         0,0,0,0,0,0,0,0,0,0,0,0
     };
 
-    // Max passengers per model, packed bitmask, mirrors ac_MaxPassengers[]
     private static readonly uint[] _maxPassengersPacked =
     {
         0x10331113,0x11311131,0x11331313,0x80133301,0x1381F110,
@@ -36,8 +33,7 @@ public static class VehicleData
     {
         int idx = modelId - 400;
         if ((uint)idx >= 212u) return 0;
-        int wordIdx = idx / 8;
-        int nibble = idx % 8;
+        int wordIdx = idx / 8, nibble = idx % 8;
         if ((uint)wordIdx >= (uint)_maxPassengersPacked.Length) return 0;
         return (int)((_maxPassengersPacked[wordIdx] >> (nibble * 4)) & 0xF);
     }
@@ -55,19 +51,10 @@ public static class VehicleData
     public static bool IsAircraft(int modelId) => GetType(modelId) == 4;
     public static bool IsTrailer(int modelId) => GetType(modelId) == 10;
     public static bool IsRC(int modelId) => GetType(modelId) == 8;
-    public static bool IsTrain(int modelId)
-    {
-        int m = modelId;
-        return m is 537 or 538 or 569 or 570 or 590 or 591;
-    }
+    public static bool IsTrain(int m) => m is 537 or 538 or 569 or 570 or 590 or 591;
+    public static bool IsRemoteControl(int m) => m is 441 or 464 or 465 or 501 or 564 or 594;
+    public static bool IsBus(int m) => m is 431 or 437 or 470 or 482 or 483 or 508 or 515 or 532 or 539;
 
-    public static bool IsRemoteControl(int modelId)
-        => modelId is 441 or 464 or 465 or 501 or 564 or 594;
-
-    public static bool IsBus(int modelId)
-        => modelId is 431 or 437 or 470 or 482 or 483 or 508 or 515 or 532 or 539;
-
-    // Pay N Spray bounding boxes, mirrors ac_PayNSpray[]
     public static readonly (float X1, float Y1, float Z1, float X2, float Y2, float Z2)[] PayNSpray =
     {
         (2056.6f,-1835.9f,12.5443f,2071.3f,-1826.97f,18.5443f),
@@ -89,68 +76,80 @@ public static class VehicleData
         return false;
     }
 
-    // Casino machine positions, mirrors ac_Casinos[][]
+    // Restaurants: Cluckin' Bell, Burger Shot, Well Stacked Pizza, Pizza Stack
+    public static readonly (float X, float Y, float Z, float Radius)[] Restaurants =
+    {
+        // Cluckin' Bell (LS exterior)
+        (365.512f,-1494.441f,30.852f,5f),
+        // Cluckin' Bell (SF)
+        (-2038.588f,139.757f,28.836f,5f),
+        // Cluckin' Bell (LV)
+        (2369.399f,2059.578f,10.820f,5f),
+        // Cluckin' Bell interior (0 interior)
+        (366.759f,-1494.441f,30.875f,5f),
+        // Burger Shot (LS)
+        (2461.172f,-1651.444f,13.343f,5f),
+        (1197.219f,-1407.488f,14.150f,5f),
+        // Burger Shot (SF)
+        (-2088.203f,-422.324f,35.320f,5f),
+        // Burger Shot (LV)
+        (2370.104f,2064.372f,10.820f,5f),
+        // Well Stacked Pizza (LS)
+        (1708.839f,-1891.285f,13.376f,5f),
+        (1959.727f,-1721.367f,13.376f,5f),
+        // Well Stacked Pizza (SF)
+        (-2154.093f,641.695f,35.672f,5f),
+        // Well Stacked Pizza (LV)
+        (2381.010f,2009.048f,10.820f,5f),
+        // Pizza Stack (LS)
+        (382.575f,-192.987f,1008.382f,5f),
+        // Restaurants interior shared
+        (367.472f,-1494.441f,30.875f,6f),
+        (2461.172f,-1651.444f,13.343f,6f),
+    };
+
+    public static bool IsNearRestaurant(float x, float y, float z)
+    {
+        foreach (var (rx, ry, rz, r) in Restaurants)
+        {
+            float r2 = r * r;
+            if ((x - rx) * (x - rx) + (y - ry) * (y - ry) + (z - rz) * (z - rz) < r2) return true;
+        }
+        return false;
+    }
+
     public static readonly (float X, float Y, float Z, float Radius)[] Casinos =
     {
-        (2230.5703f,1617.1563f,1006.2266f,8f),
-        (2241.4453f,1617.1094f,1006.2266f,8f),
-        (2242.3672f,1592.2578f,1006.2266f,10f),
-        (2230.5703f,1592.2578f,1006.2266f,10f),
-        (2241.3125f,1604.4375f,1006.1563f,10f),
-        (2230.375f, 1604.4531f,1006.1563f,10f),
-        (2218.6641f,1588.3381f,1006.7656f,4f),
-        (2218.6641f,1592.6428f,1006.7656f,4f),
-        (2217.2834f,1603.9297f,1006.7656f,4f),
-        (2220.9397f,1603.9297f,1006.7656f,4f),
-        (2218.6641f,1614.4866f,1006.7656f,4f),
-        (2218.6641f,1618.8225f,1006.7656f,4f),
-        (2255.1875f,1609.8616f,1006.7656f,4f),
-        (2255.1875f,1613.9084f,1006.7656f,4f),
-        (2255.1875f,1617.8069f,1006.7656f,4f),
-        (2269.51f,  1606.6484f,1006.7656f,4f),
-        (2273.5569f,1606.6484f,1006.7656f,4f),
-        (2252.0313f,1586.1619f,1006.1563f,2f),
-        (2261.6328f,1586.1697f,1006.1563f,2f),
-        (2271.7266f,1586.1619f,1006.1563f,2f),
-        (2253.7144f,1589.7891f,1006.0156f,6f),
-        (2258.7378f,1589.7891f,1006.0156f,6f),
-        (2264.1363f,1589.7891f,1006.0156f,6f),
-        (2269.1988f,1589.7891f,1006.0156f,6f),
-        (2273.9409f,1589.7891f,1006.0156f,6f),
-        (2253.7144f,1596.4844f,1006.0156f,6f),
-        (2258.7378f,1596.4844f,1006.0156f,6f),
-        (2264.1363f,1596.4844f,1006.0156f,6f),
-        (2269.1988f,1596.4844f,1006.0156f,6f),
-        (2273.9409f,1596.4844f,1006.0156f,6f),
-        (1961.5484f,1010.1172f,992.5078f, 10f),
-        (1961.3472f,1017.9141f,992.4688f, 10f),
-        (1961.5484f,1025.6953f,992.5078f, 10f),
-        (1957.5753f,987.4253f, 992.9844f, 4f),
-        (1962.1809f,992.035f,  992.9844f, 4f),
-        (1964.8303f,998.3747f, 992.9844f, 4f),
-        (1957.4803f,1048.1866f,992.9844f, 4f),
-        (1962.1519f,1043.4894f,992.9844f, 4f),
-        (1964.8169f,1037.3113f,992.9844f, 4f),
-        (1936.3069f,986.625f,  992.4688f, 2f),
-        (1940.6875f,990.9119f, 992.4688f, 2f),
-        (1944.9588f,986.5234f, 992.4688f, 2f),
-        (1941.5028f,1006.3394f,992.3125f, 6f),
-        (1940.3553f,1014.2188f,992.3125f, 6f),
-        (1940.3553f,1021.4141f,992.3125f, 6f),
-        (1941.1947f,1029.3028f,992.3125f, 6f),
-        (1968.0663f,1006.3438f,992.3125f, 6f),
-        (1968.0663f,1014.0f,   992.3125f, 6f),
-        (1968.0663f,1021.6875f,992.3125f, 6f),
-        (1968.0663f,1029.6641f,992.3125f, 6f),
-        (1125.1484f,1.4687f,   1000.5781f,2f),
-        (1125.1406f,-4.9141f,  1000.5781f,2f),
-        (1128.5781f,-1.6797f,  1000.5781f,2f),
-        (1118.6012f,-1.6484f,  1000.5781f,2f),
-        (1135.0469f,-3.0781f,  1000.5234f,3f),
-        (1133.6875f,-1.625f,   1000.5234f,3f),
-        (1135.0f,   -0.1797f,  1000.5234f,3f),
-        (1125.3203f,3.7969f,   1000.5234f,3f),
-        (1127.3828f,3.7969f,   1000.5234f,3f),
+        (2230.5703f,1617.1563f,1006.2266f,8f),(2241.4453f,1617.1094f,1006.2266f,8f),
+        (2242.3672f,1592.2578f,1006.2266f,10f),(2230.5703f,1592.2578f,1006.2266f,10f),
+        (2241.3125f,1604.4375f,1006.1563f,10f),(2230.375f,1604.4531f,1006.1563f,10f),
+        (2218.6641f,1588.3381f,1006.7656f,4f),(2218.6641f,1592.6428f,1006.7656f,4f),
+        (2217.2834f,1603.9297f,1006.7656f,4f),(2220.9397f,1603.9297f,1006.7656f,4f),
+        (2218.6641f,1614.4866f,1006.7656f,4f),(2218.6641f,1618.8225f,1006.7656f,4f),
+        (2255.1875f,1609.8616f,1006.7656f,4f),(2255.1875f,1613.9084f,1006.7656f,4f),
+        (2255.1875f,1617.8069f,1006.7656f,4f),(2269.51f,1606.6484f,1006.7656f,4f),
+        (2273.5569f,1606.6484f,1006.7656f,4f),(2252.0313f,1586.1619f,1006.1563f,2f),
+        (2261.6328f,1586.1697f,1006.1563f,2f),(2271.7266f,1586.1619f,1006.1563f,2f),
+        (2253.7144f,1589.7891f,1006.0156f,6f),(2258.7378f,1589.7891f,1006.0156f,6f),
+        (2264.1363f,1589.7891f,1006.0156f,6f),(2269.1988f,1589.7891f,1006.0156f,6f),
+        (2273.9409f,1589.7891f,1006.0156f,6f),(2253.7144f,1596.4844f,1006.0156f,6f),
+        (2258.7378f,1596.4844f,1006.0156f,6f),(2264.1363f,1596.4844f,1006.0156f,6f),
+        (2269.1988f,1596.4844f,1006.0156f,6f),(2273.9409f,1596.4844f,1006.0156f,6f),
+        (1961.5484f,1010.1172f,992.5078f,10f),(1961.3472f,1017.9141f,992.4688f,10f),
+        (1961.5484f,1025.6953f,992.5078f,10f),(1957.5753f,987.4253f,992.9844f,4f),
+        (1962.1809f,992.035f,992.9844f,4f),(1964.8303f,998.3747f,992.9844f,4f),
+        (1957.4803f,1048.1866f,992.9844f,4f),(1962.1519f,1043.4894f,992.9844f,4f),
+        (1964.8169f,1037.3113f,992.9844f,4f),(1936.3069f,986.625f,992.4688f,2f),
+        (1940.6875f,990.9119f,992.4688f,2f),(1944.9588f,986.5234f,992.4688f,2f),
+        (1941.5028f,1006.3394f,992.3125f,6f),(1940.3553f,1014.2188f,992.3125f,6f),
+        (1940.3553f,1021.4141f,992.3125f,6f),(1941.1947f,1029.3028f,992.3125f,6f),
+        (1968.0663f,1006.3438f,992.3125f,6f),(1968.0663f,1014.0f,992.3125f,6f),
+        (1968.0663f,1021.6875f,992.3125f,6f),(1968.0663f,1029.6641f,992.3125f,6f),
+        (1125.1484f,1.4687f,1000.5781f,2f),(1125.1406f,-4.9141f,1000.5781f,2f),
+        (1128.5781f,-1.6797f,1000.5781f,2f),(1118.6012f,-1.6484f,1000.5781f,2f),
+        (1135.0469f,-3.0781f,1000.5234f,3f),(1133.6875f,-1.625f,1000.5234f,3f),
+        (1135.0f,-0.1797f,1000.5234f,3f),(1125.3203f,3.7969f,1000.5234f,3f),
+        (1127.3828f,3.7969f,1000.5234f,3f)
     };
 
     public static bool IsNearCasino(float x, float y, float z, float extraRange = 0f)
@@ -158,8 +157,7 @@ public static class VehicleData
         foreach (var (cx, cy, cz, r) in Casinos)
         {
             float range = r + extraRange;
-            if (MathF.Abs(z - cz) < range + 2f &&
-                (x - cx) * (x - cx) + (y - cy) * (y - cy) < range * range) return true;
+            if (MathF.Abs(z - cz) < range + 2f && (x - cx) * (x - cx) + (y - cy) * (y - cy) < range * range) return true;
         }
         return false;
     }

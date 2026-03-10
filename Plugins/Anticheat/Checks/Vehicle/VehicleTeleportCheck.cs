@@ -1,6 +1,7 @@
 ﻿using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.Anticheat.Managers;
 using ProjectSMP.Plugins.Anticheat.Utilities;
+using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Events;
 using SampSharp.GameMode.World;
 using System;
@@ -34,7 +35,6 @@ public class VehicleTeleportCheck
 
         var vpos = e.Vehicle.Position;
         float dist = VectorMath.Dist(st.X, st.Y, st.Z, vpos.X, vpos.Y, vpos.Z);
-
         if (dist > MaxEnterDist)
             _warnings.AddWarning(player.Id, "TeleportVehicleEnter", $"d={dist:F1}");
     }
@@ -52,8 +52,27 @@ public class VehicleTeleportCheck
 
         var ppos = e.Pickup.Position;
         float dist = VectorMath.Dist(st.X, st.Y, st.Z, ppos.X, ppos.Y, ppos.Z);
-
         if (dist > MaxPickupTeleportDist)
             _warnings.AddWarning(player.Id, "TeleportPickup", $"d={dist:F1}");
+    }
+
+    public void OnPlayerStateChanged(BasePlayer player, StateEventArgs e)
+    {
+        if (!_config.Enabled || !_config.GetCheck("TeleportVehicleToPlayer").Enabled) return;
+        if (e.OldState != PlayerState.Driving || e.NewState != PlayerState.OnFoot) return;
+
+        var st = _players.Get(player.Id);
+        if (st is null) return;
+
+        long now = Environment.TickCount64;
+        if (now - st.SpawnTick < 3000) return;
+        if (now - st.SetPosTick < 2000) return;
+        if (now - st.PutInVehicleTick < 2000) return;
+        if (now - st.RemoveFromVehicleTick < 1500) return;
+
+        var pos = player.Position;
+        float dist = VectorMath.Dist(st.X, st.Y, st.Z, pos.X, pos.Y, pos.Z);
+        if (dist > MaxVehicleToPlayerDist)
+            _warnings.AddWarning(player.Id, "TeleportVehicleToPlayer", $"d={dist:F1}");
     }
 }

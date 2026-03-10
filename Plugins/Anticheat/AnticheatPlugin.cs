@@ -168,6 +168,29 @@ public class AnticheatPlugin
                ?? new AnticheatConfig();
     }
 
+    // ── Public hooks for game script to call ─────────────────────────────
+
+    public void OnPlayerVelocitySet(int playerId)
+    {
+        var st = _players.Get(playerId);
+        if (st is not null) st.PlayerVelocityTick = Environment.TickCount64;
+    }
+
+    public void OnVehicleVelocitySet(int vehicleId)
+    {
+        long now = Environment.TickCount64;
+        foreach (var (_, st) in _players.All)
+            if (st.VehicleId == vehicleId) st.VehicleVelocityTick = now;
+    }
+
+    public void OnSetAttachedObject(int playerId, int slot, int modelId)
+    {
+        var p = BasePlayer.Find(playerId);
+        if (p is not null) _attachCrasher.ValidateAttachedObject(p, slot, modelId);
+    }
+
+    // ── RegisterEvents ────────────────────────────────────────────────────
+
     public void RegisterEvents(BaseMode gm)
     {
         InitChecks();
@@ -204,7 +227,7 @@ public class AnticheatPlugin
         gm.VehicleResprayed += OnVehicleRespray;
         gm.VehicleDied += OnVehicleDied;
         gm.VehicleDamageStatusUpdated += OnVehicleDamageStatusUpdated;
-        gm.VehicleSirenStateChanged += OnVehicleSirenStateChanged;
+        gm.VehicleSirenStateChange += OnVehicleSirenStateChange;
         gm.DialogResponse += OnDialogResponse;
         gm.RconLoginAttempt += OnRconLoginAttempt;
 
@@ -215,6 +238,8 @@ public class AnticheatPlugin
         timer.AutoReset = true;
         timer.Start();
     }
+
+    // ── Event Handlers ────────────────────────────────────────────────────
 
     private void OnPlayerConnected(object? sender, EventArgs e)
     {
@@ -482,7 +507,7 @@ public class AnticheatPlugin
         _cbFlood.Check(p, 24);
     }
 
-    private void OnVehicleSirenStateChanged(object? sender, SirenStateEventArgs e)
+    private void OnVehicleSirenStateChange(object? sender, SirenStateEventArgs e)
     {
         if (sender is not BaseVehicle v) return;
         if (e.Player is not BasePlayer p) return;
