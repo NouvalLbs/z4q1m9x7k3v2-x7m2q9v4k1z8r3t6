@@ -37,41 +37,45 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static void Init()
         {
-            _border = new TextDraw(new Vector2(BarX - BorderPad, BarY - BorderPad), "LD_SPAC:WHITE")
-            {
-                Font = TextDrawFont.DrawSprite,
-                LetterSize = new Vector2(0f, 1f),
-                ForeColor = BorderColor,
-                UseBox = true,
-                BoxColor = BorderColor,
-                Width = BarX + MaxWidth + BorderPad,
-                Height = BarH + BorderPad * 2,
-                Shadow = 0,
-                Outline = 0,
-                Proportional = true
-            };
+            _border = TextDrawManager.CreateInternal(new Vector2(BarX - BorderPad, BarY - BorderPad), "LD_SPAC:WHITE");
+            _border.Font = TextDrawFont.DrawSprite;
+            _border.LetterSize = new Vector2(0f, 1f);
+            _border.ForeColor = BorderColor;
+            _border.UseBox = true;
+            _border.BoxColor = BorderColor;
+            _border.Width = BarX + MaxWidth + BorderPad;
+            _border.Height = BarH + BorderPad * 2;
+            _border.Shadow = 0;
+            _border.Outline = 0;
+            _border.Proportional = true;
 
-            _background = new TextDraw(new Vector2(BarX, BarY), "LD_SPAC:WHITE")
-            {
-                Font = TextDrawFont.DrawSprite,
-                LetterSize = new Vector2(0f, 1f),
-                ForeColor = BgColor,
-                UseBox = true,
-                BoxColor = BgColor,
-                Width = BarX + MaxWidth,
-                Height = BarH,
-                Shadow = 0,
-                Outline = 0,
-                Proportional = true
-            };
+            _background = TextDrawManager.CreateInternal(new Vector2(BarX, BarY), "LD_SPAC:WHITE");
+            _background.Font = TextDrawFont.DrawSprite;
+            _background.LetterSize = new Vector2(0f, 1f);
+            _background.ForeColor = BgColor;
+            _background.UseBox = true;
+            _background.BoxColor = BgColor;
+            _background.Width = BarX + MaxWidth;
+            _background.Height = BarH;
+            _background.Shadow = 0;
+            _background.Outline = 0;
+            _background.Proportional = true;
 
             _isInitialized = true;
         }
 
         public static void Dispose()
         {
-            _border?.Dispose();
-            _background?.Dispose();
+            if (_border != null)
+            {
+                TextDrawManager.UnregisterInternalTextDraw(_border);
+                _border.Dispose();
+            }
+            if (_background != null)
+            {
+                TextDrawManager.UnregisterInternalTextDraw(_background);
+                _background.Dispose();
+            }
             _isInitialized = false;
         }
 
@@ -79,19 +83,18 @@ namespace ProjectSMP.Plugins.WeaponConfig
         {
             _enabled[player.Id] = true;
 
-            var ptd = new PlayerTextDraw(player, new Vector2(BarX, BarY), "LD_SPAC:WHITE")
-            {
-                Font = TextDrawFont.DrawSprite,
-                LetterSize = new Vector2(0f, 1f),
-                ForeColor = FgColor,
-                UseBox = true,
-                BoxColor = FgColor,
-                Width = BarX + MaxWidth,
-                Height = BarH,
-                Shadow = 0,
-                Outline = 0,
-                Proportional = true
-            };
+            var ptd = TextDrawManager.CreatePlayerInternal(player, new Vector2(BarX, BarY), "LD_SPAC:WHITE");
+            ptd.Font = TextDrawFont.DrawSprite;
+            ptd.LetterSize = new Vector2(0f, 1f);
+            ptd.ForeColor = FgColor;
+            ptd.UseBox = true;
+            ptd.BoxColor = FgColor;
+            ptd.Width = BarX + MaxWidth;
+            ptd.Height = BarH;
+            ptd.Shadow = 0;
+            ptd.Outline = 0;
+            ptd.Proportional = true;
+
             _bars[player.Id] = ptd;
 
             _border?.Show(player);
@@ -100,9 +103,14 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static void OnDisconnect(BasePlayer player)
         {
-            if (_bars.TryGetValue(player.Id, out var ptd)) ptd.Dispose();
+            if (_bars.TryGetValue(player.Id, out var ptd))
+            {
+                TextDrawManager.UnregisterInternalPlayerTextDraw(player.Id, ptd);
+                ptd.Dispose();
+            }
             _bars.Remove(player.Id);
             _enabled.Remove(player.Id);
+            TextDrawManager.CleanupPlayer(player.Id);
         }
 
         public static void Update(BasePlayer player, float health, float maxHealth)

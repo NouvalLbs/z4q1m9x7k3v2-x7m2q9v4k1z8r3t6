@@ -24,6 +24,9 @@ namespace ProjectSMP
             // Initialize PreviewModelDialog
             PreviewModelDialog.Init();
 
+            // Initialize TextDrawManager
+            TextDrawManager.Init();
+
             // Initialize Weapon Config
             var (wcCfg, wcWeapons) = WeaponConfigLoader.Load();
             WeaponConfigService.Init(wcCfg, wcWeapons);

@@ -69,34 +69,29 @@ namespace ProjectSMP.Plugins.WeaponConfig
         {
             var state = new PlayerFeedState { Enabled = _globalEnabled };
 
-            state.TakenTD = new PlayerTextDraw(player, new Vector2(TakenX, StartY), "_")
-            {
-                Font = TextDrawFont.Slim,
-                LetterSize = new Vector2(0.14f, 0.9f),
-                Alignment = TextDrawAlignment.Right,
-                ForeColor = TakenColor,
-                Shadow = 0,
-                Outline = 1,
-                BackColor = Black,
-                Proportional = true,
-                Width = 640f,
-                Height = 480f
-            };
+            state.TakenTD = TextDrawManager.CreatePlayerInternal(player, new Vector2(TakenX, StartY), "_");
+            state.TakenTD.Font = TextDrawFont.Slim;
+            state.TakenTD.LetterSize = new Vector2(0.14f, 0.9f);
+            state.TakenTD.Alignment = TextDrawAlignment.Right;
+            state.TakenTD.ForeColor = TakenColor;
+            state.TakenTD.Shadow = 0;
+            state.TakenTD.Outline = 1;
+            state.TakenTD.BackColor = Black;
+            state.TakenTD.Proportional = true;
+            state.TakenTD.Width = 640f;
+            state.TakenTD.Height = 480f;
 
-            state.GivenTD = new PlayerTextDraw(player,
-                new Vector2(GivenX, StartY + LineH * FeedHeight + 2f), "_")
-            {
-                Font = TextDrawFont.Slim,
-                LetterSize = new Vector2(0.14f, 0.9f),
-                Alignment = TextDrawAlignment.Right,
-                ForeColor = GivenColor,
-                Shadow = 0,
-                Outline = 1,
-                BackColor = Black,
-                Proportional = true,
-                Width = 640f,
-                Height = 480f
-            };
+            state.GivenTD = TextDrawManager.CreatePlayerInternal(player, new Vector2(GivenX, StartY + LineH * FeedHeight + 2f), "_");
+            state.GivenTD.Font = TextDrawFont.Slim;
+            state.GivenTD.LetterSize = new Vector2(0.14f, 0.9f);
+            state.GivenTD.Alignment = TextDrawAlignment.Right;
+            state.GivenTD.ForeColor = GivenColor;
+            state.GivenTD.Shadow = 0;
+            state.GivenTD.Outline = 1;
+            state.GivenTD.BackColor = Black;
+            state.GivenTD.Proportional = true;
+            state.GivenTD.Width = 640f;
+            state.GivenTD.Height = 480f;
 
             _feeds[player.Id] = state;
         }
@@ -105,9 +100,20 @@ namespace ProjectSMP.Plugins.WeaponConfig
         {
             if (!_feeds.TryGetValue(player.Id, out var s)) return;
             s.HideCts?.Cancel();
-            s.TakenTD?.Dispose();
-            s.GivenTD?.Dispose();
+
+            if (s.TakenTD != null)
+            {
+                TextDrawManager.UnregisterInternalPlayerTextDraw(player.Id, s.TakenTD);
+                s.TakenTD.Dispose();
+            }
+            if (s.GivenTD != null)
+            {
+                TextDrawManager.UnregisterInternalPlayerTextDraw(player.Id, s.GivenTD);
+                s.GivenTD.Dispose();
+            }
+
             _feeds.Remove(player.Id);
+            TextDrawManager.CleanupPlayer(player.Id);
 
             if (_feeds.Count == 0) _isInitialized = false;
         }
