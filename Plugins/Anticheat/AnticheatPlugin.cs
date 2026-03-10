@@ -5,10 +5,12 @@ using ProjectSMP.Plugins.Anticheat.Checks.Movement;
 using ProjectSMP.Plugins.Anticheat.Checks.Player;
 using ProjectSMP.Plugins.Anticheat.Checks.Server;
 using ProjectSMP.Plugins.Anticheat.Checks.Spawn;
+using ProjectSMP.Plugins.Anticheat.Checks.Vehicle;
 using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.Anticheat.Managers;
 using ProjectSMP.Plugins.Anticheat.Utilities;
 using SampSharp.GameMode;
+using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Events;
 using SampSharp.GameMode.World;
 using System;
@@ -27,7 +29,6 @@ public class AnticheatPlugin
     private readonly AcLogger _logger;
     private readonly AnticheatConfig _config;
 
-    // Phase 2
     private AirBreakCheck _airBreak = null!;
     private TeleportCheck _teleport = null!;
     private SpeedHackCheck _speedHack = null!;
@@ -38,10 +39,11 @@ public class AnticheatPlugin
     private WeaponCheck _weapon = null!;
     private AmmoCheck _ammo = null!;
     private GodModeCheck _godMode = null!;
+    private SpecialActionCheck _specialAction = null!;
+    private InvisibleCheck _invisible = null!;
     private FakeSpawnCheck _fakeSpawn = null!;
     private FakeKillCheck _fakeKill = null!;
 
-    // Phase 3
     private RapidFireCheck _rapidFire = null!;
     private ProAimCheck _proAim = null!;
     private QuickTurnCheck _quickTurn = null!;
@@ -51,7 +53,8 @@ public class AnticheatPlugin
     private CjRunCheck _cjRun = null!;
     private AfkGhostCheck _afkGhost = null!;
 
-    // Phase 4 — Server
+    private CarJackCheck _carJack = null!;
+
     private ReconnectCheck _reconnect = null!;
     private PingCheck _ping = null!;
     private DialogHackCheck _dialogHack = null!;
@@ -59,7 +62,6 @@ public class AnticheatPlugin
     private SandboxProtection _sandbox = null!;
     private RconProtection _rcon = null!;
 
-    // Phase 4 — Anti-Crash
     private TuningCrasherCheck _tuningCrasher = null!;
     private TuningHackCheck _tuningHack = null!;
     private InvalidSeatCrasherCheck _seatCrasher = null!;
@@ -67,7 +69,6 @@ public class AnticheatPlugin
     private AttachedObjectCrasherCheck _attachCrasher = null!;
     private WeaponCrasherCheck _weaponCrasher = null!;
 
-    // Phase 5
     private ConnectionFloodCheck _connFlood = null!;
     private CallbackFloodCheck _cbFlood = null!;
     private SeatFloodCheck _seatFlood = null!;
@@ -82,6 +83,8 @@ public class AnticheatPlugin
     public AmmoCheck Ammo => _ammo;
     public DialogHackCheck Dialog => _dialogHack;
     public CallbackFloodCheck CbFlood => _cbFlood;
+    public AttachedObjectCrasherCheck AttachCrasher => _attachCrasher;
+    public SpecialActionCheck SpecialAction => _specialAction;
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -114,6 +117,8 @@ public class AnticheatPlugin
         _weapon = new WeaponCheck(_players, _warnings, _config);
         _ammo = new AmmoCheck(_players, _warnings, _config);
         _godMode = new GodModeCheck(_players, _warnings, _config);
+        _specialAction = new SpecialActionCheck(_players, _warnings, _config);
+        _invisible = new InvisibleCheck(_players, _warnings, _config);
         _fakeSpawn = new FakeSpawnCheck(_players, _warnings, _config);
         _fakeKill = new FakeKillCheck(_players, _warnings, _config);
         _rapidFire = new RapidFireCheck(_warnings, _config);
@@ -124,6 +129,7 @@ public class AnticheatPlugin
         _fullAiming = new FullAimingCheck(_players, _warnings, _config);
         _cjRun = new CjRunCheck(_players, _warnings, _config);
         _afkGhost = new AfkGhostCheck(_players, _warnings, _config);
+        _carJack = new CarJackCheck(_players, _warnings, _config);
         _reconnect = new ReconnectCheck(_warnings, _config, _logger);
         _ping = new PingCheck(_warnings, _config, _logger);
         _dialogHack = new DialogHackCheck(_players, _warnings, _config);
@@ -177,9 +183,19 @@ public class AnticheatPlugin
         gameMode.PlayerTakeDamage += OnPlayerTakeDamage;
         gameMode.PlayerWeaponShot += OnPlayerWeaponShot;
         gameMode.PlayerEnterVehicle += OnPlayerEnterVehicle;
+        gameMode.PlayerExitVehicle += OnPlayerExitVehicle;
+        gameMode.PlayerStateChanged += OnPlayerStateChanged;
+        gameMode.PlayerText += OnPlayerText;
         gameMode.VehicleMod += OnVehicleMod;
+        gameMode.PlayerEnterExitModShop += OnPlayerEnterExitModShop;
         gameMode.DialogResponse += OnDialogResponse;
         gameMode.RconLoginAttempt += OnRconLoginAttempt;
+        gameMode.PlayerPickUpPickup += OnPlayerPickUpPickup;
+        gameMode.PlayerRequestClass += OnPlayerRequestClass;
+        gameMode.VehiclePaintjobApplied += OnVehiclePaintjob;
+        gameMode.VehicleResprayed += OnVehicleRespray;
+        gameMode.VehicleDied += OnVehicleDied;
+        gameMode.VehicleDamageStatusUpdated += OnVehicleDamageStatusUpdated;
 
         _warnings.PunishmentRequired += OnPunishment;
 
@@ -241,6 +257,8 @@ public class AnticheatPlugin
         _cjRun.OnPlayerUpdate(player);
         _afkGhost.OnPlayerUpdate(player);
         _weaponCrasher.OnPlayerUpdate(player);
+        _specialAction.OnPlayerUpdate(player);
+        _invisible.OnPlayerUpdate(player);
     }
 
     private void OnPlayerSpawned(object? sender, SpawnEventArgs e)
@@ -280,7 +298,41 @@ public class AnticheatPlugin
         if (sender is not BasePlayer player) return;
         if (!_seatFlood.OnPlayerEnterVehicle(player)) return;
         if (!_cbFlood.Check(player, 6)) return;
+        if (!_carJack.OnPlayerEnterVehicle(player, e)) return;
         _seatCrasher.OnPlayerEnterVehicle(player, e);
+
+        var st = _players.Get(player.Id);
+        if (st is not null) st.EnterVehicleTick = Environment.TickCount64;
+    }
+
+    private void OnPlayerExitVehicle(object? sender, PlayerVehicleEventArgs e)
+    {
+        if (sender is not BasePlayer player) return;
+        if (!_cbFlood.Check(player, 7)) return;
+        var st = _players.Get(player.Id);
+        if (st is null) return;
+        st.RemoveFromVehicleTick = Environment.TickCount64;
+        st.VehicleId = -1;
+    }
+
+    private void OnPlayerStateChanged(object? sender, StateEventArgs e)
+    {
+        if (sender is not BasePlayer player) return;
+        if (!_cbFlood.Check(player, 11)) return;
+        var st = _players.Get(player.Id);
+        if (st is null) return;
+
+        if (e.NewState == PlayerState.OnFoot && e.OldState == PlayerState.Driving)
+            st.RemoveFromVehicleTick = Environment.TickCount64;
+
+        if (e.NewState == PlayerState.Driving)
+            st.EnterVehicleTick = Environment.TickCount64;
+    }
+
+    private void OnPlayerText(object? sender, TextEventArgs e)
+    {
+        if (sender is not BasePlayer player) return;
+        if (!_cbFlood.Check(player, 16)) e.SendToPlayers = false;
     }
 
     private void OnVehicleMod(object? sender, VehicleModEventArgs e)
@@ -290,6 +342,15 @@ public class AnticheatPlugin
         if (!_cbFlood.Check(player, 12)) return;
         bool valid = _tuningCrasher.OnVehicleMod(vehicle, player, e.ComponentId);
         if (valid) _tuningHack.OnVehicleMod(vehicle, player, e.ComponentId);
+    }
+
+    private void OnPlayerEnterExitModShop(object? sender, EnterModShopEventArgs e)
+    {
+        if (sender is not BasePlayer player) return;
+        if (!_cbFlood.Check(player, 1)) return;
+        var st = _players.Get(player.Id);
+        if (st is null) return;
+        st.IsInModShop = e.EnterExit == EnterExit.Entered;
     }
 
     private void OnDialogResponse(object? sender, DialogResponseEventArgs e)
@@ -304,6 +365,48 @@ public class AnticheatPlugin
     {
         if (sender is not BasePlayer player) return;
         _rcon.OnRconLoginAttempt(player, e.Password, e.SuccessfulLogin);
+    }
+
+    private void OnPlayerPickUpPickup(object? sender, PickUpPickupEventArgs e)
+    {
+        if (sender is not BasePlayer player) return;
+        _cbFlood.Check(player, 8);
+    }
+
+    private void OnPlayerRequestClass(object? sender, RequestClassEventArgs e)
+    {
+        if (sender is not BasePlayer player) return;
+        _cbFlood.Check(player, 9);
+    }
+
+    private void OnVehiclePaintjob(object? sender, VehiclePaintjobEventArgs e)
+    {
+        if (sender is not BaseVehicle vehicle) return;
+        if (e.Player is not BasePlayer player) return;
+        if (!_cbFlood.Check(player, 13)) return;
+        var vst = _vehicles.GetOrCreate(vehicle.Id);
+        vst.PaintJob = e.PaintjobId;
+    }
+
+    private void OnVehicleRespray(object? sender, VehicleResprayedEventArgs e)
+    {
+        if (sender is not BaseVehicle vehicle) return;
+        if (e.Player is not BasePlayer player) return;
+        _cbFlood.Check(player, 14);
+    }
+
+    private void OnVehicleDied(object? sender, PlayerEventArgs e)
+    {
+        if (sender is not BaseVehicle vehicle) return;
+        if (e.Player is not BasePlayer player) return;
+        _cbFlood.Check(player, 15);
+    }
+
+    private void OnVehicleDamageStatusUpdated(object? sender, PlayerEventArgs e)
+    {
+        if (sender is not BaseVehicle vehicle) return;
+        if (e.Player is not BasePlayer player) return;
+        _cbFlood.Check(player, 24);
     }
 
     private void OnPunishment(int playerId, string checkName, PunishAction action)
