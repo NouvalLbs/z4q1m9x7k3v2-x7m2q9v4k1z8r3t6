@@ -137,8 +137,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
     public class PlayerDamageArgs : EventArgs
     {
-        public Player Player { get; init; } = null!;
-        public Player? Issuer { get; init; }
+        public Player Player { get; set; } = null!;
+        public Player? Issuer { get; set; }
         public float Amount { get; set; }
         public int Weapon { get; init; }
         public int Bodypart { get; init; }

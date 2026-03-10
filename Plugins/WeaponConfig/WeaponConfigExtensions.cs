@@ -13,8 +13,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static float GetWcArmour(this Player p)
             => WeaponConfigWrappers.GetPlayerArmour(p);
 
-        public static void SetWcHealth(this Player p, float health)
-            => WeaponConfigWrappers.SetPlayerHealth(p, health);
+        public static void SetWcHealth(this Player p, float health, float armour = -1f)
+            => WeaponConfigWrappers.SetPlayerHealth(p, health, armour);
 
         public static void SetWcArmour(this Player p, float armour)
             => WeaponConfigWrappers.SetPlayerArmour(p, armour);

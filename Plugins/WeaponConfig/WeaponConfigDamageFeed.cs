@@ -23,7 +23,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
     {
         public PlayerTextDraw? TakenTD;
         public PlayerTextDraw? GivenTD;
-        public bool Enabled = true;
+        public int EnabledOverride = -1;
         public readonly FeedEntry[] Taken = new FeedEntry[5];
         public readonly FeedEntry[] Given = new FeedEntry[5];
         public int TakenIdx;
@@ -67,7 +67,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static void OnConnect(BasePlayer player)
         {
-            var state = new PlayerFeedState { Enabled = _globalEnabled };
+            var state = new PlayerFeedState { EnabledOverride = -1 };
 
             state.TakenTD = TextDrawManager.CreatePlayerInternal(player, new Vector2(TakenX, StartY), "_");
             state.TakenTD.Font = TextDrawFont.Slim;
@@ -134,7 +134,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static void AddTaken(BasePlayer player, string issuerName, float amount, int weapon)
         {
-            if (!_feeds.TryGetValue(player.Id, out var s) || !s.Enabled) return;
+            if (!_feeds.TryGetValue(player.Id, out var s)) return;
+            var active = s.EnabledOverride == -1 ? _globalEnabled : s.EnabledOverride == 1;
+            if (!active) return;
 
             var idx = s.TakenIdx % FeedHeight;
             s.Taken[idx] = new FeedEntry
@@ -153,7 +155,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static void AddGiven(BasePlayer player, string targetName, float amount, int weapon)
         {
-            if (!_feeds.TryGetValue(player.Id, out var s) || !s.Enabled) return;
+            if (!_feeds.TryGetValue(player.Id, out var s)) return;
+            var active = s.EnabledOverride == -1 ? _globalEnabled : s.EnabledOverride == 1;
+            if (!active) return;
 
             var idx = s.GivenIdx % FeedHeight;
             s.Given[idx] = new FeedEntry
@@ -173,17 +177,25 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static void SetEnabled(BasePlayer player, bool enable)
         {
             if (!_feeds.TryGetValue(player.Id, out var s)) return;
-            s.Enabled = enable;
-            if (!enable)
-            {
-                s.HideCts?.Cancel();
-                s.TakenTD?.Hide();
-                s.GivenTD?.Hide();
-            }
+            s.EnabledOverride = enable ? 1 : 0;
+            if (!enable) { s.HideCts?.Cancel(); s.TakenTD?.Hide(); s.GivenTD?.Hide(); }
+        }
+
+        public static void ResetToGlobal(BasePlayer player)
+        {
+            if (!_feeds.TryGetValue(player.Id, out var s)) return;
+            s.EnabledOverride = -1;
+            if (!_globalEnabled) { s.HideCts?.Cancel(); s.TakenTD?.Hide(); s.GivenTD?.Hide(); }
+        }
+
+        public static void ApplyGlobalChange(BasePlayer player, bool globalEnabled)
+        {
+            if (!_feeds.TryGetValue(player.Id, out var s) || s.EnabledOverride != -1) return;
+            if (!globalEnabled) { s.HideCts?.Cancel(); s.TakenTD?.Hide(); s.GivenTD?.Hide(); }
         }
 
         public static bool IsEnabled(BasePlayer player)
-            => _feeds.TryGetValue(player.Id, out var s) && s.Enabled;
+            => _feeds.TryGetValue(player.Id, out var s) && (s.EnabledOverride == -1 ? _globalEnabled : s.EnabledOverride == 1);
 
         private static void RenderFeed(PlayerFeedState s)
         {

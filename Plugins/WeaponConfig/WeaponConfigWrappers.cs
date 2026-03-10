@@ -21,8 +21,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static float GetPlayerArmour(Player p)
             => WeaponConfigService.GetWcArmour(p);
 
-        public static void SetPlayerHealth(Player p, float health)
-            => WeaponConfigService.SetPlayerHealth(p, health);
+        public static void SetPlayerHealth(Player p, float health, float armour = -1f)
+            => WeaponConfigService.SetPlayerHealth(p, health, armour);
 
         public static void SetPlayerArmour(Player p, float armour)
             => WeaponConfigService.SetPlayerArmour(p, armour);
@@ -32,7 +32,10 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static void SetPlayerVirtualWorld(Player p, int world)
         {
-            p.VirtualWorld = world;
+            var state = WeaponConfigService.GetPlayerState(p);
+            if (state != null) state.IntendedWorld = world;
+            if (!WeaponConfigService.IsPlayerDying(p))
+                p.VirtualWorld = world;
         }
 
         public static void SendDeathMessage(Player? killer, Player killee, int weapon)
