@@ -32,15 +32,14 @@ public class HealthCheck
 
         float gain = hp - st.Health;
         if (gain <= AllowedGain) { st.Health = hp; return; }
-
         if (st.SetHealth >= 0) { st.SetHealth = -1; st.Health = hp; return; }
 
         var pos = player.Position;
         if (VehicleData.IsInPayNSpray(pos.X, pos.Y, pos.Z)) { st.Health = hp; return; }
+        if (VehicleData.IsNearCasino(pos.X, pos.Y, pos.Z)) { st.Health = hp; return; }
         if (TuningData.IsNearVendingMachine(pos.X, pos.Y, pos.Z)) { st.Health = hp; return; }
 
-        string name = player.State == PlayerState.Driving
-            ? "HealthHackVehicle" : "HealthHackOnfoot";
+        string name = player.State == PlayerState.Driving ? "HealthHackVehicle" : "HealthHackOnfoot";
         if (!_config.GetCheck(name).Enabled) { st.Health = hp; return; }
 
         if (hp > MaxHealth + 0.5f)
