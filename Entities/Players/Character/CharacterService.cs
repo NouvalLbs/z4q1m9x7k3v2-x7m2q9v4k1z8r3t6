@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using ProjectSMP.Core;
-using ProjectSMP.Feature.CinematicCamera;
+using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.Streamer;
 using SampSharp.GameMode;
@@ -82,45 +82,45 @@ namespace ProjectSMP.Entities.Players.Character
 
     internal sealed class RawCharRow
     {
-        public string citizen_id { get; set; } = "";
-        public string ucp { get; set; } = "";
-        public string ip { get; set; } = "";
-        public string reg_date { get; set; } = "";
-        public string last_login { get; set; } = "";
-        public int verified_char { get; set; }
-        public string username { get; set; } = "";
-        public int skin { get; set; }
-        public int gender { get; set; }
-        public string birth_date { get; set; } = "";
-        public int height { get; set; } = 150;
-        public string hair { get; set; } = "";
-        public string eye { get; set; } = "";
-        public int level { get; set; } = 1;
-        public int level_points { get; set; }
-        public int level_points_exp { get; set; }
-        public int money { get; set; }
-        public int admin { get; set; }
-        public int mask_id { get; set; }
-        public int warn { get; set; }
-        public int paycheck { get; set; }
-        public string? position { get; set; }
-        public string? vitals { get; set; }
-        public string? playtime { get; set; }
-        public string? backpack { get; set; }
-        public string? phone { get; set; }
-        public string? jail_info { get; set; }
-        public string? ban_info { get; set; }
-        public string? condition { get; set; }
-        public string? settings { get; set; }
-        public string? jobs { get; set; }
+        public string Citizen_id { get; set; } = "";
+        public string Ucp { get; set; } = "";
+        public string Ip { get; set; } = "";
+        public string Reg_date { get; set; } = "";
+        public string Last_login { get; set; } = "";
+        public int Verified_char { get; set; }
+        public string Username { get; set; } = "";
+        public int Skin { get; set; }
+        public int Gender { get; set; }
+        public string Birth_date { get; set; } = "";
+        public int Height { get; set; } = 150;
+        public string Hair { get; set; } = "";
+        public string Eye { get; set; } = "";
+        public int Level { get; set; } = 1;
+        public int Level_points { get; set; }
+        public int Level_points_exp { get; set; }
+        public int Money { get; set; }
+        public int Admin { get; set; }
+        public int Mask_id { get; set; }
+        public int Warn { get; set; }
+        public int Paycheck { get; set; }
+        public string? Position { get; set; }
+        public string? Vitals { get; set; }
+        public string? Playtime { get; set; }
+        public string? Backpack { get; set; }
+        public string? Phone { get; set; }
+        public string? Jail_info { get; set; }
+        public string? Ban_info { get; set; }
+        public string? Condition { get; set; }
+        public string? Settings { get; set; }
+        public string? Jobs { get; set; }
     }
 
     internal sealed class CharListItem
     {
-        public string citizen_id { get; set; } = "";
-        public string username { get; set; } = "";
-        public int level { get; set; }
-        public string last_login { get; set; } = "";
+        public string Citizen_id { get; set; } = "";
+        public string Username { get; set; } = "";
+        public int Level { get; set; }
+        public string Last_login { get; set; } = "";
     }
 
     internal static class CharacterService
@@ -242,7 +242,7 @@ namespace ProjectSMP.Entities.Players.Character
         {
             var rows = new List<string[]>();
             foreach (var c in list)
-                rows.Add(new[] { $"{{ffffff}}{c.username}", c.level.ToString(), c.last_login });
+                rows.Add(new[] { $"{{ffffff}}{c.Username}", c.Level.ToString(), c.Last_login });
             if (list.Count < MaxChars)
                 rows.Add(new[] { L(player, "CHAR", "LIST_CREATE_BTN"), "", "" });
 
@@ -255,7 +255,7 @@ namespace ProjectSMP.Entities.Players.Character
                 {
                     if (e.DialogButton != DialogButton.Left) { player.Kick(); return; }
                     if (!_lists.TryGetValue(player.Id, out var l)) return;
-                    if (e.ListItem < l.Count) LoadExistingCharAsync(player, l[e.ListItem].citizen_id);
+                    if (e.ListItem < l.Count) LoadExistingCharAsync(player, l[e.ListItem].Citizen_id);
                     else ShowCreateNameDialog(player);
                 });
         }
@@ -546,20 +546,20 @@ namespace ProjectSMP.Entities.Players.Character
 
                 ApplyToPlayer(player, new RawCharRow
                 {
-                    citizen_id = cid,
-                    ucp = player.Name,
-                    ip = player.IP,
-                    username = c.Name,
-                    skin = c.Skin,
-                    gender = c.Gender,
-                    birth_date = c.BirthDate,
-                    height = c.Height,
-                    hair = c.Hair,
-                    eye = c.Eye,
-                    mask_id = maskId,
-                    position = Ser(pos),
-                    level = 1,
-                    last_login = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                    Citizen_id = cid,
+                    Ucp = player.Name,
+                    Ip = player.IP,
+                    Username = c.Name,
+                    Skin = c.Skin,
+                    Gender = c.Gender,
+                    Birth_date = c.BirthDate,
+                    Height = c.Height,
+                    Hair = c.Hair,
+                    Eye = c.Eye,
+                    Mask_id = maskId,
+                    Position = Ser(pos),
+                    Level = 1,
+                    Last_login = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                 });
 
                 _creations.Remove(player.Id);
@@ -588,7 +588,7 @@ namespace ProjectSMP.Entities.Players.Character
 
                 await DatabaseManager.ExecuteAsync(
                     $"UPDATE `{Table}` SET ip=@Ip, last_login=CURRENT_TIMESTAMP() WHERE citizen_id=@Id",
-                    new { Ip = player.IP, Id = raw.citizen_id });
+                    new { Ip = player.IP, Id = raw.Citizen_id });
 
                 if (player.IsDisposed) return;
                 SpawnCharacter(player);
@@ -619,36 +619,36 @@ namespace ProjectSMP.Entities.Players.Character
 
         private static void ApplyToPlayer(Player player, RawCharRow r)
         {
-            player.CitizenId = r.citizen_id;
-            player.Ucp = r.ucp;
-            player.RegDate = r.reg_date;
-            player.LastLogin = r.last_login;
-            player.VerifiedChar = r.verified_char;
-            player.Username = r.username;
-            player.CharSkin = r.skin;
-            player.Gender = r.gender;
-            player.BirthDate = r.birth_date;
-            player.Height = r.height;
-            player.Hair = r.hair;
-            player.Eye = r.eye;
-            player.Level = r.level;
-            player.LevelPoints = r.level_points;
-            player.LevelPointsExp = r.level_points_exp;
-            player.CharMoney = r.money;
-            player.Admin = r.admin;
-            player.MaskId = r.mask_id;
-            player.Warn = r.warn;
-            player.Paycheck = r.paycheck;
-            player.Vitals = Des<CharVitals>(r.vitals) ?? new();
-            player.Playtime = Des<CharPlaytime>(r.playtime) ?? new();
-            player.Backpack = Des<CharBackpack>(r.backpack) ?? new();
-            player.Phone = Des<CharPhone>(r.phone) ?? new();
-            player.JailInfo = Des<CharJailInfo>(r.jail_info) ?? new();
-            player.BanInfo = Des<CharBanInfo>(r.ban_info) ?? new();
-            player.CharSpawnPos = Des<CharPosition>(r.position) ?? new();
-            player.Condition = Des<CharCondition>(r.condition) ?? new();
-            player.Settings = Des<CharSettings>(r.settings) ?? new();
-            player.Jobs = Des<List<CharJob>>(r.jobs) ?? new();
+            player.CitizenId = r.Citizen_id;
+            player.Ucp = r.Ucp;
+            player.RegDate = r.Reg_date;
+            player.LastLogin = r.Last_login;
+            player.VerifiedChar = r.Verified_char;
+            player.Username = r.Username;
+            player.CharSkin = r.Skin;
+            player.Gender = r.Gender;
+            player.BirthDate = r.Birth_date;
+            player.Height = r.Height;
+            player.Hair = r.Hair;
+            player.Eye = r.Eye;
+            player.Level = r.Level;
+            player.LevelPoints = r.Level_points;
+            player.LevelPointsExp = r.Level_points_exp;
+            player.CharMoney = r.Money;
+            player.Admin = r.Admin;
+            player.MaskId = r.Mask_id;
+            player.Warn = r.Warn;
+            player.Paycheck = r.Paycheck;
+            player.Vitals = Des<CharVitals>(r.Vitals) ?? new();
+            player.Playtime = Des<CharPlaytime>(r.Playtime) ?? new();
+            player.Backpack = Des<CharBackpack>(r.Backpack) ?? new();
+            player.Phone = Des<CharPhone>(r.Phone) ?? new();
+            player.JailInfo = Des<CharJailInfo>(r.Jail_info) ?? new();
+            player.BanInfo = Des<CharBanInfo>(r.Ban_info) ?? new();
+            player.CharSpawnPos = Des<CharPosition>(r.Position) ?? new();
+            player.Condition = Des<CharCondition>(r.Condition) ?? new();
+            player.Settings = Des<CharSettings>(r.Settings) ?? new();
+            player.Jobs = Des<List<CharJob>>(r.Jobs) ?? new();
             player.IsCharLoaded = true;
         }
 

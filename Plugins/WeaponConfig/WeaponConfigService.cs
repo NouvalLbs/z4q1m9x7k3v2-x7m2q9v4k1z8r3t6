@@ -643,14 +643,15 @@ namespace ProjectSMP.Plugins.WeaponConfig
             }
         }
 
-        public static void HandleTakeDamage(Player damaged, Player? issuer, float amount,
-            int weaponId, int bodypart)
-        {
+        public static void HandleTakeDamage(Player damaged, Player? issuer, float amount, int weaponId, int bodypart) {
             if (issuer != null && weaponId >= 0 && weaponId < _validGiven.Length
                 && _validGiven[weaponId])
                 return;
 
             if (!_states.TryGetValue(damaged.Id, out var s) || s.IsDying) return;
+
+            if (_cfg.CustomFallDamage && weaponId == 54)
+                return;
 
             if (weaponId < 0 || weaponId >= _validTaken.Length || _validTaken[weaponId] == 0)
             {
@@ -1294,7 +1295,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static void SetWeaponName(int id, string name)
         { if (id >= 0 && id < _weapons.Length) _weapons[id].Name = name; }
         public static string GetWeaponName(int id) {
-            if (id == 55) return "Splat";
+            if (id == 55) return "Unknown";
             if (id == 56) return "Unknown";
             return id >= 0 && id < _weapons.Length ? _weapons[id].Name : $"Weapon {id}";
         }

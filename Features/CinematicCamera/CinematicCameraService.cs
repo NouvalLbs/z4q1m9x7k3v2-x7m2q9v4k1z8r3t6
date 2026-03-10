@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using ProjectSMP.Plugins.Streamer;
+using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
-using ProjectSMP.Plugins.Streamer;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace ProjectSMP.Feature.CinematicCamera {
+namespace ProjectSMP.Features.CinematicCamera {
     internal sealed record CameraLocation(
         Vector3 PlayerPosition,
         Vector3 CameraFrom,
@@ -68,12 +69,16 @@ namespace ProjectSMP.Feature.CinematicCamera {
 
             player.SetSpawnInfo(255, 1, new Vector3(0f, 0f, -5f), 0f);
             player.ToggleControllable(false);
-            player.ToggleSpectating(true);
+
+            if (player is Player p)
+                p.WcToggleSpectating(true);
+            else
+                player.ToggleSpectating(true);
+
             player.Color = new Color(255, 255, 255);
 
             var cts = new CancellationTokenSource();
             Sessions[player.Id] = cts;
-
             RunLoopAsync(player, cts.Token);
         }
 
@@ -104,8 +109,14 @@ namespace ProjectSMP.Feature.CinematicCamera {
             if (player.IsDisposed) return;
 
             player.Interior = 0;
-            player.VirtualWorld = 0;
-            player.Position = loc.PlayerPosition;
+
+            if (player is Player p) {
+                p.SetWcVirtualWorld(0);
+                p.WcSetPos(loc.PlayerPosition);
+            } else {
+                player.VirtualWorld = 0;
+                player.Position = loc.PlayerPosition;
+            }
 
             player.InterpolateCameraPosition(loc.CameraFrom, loc.CameraTo, InterpolateDuration, CameraCut.Cut);
             player.InterpolateCameraLookAt(loc.LookAtFrom, loc.LookAtTo, InterpolateDuration, CameraCut.Cut);

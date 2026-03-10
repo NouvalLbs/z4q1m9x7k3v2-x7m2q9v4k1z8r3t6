@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Character;
-using ProjectSMP.Feature.CinematicCamera;
+using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.Bank;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.WeaponConfig;
@@ -53,20 +53,17 @@ namespace ProjectSMP
             if (IsCharLoaded) _ = BankService.LoadAsync(this);
         }
 
-        public override void OnDeath(DeathEventArgs e)
-        {
+        public override void OnDeath(DeathEventArgs e) {
             base.OnDeath(e);
-            if (IsCharLoaded)
-            {
+            if (IsCharLoaded) {
                 var p = Position;
-                CharSpawnPos = new CharPosition
-                {
+                CharSpawnPos = new CharPosition {
                     X = p.X,
                     Y = p.Y,
                     Z = p.Z,
                     A = Angle,
                     Interior = Interior,
-                    World = VirtualWorld
+                    World = this.GetWcVirtualWorld()
                 };
             }
             WeaponConfigService.OnDeath(this, e.Killer as Player, (int)e.DeathReason);

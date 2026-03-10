@@ -104,7 +104,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 ("Explosion",           82.5f,  DamageType.Multiplier,  0f,     0,  false, false),
                 ("Car Parking",         1.0f,   DamageType.Multiplier,  0f,     0,  false, false),
                 ("Drowning",            1.0f,   DamageType.Multiplier,  0f,     0,  false, false),
-                ("Collision",           165f,   DamageType.Multiplier,  0f,     0,  false, false),
+                ("Splat",               165f,   DamageType.Multiplier,   0f,     0,  false, false),
             };
 
             var arr = new WeaponEntry[d.Length];

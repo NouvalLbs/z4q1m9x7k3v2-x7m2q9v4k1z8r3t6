@@ -1,5 +1,6 @@
 ﻿using ProjectSMP.Core;
 using ProjectSMP.Features.PreviewModelDialog;
+using ProjectSMP.Plugins.Anticheat;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
@@ -11,8 +12,14 @@ using System.Threading.Tasks;
 namespace ProjectSMP
 {
     public class GameMode : BaseMode {
+        private AnticheatPlugin _anticheat = null!;
+
         protected override void OnInitialized(EventArgs e) {
             base.OnInitialized(e);
+
+            // Initialize Anticheat
+            _anticheat = AnticheatPlugin.Create("anticheat.json");
+            _anticheat.RegisterEvents(this);
 
             // Initialize Primary Config
             ConfigManager.Load();
