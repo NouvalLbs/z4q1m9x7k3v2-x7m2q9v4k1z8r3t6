@@ -84,6 +84,7 @@ public class PlayerAcState
     public int Parachute { get; set; }
     public string IpAddress { get; set; } = string.Empty;
     public int IpInt { get; set; }
+    public float LastFacingAngle { get; set; } = -1f;
 
     // ── Tick Timestamps (maps to acGtc[20]) ───────────────────────────────
     public long InteriorTick { get; set; }
