@@ -172,6 +172,16 @@ namespace ProjectSMP.Plugins.WeaponConfig
             ScheduleHide(s, player);
         }
 
+        public static void SetGlobalEnabled(bool enabled)
+        {
+            _globalEnabled = enabled;
+            foreach (var (id, s) in _feeds)
+            {
+                if (s.EnabledOverride != -1) continue;
+                if (!enabled) { s.HideCts?.Cancel(); s.TakenTD?.Hide(); s.GivenTD?.Hide(); }
+            }
+        }
+
         public static void SetEnabled(BasePlayer player, bool enable)
         {
             if (!_feeds.TryGetValue(player.Id, out var s)) return;

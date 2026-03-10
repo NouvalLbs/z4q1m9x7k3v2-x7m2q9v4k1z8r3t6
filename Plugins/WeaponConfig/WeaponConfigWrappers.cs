@@ -72,12 +72,10 @@ namespace ProjectSMP.Plugins.WeaponConfig
             p.ClearAnimations(forceSync);
         }
 
-        public static void TogglePlayerControllable(Player p, bool toggle)
-        {
+        public static void TogglePlayerControllable(Player p, bool toggle) {
+            if (WeaponConfigService.IsPlayerDying(p)) return;
             var state = WeaponConfigService.GetPlayerState(p);
-            if (state != null)
-                state.LastStopTick = Environment.TickCount;
-
+            if (state != null) state.LastStopTick = Environment.TickCount;
             p.ToggleControllable(toggle);
         }
 
@@ -217,6 +215,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
         {
             if (toggle)
             {
+                WeaponConfigService.CancelDeathForSpectating(p);
+                WeaponConfigVendingMachines.OnStartSpectating(p);
                 p.ToggleSpectating(true);
             }
             else
@@ -238,10 +238,10 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static bool IsInClassSelection(Player p)
             => WeaponConfigService.IsPlayerInClassSelection(p);
 
-        public static void SetPlayerPosFindZ(Player p, float x, float y, float z)
-        {
+        public static void SetPlayerPosFindZ(Player p, float x, float y, float z) {
             if (p.IsDisposed || WeaponConfigService.IsPlayerDying(p)) return;
-
+            var state = WeaponConfigService.GetPlayerState(p);
+            if (state != null) state.LastStopTick = Environment.TickCount;
             var currentZ = p.Position.Z;
             if (currentZ > z)
                 p.Position = new Vector3(x, y, currentZ);

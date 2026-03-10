@@ -61,7 +61,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public Weapon LastExplosive = Weapon.None;
         public int LastVehicleEnterTime;
         public int LastVehicleTick;
-        public bool SpawnForStreamedIn;
 
         public int LastSentHealth = -1;
         public int LastSentArmour = -1;
@@ -133,7 +132,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             true,  true,  true,  true,  true,  true,  false, false, false, false,
             false, false, true,  true,  true,  true,  true,  true,  true,  true,
             true,  true,  true,  true,  true,  false, false, false, true,  false,
-            false, true,  true,  false, false, false, true,  false, true
+            false, true,  true,  false, false, false, true,  false, false
         };
 
         public static void Init(WeaponConfig cfg, WeaponEntry[] weapons)
@@ -343,6 +342,15 @@ namespace ProjectSMP.Plugins.WeaponConfig
             s.IsDying = false;
             spectator.ToggleControllable(true);
             WeaponConfigDamageFeed.ClearSpectating(spectator);
+        }
+
+        internal static void CancelDeathForSpectating(Player p)
+        {
+            if (!_states.TryGetValue(p.Id, out var s)) return;
+            s.DeathCts?.Cancel();
+            s.IsDying = false;
+            p.ToggleControllable(true);
+            p.VirtualWorld = s.IntendedWorld;
         }
 
         public static void OnRequestClass(Player p)
@@ -814,11 +822,26 @@ namespace ProjectSMP.Plugins.WeaponConfig
             return ("PED", "FLOOR_HIT");
         }
 
-        private static void CheckFallDamage(Player p, PlayerWcState s)
-        {
+        private static void CheckFallDamage(Player p, PlayerWcState s) {
             var zVelo = p.Velocity.Z;
-            if (zVelo < _cfg.FallDeathVelocity && s.LastZVelo >= _cfg.FallDeathVelocity)
-                Inflict(p, s, MathF.Abs(zVelo) * _cfg.FallDamageMultiplier, 54, 0);
+            if (zVelo < -0.1f)
+                Console.WriteLine($"[FallDebug] zVelo={zVelo:F4} last={s.LastZVelo:F4} threshold={_cfg.FallDeathVelocity}");
+
+            if (zVelo < _cfg.FallDeathVelocity && s.LastZVelo >= _cfg.FallDeathVelocity) {
+                var amount = MathF.Abs(zVelo) * _cfg.FallDamageMultiplier;
+                var args = new PlayerDamageArgs
+                {
+                    Player = p,
+                    Issuer = null,
+                    Amount = amount,
+                    Weapon = 54,
+                    Bodypart = 0
+                };
+                PlayerDamage?.Invoke(null, args);
+                if (!args.Cancel)
+                    Inflict(p, s, args.Amount, 54, 0);
+                Console.WriteLine($"[FallDamage] zVelo={zVelo} amount={amount}");
+            }
             s.LastZVelo = zVelo;
             s.LastZ = p.Position.Z;
         }
@@ -1185,7 +1208,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static void SetPlayerHealth(Player p, float health, float armour = -1f)
         {
-            if (!_states.TryGetValue(p.Id, out var s) || s.IsDying) return;
+            if (!_states.TryGetValue(p.Id, out var s)) return;
             if (armour >= 0f)
                 s.Armour = MathF.Max(0, MathF.Min(armour, s.MaxArmour));
             s.Health = MathF.Max(0, MathF.Min(health, s.MaxHealth));
@@ -1195,10 +1218,23 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (s.Health <= 0) {
                 s.Armour = 0;
                 SyncFakeVitals(p, s);
-                if (p.IsNPC)
+                if (p.IsNPC) {
                     WeaponConfigHealthBar.Update(p, 0f, s.MaxHealth);
-                else
-                    TriggerDeath(p, s, 55, 0, cancelable: true);
+                }
+                else {
+                    var args = new PlayerDamageArgs {
+                        Player = p,
+                        Issuer = null,
+                        Amount = 0f,
+                        Weapon = 55,
+                        Bodypart = 0
+                    };
+                    PlayerDamage?.Invoke(null, args);
+                    if (!args.Cancel) {
+                        TriggerDeath(p, s, 55, 0, cancelable: true);
+                        PlayerDamageDone?.Invoke(null, args);
+                    }
+                }
             }
         }
 
@@ -1211,9 +1247,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
             WeaponConfigHealthBar.Update(p, s.Health, s.MaxHealth);
         }
 
-        public static void HealPlayer(Player p, float amount)
-        {
+        public static void HealPlayer(Player p, float amount) {
             if (!_states.TryGetValue(p.Id, out var s) || s.IsDying) return;
+            if (amount <= 0) return;
             s.Health = MathF.Min(s.Health + amount, s.MaxHealth);
             p.Health = 99999f;
             SyncFakeVitals(p, s);
@@ -1223,21 +1259,15 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static float GetWcHealth(Player p) => _states.TryGetValue(p.Id, out var s) ? s.Health : 0f;
         public static float GetWcArmour(Player p) => _states.TryGetValue(p.Id, out var s) ? s.Armour : 0f;
 
-        public static void DamagePlayer(Player p, float amount, Player? issuer = null,
-            int weapon = 55, int bodypart = 0, bool ignoreArmour = false)
-        {
-            if (!_states.TryGetValue(p.Id, out var s) || s.IsDying || p.IsDisposed) return;
+        public static void DamagePlayer(Player p, float amount, Player? issuer = null, int weapon = 55, int bodypart = 0, bool ignoreArmour = false) {
+            if (!_states.TryGetValue(p.Id, out var s) || p.IsDisposed) return;
+            if (amount < 0) return;
             Inflict(p, s, amount, weapon, bodypart, issuer, ignoreArmour);
         }
 
-        public static void SetDamageFeed(bool enable)
-        {
+        public static void SetDamageFeed(bool enable) {
             _cfg.EnableDamageFeed = enable;
-            foreach (var id in _states.Keys)
-            {
-                if (BasePlayer.Find(id) is not Player p) continue;
-                WeaponConfigDamageFeed.SetEnabled(p, enable);
-            }
+            WeaponConfigDamageFeed.SetGlobalEnabled(enable);
         }
 
         public static bool IsDamageFeedActive(Player? p = null)
@@ -1263,8 +1293,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static void SetWeaponName(int id, string name)
         { if (id >= 0 && id < _weapons.Length) _weapons[id].Name = name; }
-        public static string GetWeaponName(int id)
-            => id >= 0 && id < _weapons.Length ? _weapons[id].Name : $"Weapon {id}";
+        public static string GetWeaponName(int id) {
+            if (id == 55) return "Splat";
+            if (id == 56) return "Unknown";
+            return id >= 0 && id < _weapons.Length ? _weapons[id].Name : $"Weapon {id}";
+        }
 
         public static void SetWeaponArmourRule(int id, bool affectsArmour, bool torsoOnly = false)
         {
