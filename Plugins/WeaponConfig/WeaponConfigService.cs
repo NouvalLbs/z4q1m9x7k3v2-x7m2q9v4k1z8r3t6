@@ -1,11 +1,12 @@
 ﻿#nullable enable
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.World;
+using System;
+using System.Collections.Generic;
+using System.Reflection.PortableExecutable;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ProjectSMP.Plugins.WeaponConfig
 {
@@ -48,12 +49,18 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public int PreviousHitIdx;
 
         public CancellationTokenSource? DeathCts;
-        public CancellationTokenSource? DelayedDeathCts;
         public CancellationTokenSource? ResyncCts;
 
         public int SpawnClass = -2;
-        public bool SpawnInfoModified;
         public bool ForceClassSelection;
+        public bool FirstSpawn = true;
+        public int LastAnim = -1;
+        public int LastStopTick;
+        public int KnifeTimeout;
+        public Weapon LastExplosive = Weapon.None;
+        public int LastVehicleEnterTime;
+        public int LastVehicleTick;
+        public bool SpawnForStreamedIn;
     }
 
     internal sealed class ShotInfo
@@ -72,7 +79,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
     {
         public bool Alive;
         public int LastShooter = -1;
-        public CancellationTokenSource? RespawnCts;
     }
 
     public static partial class WeaponConfigService
@@ -92,6 +98,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
         private static readonly Dictionary<int, PlayerWcState> _states = new();
         private static readonly Dictionary<int, VehicleState> _vehicles = new();
         private static readonly Dictionary<int, SpawnClassInfo> _spawnClasses = new();
+        private static readonly Dictionary<int, SpawnInfo> _playerSpawnInfo = new();
+        private static readonly Dictionary<int, SpawnInfo> _playerFallbackSpawnInfo = new();
 
         public static event EventHandler<PlayerDamageArgs>? PlayerDamage;
         public static event EventHandler<PlayerDamageArgs>? PlayerDamageDone;
@@ -160,9 +168,10 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (_states.TryGetValue(p.Id, out var s))
             {
                 s.DeathCts?.Cancel();
-                s.DelayedDeathCts?.Cancel();
                 s.ResyncCts?.Cancel();
             }
+            _playerSpawnInfo.Remove(p.Id);
+            _playerFallbackSpawnInfo.Remove(p.Id);
             _states.Remove(p.Id);
 
             foreach (var vs in _vehicles.Values)
@@ -178,7 +187,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
         {
             if (!_states.TryGetValue(p.Id, out var s)) return;
             s.DeathCts?.Cancel();
-            s.DelayedDeathCts?.Cancel();
 
             var snap = s.ResyncSnap;
             s.ResyncSnap = null;
@@ -198,6 +206,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
             s.BeingResynced = false;
             s.TrueDeath = true;
             s.InClassSelection = false;
+            if (s.FirstSpawn)
+            {
+                s.FirstSpawn = false;
+                WeaponConfigVendingMachines.OnFirstSpawn(p);
+            }
             s.ShotsFired = 0;
             s.HitsIssued = 0;
             s.LastShot = null;
@@ -257,6 +270,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (!_states.TryGetValue(p.Id, out var s)) return;
             s.LastUpdateTick = Environment.TickCount;
 
+            TrackLastAnimation(p, s);
+            UpdateKnifeTimeout(s);
+
             if (s.IsDying)
             {
                 if (p.SpecialAction != SpecialAction.None || p.AnimationIndex == 0)
@@ -271,6 +287,25 @@ namespace ProjectSMP.Plugins.WeaponConfig
             if (_cfg.CustomVendingMachines) WeaponConfigVendingMachines.OnUpdate(p);
         }
 
+        private static void TrackLastAnimation(Player p, PlayerWcState s)
+        {
+            var anim = p.AnimationIndex;
+            if (anim != s.LastAnim)
+            {
+                s.LastAnim = anim;
+                if (anim == 0) s.LastStopTick = Environment.TickCount;
+            }
+        }
+
+        private static void UpdateKnifeTimeout(PlayerWcState s)
+        {
+            if (s.KnifeTimeout > 0)
+            {
+                var elapsed = Environment.TickCount - s.LastUpdateTick;
+                s.KnifeTimeout = Math.Max(0, s.KnifeTimeout - elapsed);
+            }
+        }
+
         public static void OnStartSpectating(Player spectator, Player target)
             => WeaponConfigDamageFeed.SetSpectating(spectator, target.Id);
 
@@ -278,7 +313,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
         {
             if (!_states.TryGetValue(spectator.Id, out var s)) return;
             s.DeathCts?.Cancel();
-            s.DelayedDeathCts?.Cancel();
             s.IsDying = false;
             spectator.ToggleControllable(true);
             WeaponConfigDamageFeed.ClearSpectating(spectator);
@@ -296,13 +330,15 @@ namespace ProjectSMP.Plugins.WeaponConfig
             }
             s.IsDying = false;
             s.DeathCts?.Cancel();
-            s.DelayedDeathCts?.Cancel();
         }
 
         public static void HandleWeaponShot(Player p, int weaponId, int hitType, int hitId,
             Vector3 origin, Vector3 hitPos)
         {
             if (!_states.TryGetValue(p.Id, out var s)) return;
+            if (weaponId == 16 || weaponId == 18 || weaponId == 35 || weaponId == 36 || weaponId == 39) {
+                s.LastExplosive = (Weapon)weaponId;
+            }
 
             s.LastShot = new ShotInfo
             {
@@ -1293,7 +1329,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
             }
             vs.Alive = true;
             vs.LastShooter = -1;
-            vs.RespawnCts?.Cancel();
         }
 
         public static void OnVehicleDeath(int vehicleId)
@@ -1304,8 +1339,6 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static void OnVehicleDestroy(int vehicleId)
         {
-            if (!_vehicles.TryGetValue(vehicleId, out var vs)) return;
-            vs.RespawnCts?.Cancel();
             _vehicles.Remove(vehicleId);
         }
 
@@ -1353,6 +1386,18 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static SpawnClassInfo? GetSpawnClass(int classId)
             => _spawnClasses.TryGetValue(classId, out var c) ? c : null;
+
+        public static SpawnInfo? GetPlayerSpawnInfo(Player p)
+            => _playerSpawnInfo.TryGetValue(p.Id, out var info) ? info : null;
+
+        public static void SetPlayerSpawnInfo(Player p, SpawnInfo info)
+            => _playerSpawnInfo[p.Id] = info;
+
+        public static SpawnInfo? GetPlayerFallbackSpawnInfo(Player p)
+            => _playerFallbackSpawnInfo.TryGetValue(p.Id, out var info) ? info : null;
+
+        public static void SetPlayerFallbackSpawnInfo(Player p, SpawnInfo info)
+            => _playerFallbackSpawnInfo[p.Id] = info;
 
         public static string GetRejectedHitFormatted(Player p, int idx)
         {
@@ -1539,5 +1584,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
             }
             catch { }
         }
+
+        internal static PlayerWcState? GetPlayerState(Player p)
+            => _states.TryGetValue(p.Id, out var s) ? s : null;
     }
 }

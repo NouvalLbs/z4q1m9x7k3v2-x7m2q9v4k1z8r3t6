@@ -183,6 +183,20 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public bool Given { get; init; }
     }
 
+    public class SpawnInfo
+    {
+        public int Skin { get; set; }
+        public int Team { get; set; }
+        public Vector3 Position { get; set; }
+        public float Rotation { get; set; }
+        public Weapon Weapon1 { get; set; }
+        public int Ammo1 { get; set; }
+        public Weapon Weapon2 { get; set; }
+        public int Ammo2 { get; set; }
+        public Weapon Weapon3 { get; set; }
+        public int Ammo3 { get; set; }
+    }
+
     public class VendingMachineArgs : EventArgs
     {
         public Player Player { get; init; } = null!;

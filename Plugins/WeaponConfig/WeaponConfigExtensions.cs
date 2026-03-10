@@ -176,7 +176,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static bool WcIsHighRate(this int weaponId)
             => WeaponConfigWrappers.IsHighRateWeapon(weaponId);
 
-        public static WeaponEntry WcGetEntry(this int weaponId)
+        public static WeaponEntry? WcGetEntry(this int weaponId)
             => WeaponConfigWrappers.GetWeaponEntry(weaponId);
 
         public static void WcModifyEntry(this int weaponId, Action<WeaponEntry> modifier)
@@ -187,5 +187,20 @@ namespace ProjectSMP.Plugins.WeaponConfig
 
         public static string WcGetPreviousHitRaw(this Player p, int index)
             => WeaponConfigWrappers.GetPreviousHit(p, index);
+
+        public static int WcGetLastAnimation(this Player p)
+            => WeaponConfigWrappers.GetLastAnimation(p);
+
+        public static int WcGetLastStopTick(this Player p)
+            => WeaponConfigWrappers.GetLastStopTick(p);
+
+        public static Weapon WcGetLastExplosive(this Player p)
+            => WeaponConfigWrappers.GetLastExplosive(p);
+
+        public static SpawnInfo? WcGetSpawnInfo(this Player p)
+            => WeaponConfigService.GetPlayerSpawnInfo(p);
+
+        public static void WcSetSpawnInfo(this Player p, SpawnInfo info)
+            => WeaponConfigService.SetPlayerSpawnInfo(p, info);
     }
 }

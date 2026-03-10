@@ -61,23 +61,45 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static void ClearAnimations(Player p, bool forceSync = true)
         {
             if (WeaponConfigService.IsPlayerDying(p)) return;
+
+            var state = WeaponConfigService.GetPlayerState(p);
+            if (state != null)
+                state.LastStopTick = Environment.TickCount;
+
             p.ClearAnimations(forceSync);
         }
 
         public static void TogglePlayerControllable(Player p, bool toggle)
         {
+            var state = WeaponConfigService.GetPlayerState(p);
+            if (state != null)
+                state.LastStopTick = Environment.TickCount;
+
             p.ToggleControllable(toggle);
         }
 
         public static void SetPlayerPos(Player p, Vector3 pos)
         {
             if (WeaponConfigService.IsPlayerDying(p)) return;
+
+            var state = WeaponConfigService.GetPlayerState(p);
+            if (state != null)
+                state.LastStopTick = Environment.TickCount;
+
             p.Position = pos;
         }
 
         public static void SetPlayerVelocity(Player p, Vector3 velocity)
         {
             if (WeaponConfigService.IsPlayerDying(p)) return;
+
+            if (velocity.X == 0 && velocity.Y == 0 && velocity.Z == 0)
+            {
+                var state = WeaponConfigService.GetPlayerState(p);
+                if (state != null)
+                    state.LastStopTick = Environment.TickCount;
+            }
+
             p.Velocity = velocity;
         }
 
@@ -129,10 +151,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static int GetMaxHitRateSamples()
             => WeaponConfigService.GetMaxHitRateSamples();
 
-        public static PreviousHitInfo GetPreviousHitRaw(Player p, int index)
+        // Fixed: Added nullable return type
+        public static PreviousHitInfo? GetPreviousHitRaw(Player p, int index)
             => WeaponConfigService.GetPreviousHit(p, index);
 
-        public static RejectedHit GetRejectedHitRaw(Player p, int index)
+        // Fixed: Added nullable return type
+        public static RejectedHit? GetRejectedHitRaw(Player p, int index)
             => WeaponConfigService.GetRejectedHit(p, index);
 
         public static void SetPlayerStreamDistance(float distance)
@@ -236,11 +260,23 @@ namespace ProjectSMP.Plugins.WeaponConfig
             Weapon weapon2 = Weapon.None, int ammo2 = 0,
             Weapon weapon3 = Weapon.None, int ammo3 = 0)
         {
-            WeaponConfigService.AddPlayerClassEx(team, skin,
-                new SampSharp.GameMode.Vector3(x, y, z), rotation,
-                weapon1, ammo1, weapon2, ammo2, weapon3, ammo3);
+            var info = new SpawnInfo
+            {
+                Skin = skin,
+                Team = team,
+                Position = new Vector3(x, y, z),
+                Rotation = rotation,
+                Weapon1 = weapon1,
+                Ammo1 = ammo1,
+                Weapon2 = weapon2,
+                Ammo2 = ammo2,
+                Weapon3 = weapon3,
+                Ammo3 = ammo3
+            };
 
-            p.SetSpawnInfo(team, skin, new SampSharp.GameMode.Vector3(x, y, z), rotation,
+            WeaponConfigService.SetPlayerSpawnInfo(p, info);
+
+            p.SetSpawnInfo(team, skin, new Vector3(x, y, z), rotation,
                 weapon1, ammo1, weapon2, ammo2, weapon3, ammo3);
         }
 
@@ -274,6 +310,28 @@ namespace ProjectSMP.Plugins.WeaponConfig
             p.SpecialAction = action;
         }
 
+        public static int GetLastAnimation(Player p)
+        {
+            if (!WeaponConfigService.IsPlayerSpawned(p)) return -1;
+            return p.AnimationIndex;
+        }
+
+        public static int GetLastStopTick(Player p)
+        {
+            if (p.Id >= 0 && p.Id < 500)
+            {
+                var state = WeaponConfigService.GetPlayerState(p);
+                return state?.LastStopTick ?? 0;
+            }
+            return 0;
+        }
+
+        public static Weapon GetLastExplosive(Player p)
+        {
+            var state = WeaponConfigService.GetPlayerState(p);
+            return state?.LastExplosive ?? Weapon.None;
+        }
+
         public static void SetCbugDeathDelay(bool toggle)
             => WeaponConfigService.SetCbugDeathDelay(toggle);
 
@@ -297,10 +355,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 weapon1, weapon1Ammo, weapon2, weapon2Ammo, weapon3, weapon3Ammo);
         }
 
+        // Fixed: Added nullable return type
         public static SpawnClassInfo? GetSpawnClass(int classid)
             => WeaponConfigService.GetSpawnClass(classid);
 
-        public static bool GetSpawnClassInfo(int classid, out SpawnClassInfo info)
+        public static bool GetSpawnClassInfo(int classid, out SpawnClassInfo? info)
         {
             info = WeaponConfigService.GetSpawnClass(classid);
             return info != null;
@@ -330,6 +389,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static LagCompMode GetLagCompMode()
             => WeaponConfigService.GetLagCompMode();
 
+        // Fixed: Added nullable parameter for Player p
         public static int CreateVehicle(int modelid, float x, float y, float z, float rotation, int color1, int color2, int respawnDelay, bool addSiren = false)
         {
             var vehicle = BaseVehicle.Create(
@@ -391,7 +451,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static void EnableHealthBarForPlayer(Player p, bool enable)
             => WeaponConfigHealthBar.SetEnabled(p, enable);
 
-        public static WeaponEntry GetWeaponEntry(int weaponId)
+        // Fixed: Added nullable return type
+        public static WeaponEntry? GetWeaponEntry(int weaponId)
             => WeaponConfigService.GetWeaponEntryPublic(weaponId);
 
         public static void ModifyWeaponEntry(int weaponId, Action<WeaponEntry> modifier)
@@ -421,10 +482,12 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static void SetDamageSounds(int taken, int given)
             => WeaponConfigService.SetDamageSounds(taken, given);
 
-        public static void SetCbugAllowed(bool enabled, Player p = null)
+        // Fixed: Made player parameter nullable with default value
+        public static void SetCbugAllowed(bool enabled, Player? p = null)
             => WeaponConfigService.SetCbugAllowed(enabled, p);
 
-        public static bool GetCbugAllowed(Player p = null)
+        // Fixed: Made player parameter nullable with default value
+        public static bool GetCbugAllowed(Player? p = null)
             => WeaponConfigService.GetCbugAllowed(p);
 
         public static void SetCustomFallDamage(bool toggle, float multiplier = 25f, float deathVel = -0.6f)
@@ -439,7 +502,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static void SetDamageFeedForPlayer(Player p, bool enable)
             => WeaponConfigDamageFeed.SetEnabled(p, enable);
 
-        public static bool IsDamageFeedActive(Player p = null)
+        // Fixed: Made player parameter nullable with default value
+        public static bool IsDamageFeedActive(Player? p = null)
             => WeaponConfigService.IsDamageFeedActive(p);
 
         public static void SetWeaponDamage(int id, float dmg, DamageType type = DamageType.Static)
