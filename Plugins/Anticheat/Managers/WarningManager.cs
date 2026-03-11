@@ -79,20 +79,4 @@ public class WarningManager
 
     public int GetCount(int playerId, string checkName) =>
         _players.Get(playerId)?.GetWarning(checkName) ?? 0;
-
-    public void TrackKick(int playerId)
-    {
-        var state = _players.GetOrCreate(playerId);
-        state.TotalKicks++;
-
-        // Check for auto-ban
-        if (_config.MaxWarningsBeforeBan > 0 && state.TotalKicks >= _config.MaxWarningsBeforeBan)
-        {
-            _logger.LogBan(playerId, $"AutoBan after {state.TotalKicks} kicks");
-            PunishmentRequired?.Invoke(playerId, "AutoBan", PunishAction.Ban);
-        }
-    }
-
-    public int GetTotalKicks(int playerId)
-        => _players.Get(playerId)?.TotalKicks ?? 0;
 }

@@ -9,18 +9,6 @@ public class VehicleAcState
     public long LastServerPaintjobTick { get; set; }
     public bool HasNitro { get; set; }
     public int NitroType { get; set; } = -1;
-    public float LastVehicleAngle { get; set; }
-    public float LastVehicleRoll { get; set; }
-    public float LastVehiclePitch { get; set; }
-    public long LastUpdateTick { get; set; }
-    public long LastFlipTick { get; set; }
-    public int FlipCount { get; set; }
-    public Queue<long> FlipHistory { get; } = new();
-    public float LastKnownX { get; set; }
-    public float LastKnownY { get; set; }
-    public float LastKnownZ { get; set; }
-    public long LastTrackedTick { get; set; }
-    public long LastServerVehiclePosTick { get; set; }
     public HashSet<int> InstalledComponents { get; } = new();
     public Queue<long> ComponentChangeHistory { get; } = new();
     public long LastServerModTick { get; set; }

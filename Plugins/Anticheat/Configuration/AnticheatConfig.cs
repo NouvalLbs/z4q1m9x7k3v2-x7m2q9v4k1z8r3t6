@@ -21,12 +21,6 @@ public class AnticheatConfig
     public int AutoSaveIntervalMinutes { get; set; } = 10;
     public bool EnableVerboseLogging { get; set; } = false;
     public int MaxWarningsBeforeBan { get; set; } = 10; // Global ban threshold
-    public List<int> BlacklistedWeapons { get; set; } = new();
-    public List<int> BlacklistedSkins { get; set; } = new();
-    public List<int> BlacklistedVehicleMods { get; set; } = new();
-    public List<int> BlacklistedVehicles { get; set; } = new();
-    public List<int> BlacklistedSpecialActions { get; set; } = new();
-    public List<string> BlacklistedAnimations { get; set; } = new();
 
     public Dictionary<string, CheckConfig> Checks { get; set; } = BuildDefaults();
 
@@ -54,10 +48,7 @@ public class AnticheatConfig
         ["HealthHackVehicle"] = new(),
         ["ArmourHack"] = new(),
         ["MoneyHack"] = new(),
-        ["MoneyLossHack"] = new(),
         ["WeaponHack"] = new(),
-        ["WeaponDamageHack"] = new(),
-        ["WeaponSwitchSpam"] = new() { MaxWarnings = 5 },
         ["AmmoHackAdd"] = new(),
         ["AmmoHackInfinite"] = new(),
         ["SpecialActionHack"] = new(),
@@ -75,8 +66,6 @@ public class AnticheatConfig
         ["FakeSpawn"] = new(),
         ["FakeKill"] = new(),
         ["AfkGhost"] = new(),
-        ["AFKBot"] = new() { MaxWarnings = 2, Action = PunishAction.Kick },
-        ["AFKBotPattern"] = new() { MaxWarnings = 2, Action = PunishAction.Kick },
         ["CarJack"] = new(),
         ["TuningHack"] = new(),
         ["TuningCrasher"] = new(),
@@ -98,10 +87,6 @@ public class AnticheatConfig
         ["UnFreeze"] = new() { Enabled = false },
         ["FakeNpc"] = new() { Enabled = false },
         ["JetpackHack"] = new(),
-        ["AnimationHack"] = new(),
-        ["InvalidAnimLibrary"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
-        ["DangerousAnimation"] = new() { MaxWarnings = 2, Action = PunishAction.Kick },
-        ["VehicleAnimationHack"] = new() { MaxWarnings = 3 },
         ["NitroHack"] = new(),
         ["VehicleModHack"] = new(),
         ["VehicleHealthHack"] = new(),
@@ -109,39 +94,7 @@ public class AnticheatConfig
         ["InteriorWeaponHack"] = new(),
         ["InteriorWeaponShot"] = new(),
         ["InteriorWeaponClear"] = new() { Enabled = false },
-        ["BlacklistedWeapon"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
-        ["BlacklistedWeaponSlots"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
-        ["BlacklistedSkin"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
-        ["BlacklistedVehicleMod"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
-        ["BlacklistedVehicle"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
-        ["BlacklistedSpecialAction"] = new() { MaxWarnings = 2, Action = PunishAction.Kick },
-        ["BlacklistedAnimation"] = new() { MaxWarnings = 2, Action = PunishAction.Kick },
         ["InteriorWeaponShot"] = new(),
-        ["CheckpointTeleport"] = new(),
-        ["RaceCheckpointTeleport"] = new(),
-        ["FakePickup"] = new(),
-        ["MacroShoot"] = new(),
-        ["MacroKeys"] = new(),
-        ["MacroCommand"] = new(),
-        ["MacroChat"] = new(),
-        ["DriveOnWater"] = new(),
-        ["SwimThroughWall"] = new(),
-        ["FlyThroughWall"] = new(),
-        ["InteriorClip"] = new(),
-        ["VehicleFlipSpam"] = new(),
-        ["InfiniteRun"] = new(),
-        ["ClassSelectionSpam"] = new(),
-        ["ClassSelectionExploit"] = new(),
-        ["VehicleSprint"] = new() { MaxWarnings = 5, Action = PunishAction.Warn },
-        ["InvalidClassId"] = new() { Enabled = false },
-        ["MoonGravity"] = new(),
-        ["IceSlide"] = new(),
-        ["Carwarp"] = new(),
-        ["CodeVerification"] = new(),
-        ["ObjectCrasher"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
-        ["TextDrawCrasher"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
-        ["Text3DCrasher"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
-        ["MenuCrasher"] = new() { MaxWarnings = 2, Action = PunishAction.Kick },
 
         // Anti-NOP checks
         ["NopGiveWeapon"] = new() { MaxWarnings = 8 },
