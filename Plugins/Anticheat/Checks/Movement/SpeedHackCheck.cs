@@ -49,7 +49,8 @@ public class SpeedHackCheck
         else if (player.State == PlayerState.Driving)
         {
             if (!_config.GetCheck("SpeedHackVehicle").Enabled) return;
-            if (now - st.VehicleVelocityTick < 2500) return;
+            long delayMs = _config.SpeedHackVehResetDelay * 1000L;
+            if (now - st.VehicleVelocityTick < delayMs) return;
             int model = player.Vehicle is not null ? (int)player.Vehicle.Model : -1;
             float limit = model >= 400 ? GetLimit(model) : MaxVehicleDefault;
             if (spd > limit)
@@ -66,5 +67,6 @@ public class SpeedHackCheck
         _ => IsHighSpeedPlane(model) ? MaxPlaneSpeed : MaxVehicleDefault
     };
 
-    private static bool IsHighSpeedPlane(int model) => model is 592 or 577 or 511 or 512 or 593 or 520 or 553 or 476 or 519 or 460 or 513 or 548;
+    private static bool IsHighSpeedPlane(int model)
+        => model is 592 or 577 or 511 or 512 or 593 or 520 or 553 or 476 or 519 or 460 or 513 or 548;
 }

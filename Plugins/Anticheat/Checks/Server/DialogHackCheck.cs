@@ -2,7 +2,6 @@
 using ProjectSMP.Plugins.Anticheat.Managers;
 using SampSharp.GameMode.Events;
 using SampSharp.GameMode.World;
-using System;
 
 namespace ProjectSMP.Plugins.Anticheat.Checks.Server;
 
@@ -22,15 +21,9 @@ public class DialogHackCheck
         var st = _players.Get(player.Id);
         if (st is null) return;
 
-        int responded = e.DialogId;
+        if (st.NextDialog >= 0 && e.DialogId != st.NextDialog)
+            _warnings.AddWarning(player.Id, "DialogHack", $"got={e.DialogId} expected={st.NextDialog}");
 
-        if (st.NextDialog >= 0 && responded != st.NextDialog)
-        {
-            _warnings.AddWarning(player.Id, "DialogHack",
-                $"got={responded} expected={st.NextDialog}");
-        }
-
-        st.Dialog = -1;
         st.NextDialog = -1;
     }
 

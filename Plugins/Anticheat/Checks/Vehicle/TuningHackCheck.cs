@@ -2,19 +2,17 @@
 using ProjectSMP.Plugins.Anticheat.Data;
 using ProjectSMP.Plugins.Anticheat.Managers;
 using SampSharp.GameMode.World;
-using System;
 
 namespace ProjectSMP.Plugins.Anticheat.Checks.Vehicle;
 
 public class TuningHackCheck
 {
     private readonly PlayerStateManager _players;
-    private readonly VehicleStateManager _vehicles;
     private readonly WarningManager _warnings;
     private readonly AnticheatConfig _config;
 
-    public TuningHackCheck(PlayerStateManager p, VehicleStateManager v, WarningManager w, AnticheatConfig c)
-        => (_players, _vehicles, _warnings, _config) = (p, v, w, c);
+    public TuningHackCheck(PlayerStateManager p, WarningManager w, AnticheatConfig c)
+        => (_players, _warnings, _config) = (p, w, c);
 
     public void OnVehicleMod(BaseVehicle vehicle, BasePlayer player, int componentId)
     {

@@ -7,7 +7,6 @@ using System;
 
 namespace ProjectSMP.Plugins.Anticheat.Checks.Player;
 
-/// <summary>Check 16 (ammo bertambah) dan 17 (ammo infinite)</summary>
 public class AmmoCheck
 {
     private readonly PlayerStateManager _players;
@@ -32,36 +31,44 @@ public class AmmoCheck
 
             player.GetWeaponData(slot, out Weapon _, out int ammo);
             int stored = st.Ammo[slot];
+
+            if (_config.GetCheck("AmmoHackInfinite").Enabled)
+            {
+                long shotTick = st.ShotAmmoTick[slot];
+                if (shotTick > 0 && now - shotTick >= 500 && now - shotTick < 2000)
+                {
+                    bool serverGave = now - st.GiveAmmoTick[slot] < 1500;
+                    if (!serverGave && ammo >= st.PreShotAmmo[slot] && st.PreShotAmmo[slot] > 0)
+                        _warnings.AddWarning(player.Id, "AmmoHackInfinite", $"slot={slot} ammo={ammo}");
+                    st.ShotAmmoTick[slot] = 0;
+                }
+            }
+
             if (ammo == stored) continue;
 
-            long giveTick = st.GiveAmmoTick[slot];
-            bool serverGave = now - giveTick < 1500;
             int gain = ammo - stored;
+            bool serverGaveAmmo = now - st.GiveAmmoTick[slot] < 1500;
 
-            // Check 16: ammo bertambah tanpa izin server
-            if (gain > 0 && !serverGave && _config.GetCheck("AmmoHackAdd").Enabled)
+            if (gain > 0 && !serverGaveAmmo && _config.GetCheck("AmmoHackAdd").Enabled)
             {
-                _warnings.AddWarning(player.Id, "AmmoHackAdd",
-                    $"slot={slot} +{gain} total={ammo}");
-            }
-
-            var pos = player.Position;
-            if (WeaponData.IsNearAmmuNation(pos.X, pos.Y, pos.Z)) {
-                st.Ammo[slot] = ammo;
-                continue;
-            }
-
-            // Check 17: ammo tidak berkurang setelah tembak
-            else if (gain == 0 && stored > 0
-                     && st.ShotTick > 0 && now - st.ShotTick < 2000
-                     && _config.GetCheck("AmmoHackInfinite").Enabled)
-            {
-                _warnings.AddWarning(player.Id, "AmmoHackInfinite",
-                    $"slot={slot} noDecrement");
+                var pos = player.Position;
+                if (!WeaponData.IsNearAmmuNation(pos.X, pos.Y, pos.Z))
+                    _warnings.AddWarning(player.Id, "AmmoHackAdd", $"slot={slot} +{gain} total={ammo}");
             }
 
             st.Ammo[slot] = ammo;
         }
+    }
+
+    public void OnPlayerWeaponShot(BasePlayer player, int weaponId)
+    {
+        var st = _players.Get(player.Id);
+        if (st is null || !WeaponData.IsValid(weaponId)) return;
+        int slot = WeaponData.Slot[weaponId];
+        if (!WeaponData.SlotHasAmmo(slot)) return;
+        player.GetWeaponData(slot, out _, out int ammo);
+        st.PreShotAmmo[slot] = ammo;
+        st.ShotAmmoTick[slot] = Environment.TickCount64;
     }
 
     public void OnAmmoGiven(int playerId, int weaponId, int ammo)
@@ -69,7 +76,6 @@ public class AmmoCheck
         var st = _players.Get(playerId);
         if (st is null || !WeaponData.IsValid(weaponId)) return;
         int slot = WeaponData.Slot[weaponId];
-        st.GiveAmmo[slot] = ammo;
         st.GiveAmmoTick[slot] = Environment.TickCount64;
         st.Ammo[slot] += ammo;
     }

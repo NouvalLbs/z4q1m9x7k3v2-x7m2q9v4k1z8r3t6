@@ -81,18 +81,9 @@ public class AnticheatPlugin : IDisposable
     private FakeNpcCheck _fakeNpc = null!;
 
     public PlayerStateManager Players => _players;
-    public VehicleStateManager Vehicles => _vehicles;
-    public PickupStateManager Pickups => _pickups;
     public WarningManager Warnings => _warnings;
     public AnticheatConfig Config => _config;
     public AnticheatEvents Events => _events;
-    public MoneyCheck Money => _money;
-    public WeaponCheck Weapon => _weapon;
-    public AmmoCheck Ammo => _ammo;
-    public DialogHackCheck Dialog => _dialogHack;
-    public CallbackFloodCheck CbFlood => _cbFlood;
-    public SpecialActionCheck SpecialAction => _specialAction;
-    public AttachedObjectCrasherCheck AttachCrasher => _attachCrasher;
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -140,7 +131,7 @@ public class AnticheatPlugin : IDisposable
         _afkGhost = new AfkGhostCheck(_players, _warnings, _config);
         _carJack = new CarJackCheck(_players, _warnings, _config);
         _vehicleTeleport = new VehicleTeleportCheck(_players, _pickups, _warnings, _config);
-        _tuningHack = new TuningHackCheck(_players, _vehicles, _warnings, _config);
+        _tuningHack = new TuningHackCheck(_players, _warnings, _config);
         _reconnect = new ReconnectCheck(_warnings, _config, _logger);
         _ping = new PingCheck(_warnings, _config, _logger);
         _dialogHack = new DialogHackCheck(_players, _warnings, _config);
@@ -179,6 +170,7 @@ public class AnticheatPlugin : IDisposable
                 _config.MaxPing = fresh.MaxPing;
                 _config.MaxConnectsPerIp = fresh.MaxConnectsPerIp;
                 _config.MinReconnectSeconds = fresh.MinReconnectSeconds;
+                _config.SpeedHackVehResetDelay = fresh.SpeedHackVehResetDelay;
                 foreach (var (k, v) in fresh.Checks) _config.Checks[k] = v;
                 _logger.Log("anticheat.json reloaded.");
             }
@@ -251,20 +243,17 @@ public class AnticheatPlugin : IDisposable
         st.SetArmourTick = Environment.TickCount64;
     }
 
-    public void OnSetPlayerPos(int playerId, float x, float y, float z)
+    public void OnSetPlayerPos(int playerId)
     {
         var st = _players.Get(playerId);
         if (st is null) return;
-        st.SetX = x; st.SetY = y; st.SetZ = z;
         st.SetPosTick = Environment.TickCount64;
     }
 
-    public void OnPutPlayerInVehicle(int playerId, int vehicleId, int seat)
+    public void OnPutPlayerInVehicle(int playerId, int vehicleId)
     {
         var st = _players.Get(playerId);
         if (st is null) return;
-        st.SetVehicle = vehicleId;
-        st.SetSeat = seat;
         st.VehicleId = vehicleId;
         st.PutInVehicleTick = Environment.TickCount64;
     }
@@ -302,6 +291,15 @@ public class AnticheatPlugin : IDisposable
 
     public void OnTogglePlayerControllable(int playerId, bool toggle)
         => _unFreeze.OnPlayerFrozen(playerId, !toggle);
+
+    public void OnSetPlayerSpawnInfo(int playerId, int weapon1, int ammo1, int weapon2, int ammo2, int weapon3, int ammo3)
+    {
+        var st = _players.Get(playerId);
+        if (st is null) return;
+        st.SpawnWeapon1 = weapon1; st.SpawnAmmo1 = ammo1;
+        st.SpawnWeapon2 = weapon2; st.SpawnAmmo2 = ammo2;
+        st.SpawnWeapon3 = weapon3; st.SpawnAmmo3 = ammo3;
+    }
 
     // ── RegisterEvents ───────────────────────────────────────────────────
 
@@ -439,8 +437,7 @@ public class AnticheatPlugin : IDisposable
     private void OnPlayerWeaponShot(object? sender, WeaponShotEventArgs e)
     {
         if (sender is not BasePlayer p) return;
-        var st = _players.Get(p.Id);
-        if (st is not null) st.ShotTick = Environment.TickCount64;
+        _ammo.OnPlayerWeaponShot(p, (int)e.Weapon);
         _rapidFire.OnPlayerWeaponShot(p, e);
         _proAim.OnPlayerWeaponShot(p, e);
         _carShot.OnPlayerWeaponShot(p, e);
@@ -541,33 +538,22 @@ public class AnticheatPlugin : IDisposable
 
         switch (pickup.Type)
         {
-            case 1: // Money
+            case 1:
                 _money.AllowMoneyGain(p.Id, pickup.Amount);
                 break;
-            case 2: // Health
+            case 2:
                 var hst = _players.Get(p.Id);
                 if (hst is not null) hst.SetHealthTick = Environment.TickCount64;
                 break;
-            case 3: // Armour
+            case 3:
                 var ast = _players.Get(p.Id);
                 if (ast is not null) ast.SetArmourTick = Environment.TickCount64;
                 break;
-            case 4: // Weapon
-                _weapon.OnWeaponGiven(p.Id, pickup.Weapon,
-                    WeaponData.PickupAmmo[pickup.Weapon]);
-                _ammo.OnAmmoGiven(p.Id, pickup.Weapon,
-                    WeaponData.PickupAmmo[pickup.Weapon]);
+            case 4:
+                _weapon.OnWeaponGiven(p.Id, pickup.Weapon, WeaponData.PickupAmmo[pickup.Weapon]);
+                _ammo.OnAmmoGiven(p.Id, pickup.Weapon, WeaponData.PickupAmmo[pickup.Weapon]);
                 break;
         }
-    }
-
-    public void OnSetPlayerSpawnInfo(int playerId, int weapon1, int ammo1, int weapon2, int ammo2, int weapon3, int ammo3)
-    {
-        var st = _players.Get(playerId);
-        if (st is null) return;
-        st.SpawnWeapon1 = weapon1; st.SpawnAmmo1 = ammo1;
-        st.SpawnWeapon2 = weapon2; st.SpawnAmmo2 = ammo2;
-        st.SpawnWeapon3 = weapon3; st.SpawnAmmo3 = ammo3;
     }
 
     private void OnPlayerRequestClass(object? sender, RequestClassEventArgs e)
@@ -700,7 +686,8 @@ public class AnticheatPlugin : IDisposable
         }
     }
 
-    public void Dispose() {
+    public void Dispose()
+    {
         _timer?.Stop();
         _timer?.Dispose();
         _watcher?.Dispose();

@@ -7,7 +7,6 @@ using System;
 
 namespace ProjectSMP.Plugins.Anticheat.Checks.Player;
 
-/// <summary>Check 15 — senjata tak sah di slot pemain</summary>
 public class WeaponCheck
 {
     private readonly PlayerStateManager _players;
@@ -29,9 +28,9 @@ public class WeaponCheck
 
         for (int slot = 0; slot < 13; slot++)
         {
-            player.GetWeaponData(slot, out Weapon weapon, out int ammo);
+            player.GetWeaponData(slot, out Weapon weapon, out _);
             int wid = (int)weapon;
-            if (wid == 0) continue; // slot kosong
+            if (wid == 0) continue;
 
             if (!WeaponData.IsValid(wid))
             {
@@ -42,8 +41,7 @@ public class WeaponCheck
             int trackedWid = st.Weapons[slot];
             if (trackedWid == wid) continue;
 
-            long setTick = st.SetWeaponTick[slot];
-            if (now - setTick < 1500) continue; // grace server GivePlayerWeapon
+            if (now - st.SetWeaponTick[slot] < 1500) continue;
 
             var pos = player.Position;
             if (WeaponData.IsNearAmmuNation(pos.X, pos.Y, pos.Z))
@@ -53,12 +51,10 @@ public class WeaponCheck
                 continue;
             }
 
-            _warnings.AddWarning(player.Id, "WeaponHack",
-                $"slot={slot} got={wid} expected={trackedWid}");
+            _warnings.AddWarning(player.Id, "WeaponHack", $"slot={slot} got={wid} expected={trackedWid}");
         }
     }
 
-    /// <summary>Panggil setiap kali server GivePlayerWeapon.</summary>
     public void OnWeaponGiven(int playerId, int weaponId, int ammo)
     {
         var st = _players.Get(playerId);
@@ -66,11 +62,9 @@ public class WeaponCheck
         int slot = WeaponData.Slot[weaponId];
         st.Weapons[slot] = weaponId;
         st.Ammo[slot] = ammo;
-        st.SetWeapon[slot] = weaponId;
         st.SetWeaponTick[slot] = Environment.TickCount64;
     }
 
-    /// <summary>Panggil setiap kali server ResetPlayerWeapons.</summary>
     public void OnWeaponsReset(int playerId)
     {
         var st = _players.Get(playerId);
