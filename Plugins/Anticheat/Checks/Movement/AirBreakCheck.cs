@@ -47,10 +47,7 @@ public class AirBreakCheck
             if (isJetpacking) {
                 bool validJetpackAnim = (1128 <= anim && anim <= 1134) || (1538 <= anim && anim <= 1544);
                 if (!validJetpackAnim && anim != 0) {
-                    if (_config.GetCheck("AirBreakOnfoot").Enabled) {
-                        _warnings.AddWarning(player.Id, "AirBreakOnfoot",
-                            $"fakeJetpack anim={anim}");
-                    }
+                    _warnings.AddWarning(player.Id, "AirBreakOnfoot", $"fakeJetpack anim={anim}");
                 }
                 st.WasJetpacking = true;
                 return;

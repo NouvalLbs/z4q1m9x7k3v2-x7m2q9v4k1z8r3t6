@@ -36,8 +36,7 @@ public class AmmoCheck
             if (_config.GetCheck("AmmoHackInfinite").Enabled)
             {
                 long shotTick = st.ShotAmmoTick[slot];
-                if (shotTick > 0 && now - shotTick >= 500 && now - shotTick < 2000)
-                {
+                if (shotTick > 0 && now - shotTick >= 100 && now - shotTick < 800) {
                     bool serverGave = now - st.GiveAmmoTick[slot] < 1500;
                     if (!serverGave && ammo >= st.PreShotAmmo[slot] && st.PreShotAmmo[slot] > 0)
                         _warnings.AddWarning(player.Id, "AmmoHackInfinite", $"slot={slot} ammo={ammo}");

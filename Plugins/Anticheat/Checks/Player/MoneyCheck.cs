@@ -29,19 +29,21 @@ public class MoneyCheck
         int cur = player.Money;
         int change = cur - st.Money;
 
-        // Money gain detection (existing)
         if (change > AllowedGain)
         {
             if (!_config.GetCheck("MoneyHack").Enabled) { st.Money = cur; return; }
-
-            // Check if server authorized this gain
             bool authorized = now - st.MoneyGivenTick < 1500;
-            if (!authorized)
-            {
+            if (!authorized) {
                 _warnings.AddWarning(player.Id, "MoneyHack", $"gain={change} cur={cur}");
             }
             st.Money = cur;
             return;
+        } else if (change < -AllowedGain) {
+            if (!_config.GetCheck("MoneyHack").Enabled) { st.Money = cur; return; }
+            bool authorized = now - st.MoneyGivenTick < 1500;
+            if (!authorized) {
+                _warnings.AddWarning(player.Id, "MoneyHack", $"loss={change} cur={cur}");
+            }
         }
 
         st.Money = cur;

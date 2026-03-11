@@ -69,9 +69,10 @@ public class VehicleTeleportCheck
         if (dist > MaxVehicleToPlayerDist) {
             bool isRespawn = false;
 
-            if (player.Vehicle is not null) {
-                var vst = _vehicles.Get(player.Vehicle.Id);
-                if (vst is not null) {
+            if (st.VehicleId != -1) {
+                var vst = _vehicles.Get(st.VehicleId);
+                if (vst is not null)
+                {
                     float spawnDist = VectorMath.Dist(pos.X, pos.Y, pos.Z,
                         vst.SpawnPosX, vst.SpawnPosY, vst.SpawnPosZ);
                     if (spawnDist < 15.0f) isRespawn = true;

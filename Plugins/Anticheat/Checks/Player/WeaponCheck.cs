@@ -74,10 +74,15 @@ public class WeaponCheck
         st.ResetWeaponsTick = Environment.TickCount64;
     }
 
-    public void OnPlayerSpawned(BasePlayer player)
-    {
+    public void OnPlayerSpawned(BasePlayer player) {
         var st = _players.Get(player.Id);
         if (st is null) return;
+
+        for (int i = 0; i < 13; i++) {
+            st.Weapons[i] = 0;
+            st.Ammo[i] = 0;
+        }
+
         OnWeaponGiven(player.Id, st.SpawnWeapon1, st.SpawnAmmo1);
         OnWeaponGiven(player.Id, st.SpawnWeapon2, st.SpawnAmmo2);
         OnWeaponGiven(player.Id, st.SpawnWeapon3, st.SpawnAmmo3);

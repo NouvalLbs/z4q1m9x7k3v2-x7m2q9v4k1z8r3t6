@@ -53,20 +53,8 @@ public class FlyHackCheck
             if (!_config.GetCheck("FlyHackVehicle").Enabled) return;
             if (now - st.VehicleVelocityTick < 2000) return;
 
-            if (vel.Z > MaxLiftZ)
-            {
-                int currentWarnings = st.GetWarning("FlyHackVehicle");
-                int maxAllowed = isBike ? 10 : _config.GetCheck("FlyHackVehicle").MaxWarnings;
-
-                if (currentWarnings < maxAllowed - 1)
-                {
-                    st.AddWarning("FlyHackVehicle");
-                    _warnings.AddWarning(player.Id, "FlyHackVehicle", $"vz={vel.Z:F3} bike={isBike}");
-                }
-                else
-                {
-                    _warnings.AddWarning(player.Id, "FlyHackVehicle", $"vz={vel.Z:F3} bike={isBike}");
-                }
+            if (vel.Z > MaxLiftZ) {
+                _warnings.AddWarning(player.Id, "FlyHackVehicle", $"vz={vel.Z:F3}");
             }
         }
     }

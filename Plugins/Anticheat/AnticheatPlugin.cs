@@ -15,6 +15,7 @@ using ProjectSMP.Plugins.Anticheat.Utilities;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Events;
+using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using System;
 using System.IO;
@@ -34,7 +35,7 @@ public class AnticheatPlugin : IDisposable
     private readonly AcLogger _logger;
     private readonly AnticheatConfig _config;
     private FileSystemWatcher? _watcher;
-    private Timer? _timer;
+    private System.Timers.Timer? _timer;
 
     private AirBreakCheck _airBreak = null!;
     private TeleportCheck _teleport = null!;
@@ -198,13 +199,13 @@ public class AnticheatPlugin : IDisposable
                 _config.MinReconnectSeconds = fresh.MinReconnectSeconds;
                 _config.SpeedHackVehResetDelay = fresh.SpeedHackVehResetDelay;
                 foreach (var (k, v) in fresh.Checks) _config.Checks[k] = v;
-                _logger.Log("anticheat.json reloaded.");
+                _logger.Log("AntiCheat.json reloaded.");
             }
             catch (Exception ex) { _logger.LogWarn($"Hot-reload failed: {ex.Message}"); }
         };
     }
 
-    public static AnticheatPlugin Create(string configPath = "anticheat.json")
+    public static AnticheatPlugin Create(string configPath = "AntiCheat.json")
     {
         var cfg = LoadConfig(configPath);
         var players = new PlayerStateManager();
@@ -218,7 +219,7 @@ public class AnticheatPlugin : IDisposable
         return plugin;
     }
 
-    public static AnticheatConfig LoadConfig(string path = "anticheat.json")
+    public static AnticheatConfig LoadConfig(string path = "AntiCheat.json")
     {
         if (!File.Exists(path))
         {
@@ -513,7 +514,7 @@ public class AnticheatPlugin : IDisposable
         gm.PlayerClickPlayer += OnPlayerClickPlayer;
         gm.PlayerClickTextDraw += OnPlayerClickTextDraw;
         gm.PlayerClickPlayerTextDraw += OnPlayerClickPlayerTextDraw;
-        gm.PlayerSelectObject += OnPlayerSelectObject;
+        // gm.PlayerSelectObject += OnPlayerSelectObject;
         gm.PlayerKeyStateChanged += OnPlayerKeyStateChange;
         gm.VehicleMod += OnVehicleMod;
         gm.PlayerEnterExitModShop += OnPlayerEnterExitModShop;
@@ -525,7 +526,7 @@ public class AnticheatPlugin : IDisposable
         gm.DialogResponse += OnDialogResponse;
         gm.RconLoginAttempt += OnRconLoginAttempt;
 
-        _timer = new Timer(5000);
+        _timer = new System.Timers.Timer(5000);
         _timer.Elapsed += (_, _) => {
             _ping.Tick();
             _afkGhost.Tick();
@@ -619,7 +620,7 @@ public class AnticheatPlugin : IDisposable
         var st = _players.Get(p.Id);
         if (st is not null) {
             st.CamMode = (int)p.CameraMode;
-            st.Anim = p.GetAnimationIndex();
+            st.Anim = p.AnimationIndex;
 
             if (958 <= st.Anim && st.Anim <= 979)
                 st.IsParachuting = true;
@@ -856,11 +857,13 @@ public class AnticheatPlugin : IDisposable
         _cbFlood.Check(p, 23);
     }
 
+    /*
     private void OnPlayerSelectObject(object? sender, SelectObjectEventArgs e)
     {
         if (sender is not BasePlayer p) return;
         _cbFlood.Check(p, 26);
     }
+    */
 
     private void OnPlayerKeyStateChange(object? sender, KeyStateChangedEventArgs e) {
         if (sender is not BasePlayer p) return;
@@ -959,7 +962,8 @@ public class AnticheatPlugin : IDisposable
         {
             case PunishAction.Kick:
                 _logger.LogKick(playerId, checkName);
-                p.Kick(message);
+                p.SendClientMessage(Color.Red, message);
+                p.Kick();
                 break;
 
             case PunishAction.Ban:

@@ -118,15 +118,17 @@ public class LagCompSpoofCheck
 
         float absVertical = MathF.Abs(verticalAngle);
 
-        if (absVertical > MaxVerticalAngleDiff && isAiming)
-        {
-            _warnings.AddWarning(issuer.Id, "LagCompSpoof",
-                $"silentAim angle={angleDiff:F1}° vert={absVertical:F1}° dist={distance:F1} wid={wid}");
-        }
-        else if (!isAiming)
-        {
-            _warnings.AddWarning(issuer.Id, "LagCompSpoof",
-                $"silentAim noAim angle={angleDiff:F1}° dist={distance:F1} wid={wid}");
+        if (angleDiff > MaxAngleDifference) {
+            if (!isAiming) {
+                _warnings.AddWarning(issuer.Id, "LagCompSpoof",
+                    $"silentAim noAim angle={angleDiff:F1}° dist={distance:F1} wid={wid}");
+            } else if (absVertical > MaxVerticalAngleDiff) {
+                _warnings.AddWarning(issuer.Id, "LagCompSpoof",
+                    $"silentAim angle={angleDiff:F1}° vert={absVertical:F1}° dist={distance:F1} wid={wid}");
+            } else {
+                _warnings.AddWarning(issuer.Id, "LagCompSpoof",
+                    $"silentAim horizontal angle={angleDiff:F1}° dist={distance:F1} wid={wid}");
+            }
         }
     }
 
