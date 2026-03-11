@@ -69,11 +69,6 @@ public class PlayerAcState
     public bool PendingClassResult { get; set; }
     public bool JetpackAuthorized { get; set; }
     public long JetpackGivenTick { get; set; }
-    public int NitroUseCount { get; set; }
-    public long LastNitroBoostTick { get; set; }
-    public float LastVehicleSpeed { get; set; }
-    public long LastInteriorChangeTick { get; set; }
-    public bool ShouldClearWeaponsOnInterior { get; set; }
 
     public int ConsecutiveSilentAimHits { get; set; }
 

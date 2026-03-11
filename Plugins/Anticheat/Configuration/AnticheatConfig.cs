@@ -91,10 +91,6 @@ public class AnticheatConfig
         ["VehicleModHack"] = new(),
         ["VehicleHealthHack"] = new(),
         ["PaintJobHack"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
-        ["InteriorWeaponHack"] = new(),
-        ["InteriorWeaponShot"] = new(),
-        ["InteriorWeaponClear"] = new() { Enabled = false },
-        ["InteriorWeaponShot"] = new(),
 
         // Anti-NOP checks
         ["NopGiveWeapon"] = new() { MaxWarnings = 8 },
