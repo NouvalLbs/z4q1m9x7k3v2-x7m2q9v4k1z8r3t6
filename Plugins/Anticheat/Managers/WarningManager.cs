@@ -34,13 +34,28 @@ public class WarningManager
 
         int count = state.AddWarning(checkName);
         _logger.LogCheat(playerId, checkName, count, details);
-        CheatDetected?.Invoke(this, new CheatDetectedEventArgs(playerId, checkName, count, details));
 
-        if (count < cfg.MaxWarnings) return CheckResult.Warn;
+        // Determine suggested action
+        PunishAction suggestedAction = count >= cfg.MaxWarnings ? cfg.Action : PunishAction.Warn;
+
+        // Fire event with ability to override
+        var eventArgs = new CheatDetectedEventArgs(playerId, checkName, count, details, suggestedAction);
+        CheatDetected?.Invoke(this, eventArgs);
+
+        // Check if punishment was canceled
+        if (eventArgs.Cancel)
+            return CheckResult.Warn;
+
+        // Use override action if provided
+        PunishAction finalAction = eventArgs.OverrideAction ?? suggestedAction;
+
+        if (count < cfg.MaxWarnings && finalAction == PunishAction.Warn)
+            return CheckResult.Warn;
 
         state.ResetWarning(checkName);
-        PunishmentRequired?.Invoke(playerId, checkName, cfg.Action);
-        return cfg.Action switch
+        PunishmentRequired?.Invoke(playerId, checkName, finalAction);
+
+        return finalAction switch
         {
             PunishAction.Ban => CheckResult.Ban,
             PunishAction.Kick => CheckResult.Kick,
@@ -64,4 +79,20 @@ public class WarningManager
 
     public int GetCount(int playerId, string checkName) =>
         _players.Get(playerId)?.GetWarning(checkName) ?? 0;
+
+    public void TrackKick(int playerId)
+    {
+        var state = _players.GetOrCreate(playerId);
+        state.TotalKicks++;
+
+        // Check for auto-ban
+        if (_config.MaxWarningsBeforeBan > 0 && state.TotalKicks >= _config.MaxWarningsBeforeBan)
+        {
+            _logger.LogBan(playerId, $"AutoBan after {state.TotalKicks} kicks");
+            PunishmentRequired?.Invoke(playerId, "AutoBan", PunishAction.Ban);
+        }
+    }
+
+    public int GetTotalKicks(int playerId)
+        => _players.Get(playerId)?.TotalKicks ?? 0;
 }

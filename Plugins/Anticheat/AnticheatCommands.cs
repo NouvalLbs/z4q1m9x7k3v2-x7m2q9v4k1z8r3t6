@@ -64,6 +64,25 @@ public class AnticheatCommands
                 foreach (var (k, v) in fresh.Checks) _ac.Config.Checks[k] = v;
                 caller.SendClientMessage(-1, "[AC] Config reloaded.");
                 break;
+            case "/acstats":
+                string report = _ac.GenerateStatsReport();
+                foreach (var line in report.Split('\n'))
+                    caller.SendClientMessage(-1, line);
+                break;
+
+            case "/achistory":
+                if (!TryGetTarget(caller, args, out target)) return;
+                var history = _ac.GetPlayerHistory(target.Id);
+                if (history is null) { caller.SendClientMessage(-1, "No history found."); return; }
+                string histReport = history.GenerateReport();
+                foreach (var line in histReport.Split('\n'))
+                    caller.SendClientMessage(-1, line);
+                break;
+
+            case "/acresetstats":
+                _ac.ResetStatistics();
+                caller.SendClientMessage(-1, "[AC] Statistics reset.");
+                break;
         }
     }
 

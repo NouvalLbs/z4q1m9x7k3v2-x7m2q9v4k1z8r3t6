@@ -1,8 +1,27 @@
-﻿namespace ProjectSMP.Plugins.Anticheat.State;
+﻿using System.Collections.Generic;
+
+namespace ProjectSMP.Plugins.Anticheat.State;
 
 public class VehicleAcState
 {
     public int PaintJob { get; set; } = 3;
+    public bool HasNitro { get; set; }
+    public int NitroType { get; set; } = -1;
+    public float LastVehicleAngle { get; set; }
+    public float LastVehicleRoll { get; set; }
+    public float LastVehiclePitch { get; set; }
+    public long LastUpdateTick { get; set; }
+    public long LastFlipTick { get; set; }
+    public int FlipCount { get; set; }
+    public Queue<long> FlipHistory { get; } = new();
+    public float LastKnownX { get; set; }
+    public float LastKnownY { get; set; }
+    public float LastKnownZ { get; set; }
+    public long LastTrackedTick { get; set; }
+    public long LastServerVehiclePosTick { get; set; }
+    public HashSet<int> InstalledComponents { get; } = new();
+    public Queue<long> ComponentChangeHistory { get; } = new();
+    public long LastServerModTick { get; set; }
 
     // ── Anti-NOP: SetVehicleHealth ───────────────────────────────────────
     public float NopSetHealthExpected { get; set; } = -1f;

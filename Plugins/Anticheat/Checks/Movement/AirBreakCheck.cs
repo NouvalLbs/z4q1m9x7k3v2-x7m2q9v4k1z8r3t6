@@ -32,20 +32,21 @@ public class AirBreakCheck
         var vel = player.Velocity;
         var pos = player.Position;
 
-        // Skip jetpack (SpecialAction 2 = UseJetpack)
         if (player.SpecialAction == SpecialAction.Usejetpack) return;
 
         float zDiff = pos.Z - st.Z;
 
         if (pState == PlayerState.OnFoot)
         {
-            if (!_config.Enabled || !_config.GetCheck("AirBreakOnfoot").Enabled) return;
+            if (!_config.GetCheck("AirBreakOnfoot").Enabled) return;
+            if (player.AnimationIndex == 1133) return;
+            if (player.SurfingVehicle is not null) return;
             if (zDiff > MaxZGainNoVelocity && MathF.Abs(vel.Z) < 0.05f)
                 _warnings.AddWarning(player.Id, "AirBreakOnfoot", $"dz={zDiff:F2} vz={vel.Z:F3}");
         }
         else if (pState == PlayerState.Driving)
         {
-            if (!_config.Enabled || !_config.GetCheck("AirBreakVehicle").Enabled) return;
+            if (!_config.GetCheck("AirBreakVehicle").Enabled) return;
             if (now - st.VehicleVelocityTick < 2000) return;
             if (zDiff > MaxZGainNoVelocity * 1.5f && MathF.Abs(vel.Z) < 0.05f)
                 _warnings.AddWarning(player.Id, "AirBreakVehicle", $"dz={zDiff:F2}");

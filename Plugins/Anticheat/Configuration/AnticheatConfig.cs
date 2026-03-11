@@ -10,10 +10,26 @@ public class AnticheatConfig
     public int MaxConnectsPerIp { get; set; } = 1;
     public int MinReconnectSeconds { get; set; } = 12;
     public int SpeedHackVehResetDelay { get; set; } = 3;
+
+    // NEW: Enhanced configuration
+    public List<string> WhitelistedIPs { get; set; } = new();
+    public List<int> WhitelistedPlayerIds { get; set; } = new();
+    public bool EnableAdminImmunity { get; set; } = true;
+    public bool EnableDiscordWebhook { get; set; } = false;
+    public string DiscordWebhookUrl { get; set; } = "";
+    public bool EnableAutoSave { get; set; } = true;
+    public int AutoSaveIntervalMinutes { get; set; } = 10;
+    public bool EnableVerboseLogging { get; set; } = false;
+    public int MaxWarningsBeforeBan { get; set; } = 10; // Global ban threshold
+
     public Dictionary<string, CheckConfig> Checks { get; set; } = BuildDefaults();
 
     public CheckConfig GetCheck(string name) =>
         Checks.TryGetValue(name, out var c) ? c : Checks[name] = new CheckConfig();
+
+    public bool IsWhitelisted(string ip) => WhitelistedIPs.Contains(ip);
+
+    public bool IsWhitelisted(int playerId) => WhitelistedPlayerIds.Contains(playerId);
 
     private static Dictionary<string, CheckConfig> BuildDefaults() => new()
     {
@@ -32,6 +48,7 @@ public class AnticheatConfig
         ["HealthHackVehicle"] = new(),
         ["ArmourHack"] = new(),
         ["MoneyHack"] = new(),
+        ["MoneyLossHack"] = new(),
         ["WeaponHack"] = new(),
         ["AmmoHackAdd"] = new(),
         ["AmmoHackInfinite"] = new(),
@@ -69,8 +86,35 @@ public class AnticheatConfig
         ["ParkourMod"] = new() { Enabled = false },
         ["UnFreeze"] = new() { Enabled = false },
         ["FakeNpc"] = new() { Enabled = false },
+        ["JetpackHack"] = new(),
+        ["AnimationHack"] = new(),
+        ["NitroHack"] = new(),
+        ["VehicleModHack"] = new(),
+        ["InteriorWeaponHack"] = new(),
+        ["InteriorWeaponShot"] = new(),
+        ["InteriorWeaponClear"] = new() { Enabled = false },
+        ["CheckpointTeleport"] = new(),
+        ["RaceCheckpointTeleport"] = new(),
+        ["FakePickup"] = new(),
+        ["MacroShoot"] = new(),
+        ["MacroKeys"] = new(),
+        ["MacroCommand"] = new(),
+        ["MacroChat"] = new(),
+        ["DriveOnWater"] = new(),
+        ["SwimThroughWall"] = new(),
+        ["FlyThroughWall"] = new(),
+        ["InteriorClip"] = new(),
+        ["VehicleFlipSpam"] = new(),
+        ["InfiniteRun"] = new(),
+        ["ClassSelectionSpam"] = new(),
+        ["ClassSelectionExploit"] = new(),
+        ["InvalidClassId"] = new() { Enabled = false },
+        ["MoonGravity"] = new(),
+        ["IceSlide"] = new(),
+        ["Carwarp"] = new(),
+        ["CodeVerification"] = new(),
 
-        // ── Anti-NOP ─────────────────────────────────────────────────────
+        // Anti-NOP checks
         ["NopGiveWeapon"] = new() { MaxWarnings = 8 },
         ["NopSetAmmo"] = new() { MaxWarnings = 8 },
         ["NopSetInterior"] = new() { MaxWarnings = 8 },

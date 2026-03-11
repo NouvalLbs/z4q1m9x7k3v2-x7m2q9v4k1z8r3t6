@@ -12,13 +12,16 @@ using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.Anticheat.Data;
 using ProjectSMP.Plugins.Anticheat.Events;
 using ProjectSMP.Plugins.Anticheat.Managers;
+using ProjectSMP.Plugins.Anticheat.Statistics;
 using ProjectSMP.Plugins.Anticheat.Utilities;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Events;
 using SampSharp.GameMode.World;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Timers;
 
@@ -80,6 +83,23 @@ public class AnticheatPlugin : IDisposable
     private ParkourModCheck _parkourMod = null!;
     private UnFreezeCheck _unFreeze = null!;
     private FakeNpcCheck _fakeNpc = null!;
+    private JetpackCheck _jetpack = null!;
+    private AnimationHackCheck _animationHack = null!;
+    private NitroHackCheck _nitroHack = null!;
+    private VehicleModHackCheck _vehicleModHack = null!;
+    private InteriorWeaponCheck _interiorWeapon = null!;
+    private CheckpointTeleportCheck _checkpointTeleport = null!;
+    private FakePickupCheck _fakePickup = null!;
+    private MacroDetectionCheck _macroDetection = null!;
+    private DriveOnWaterCheck _driveOnWater = null!;
+    private WallClipCheck _wallClip = null!;
+    private VehicleFlipCheck _vehicleFlip = null!;
+    private InfiniteRunCheck _infiniteRun = null!;
+    private ClassSelectionCheck _classSelection = null!;
+    private GravityHackCheck _gravityHack = null!;
+    private CarwarpCheck _carwarp = null!;
+    private CodeVerificationCheck _codeVerification = null!;
+    private readonly AntiCheatStats _stats;
 
     // ── Anti-NOP ─────────────────────────────────────────────────────────
     private NopGiveWeaponCheck _nopGiveWeapon = null!;
@@ -106,10 +126,7 @@ public class AnticheatPlugin : IDisposable
         Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
     };
 
-    public AnticheatPlugin(
-        PlayerStateManager players, VehicleStateManager vehicles, PickupStateManager pickups,
-        WarningManager warnings, FloodRateLimiter flood, AcLogger logger, AnticheatConfig config)
-    {
+    public AnticheatPlugin(PlayerStateManager players, VehicleStateManager vehicles, PickupStateManager pickups, WarningManager warnings, FloodRateLimiter flood, AcLogger logger, AnticheatConfig config) {
         _players = players;
         _vehicles = vehicles;
         _pickups = pickups;
@@ -118,6 +135,7 @@ public class AnticheatPlugin : IDisposable
         _logger = logger;
         _config = config;
         _events = new AnticheatEvents();
+        _stats = new AntiCheatStats(); // ADD THIS
     }
 
     private void InitChecks()
@@ -165,6 +183,20 @@ public class AnticheatPlugin : IDisposable
         _parkourMod = new ParkourModCheck(_players, _warnings, _config);
         _unFreeze = new UnFreezeCheck(_players, _warnings, _config);
         _fakeNpc = new FakeNpcCheck(_config, _logger);
+        _jetpack = new JetpackCheck(_players, _warnings, _config);
+        _animationHack = new AnimationHackCheck(_players, _warnings, _config);
+        _nitroHack = new NitroHackCheck(_players, _vehicles, _warnings, _config);
+        _vehicleModHack = new VehicleModHackCheck(_players, _vehicles, _warnings, _config);
+        _interiorWeapon = new InteriorWeaponCheck(_players, _warnings, _config);
+        _macroDetection = new MacroDetectionCheck(_players, _warnings, _config);
+        _driveOnWater = new DriveOnWaterCheck(_players, _warnings, _config);
+        _wallClip = new WallClipCheck(_players, _warnings, _config);
+        _vehicleFlip = new VehicleFlipCheck(_players, _vehicles, _warnings, _config);
+        _infiniteRun = new InfiniteRunCheck(_players, _warnings, _config);
+        _classSelection = new ClassSelectionCheck(_players, _warnings, _config);
+        _gravityHack = new GravityHackCheck(_players, _warnings, _config);
+        _carwarp = new CarwarpCheck(_players, _vehicles, _warnings, _config);
+        _codeVerification = new CodeVerificationCheck(_config, _logger);
 
         _nopGiveWeapon = new NopGiveWeaponCheck(_players, _warnings, _config);
         _nopSetAmmo = new NopSetAmmoCheck(_players, _warnings, _config);
@@ -178,6 +210,8 @@ public class AnticheatPlugin : IDisposable
         _nopSpawnPlayer = new NopSpawnPlayerCheck(_players, _warnings, _config);
         _nopSetPos = new NopSetPlayerPosCheck(_players, _warnings, _config);
         _nopRemoveFromVehicle = new NopRemoveFromVehicleCheck(_players, _warnings, _config);
+        _checkpointTeleport = new CheckpointTeleportCheck(_players, _warnings, _config);
+        _fakePickup = new FakePickupCheck(_players, _pickups, _warnings, _config);
     }
 
     private void InitHotReload(string configPath)
@@ -237,6 +271,9 @@ public class AnticheatPlugin : IDisposable
     public void OnGivePlayerMoney(int playerId, int amount)
         => _money.AllowMoneyGain(playerId, amount);
 
+    public void OnTakePlayerMoney(int playerId, int amount)
+        => _money.AllowMoneyLoss(playerId, amount);
+
     public void OnResetPlayerMoney(int playerId)
         => _money.OnResetPlayerMoney(playerId);
 
@@ -250,8 +287,14 @@ public class AnticheatPlugin : IDisposable
     public void OnSetPlayerAmmo(int playerId, int weaponId, int ammo)
         => _nopSetAmmo.OnSetPlayerAmmo(playerId, weaponId, ammo);
 
-    public void OnSetPlayerInterior(int playerId, int interiorId)
-        => _nopSetInterior.OnSetPlayerInterior(playerId, interiorId);
+    public void OnSetPlayerInterior(int playerId, int interiorId) {
+        var p = BasePlayer.Find(playerId);
+        if (p is null) return;
+
+        int oldInterior = p.Interior;
+        _nopSetInterior.OnSetPlayerInterior(playerId, interiorId);
+        _interiorWeapon.OnPlayerInteriorChanged(playerId, interiorId, oldInterior);
+    }
 
     public void OnResetPlayerWeapons(int playerId)
     {
@@ -308,10 +351,12 @@ public class AnticheatPlugin : IDisposable
         _nopPutInVehicle.OnPutPlayerInVehicle(playerId, vehicleId);
     }
 
-    public void OnTogglePlayerSpectating(int playerId, bool toggle)
-    {
+    public void OnTogglePlayerSpectating(int playerId, bool toggle) {
         var st = _players.Get(playerId);
-        if (st is not null) st.SpectateTick = Environment.TickCount64;
+        if (st is not null) {
+            st.SpectateTick = Environment.TickCount64;
+            st.IsSpectating = toggle;
+        }
         _nopToggleSpectating.OnTogglePlayerSpectating(playerId, toggle);
     }
 
@@ -334,11 +379,15 @@ public class AnticheatPlugin : IDisposable
         if (p is not null) _attachCrasher.ValidateAttachedObject(p, slot, modelId);
     }
 
-    public void OnRegisterPickup(int pickupId, float x, float y, float z, int type = 0, int weapon = 0, int amount = 0)
-        => _pickups.Register(pickupId, x, y, z, type, weapon, amount);
+    public void OnRegisterPickup(int pickupId, float x, float y, float z, int type = 0, int weapon = 0, int amount = 0) {
+        _pickups.Register(pickupId, x, y, z, type, weapon, amount);
+        _fakePickup.OnPickupCreated(pickupId, x, y, z, type, weapon, amount);
+    }
 
-    public void OnDestroyPickup(int pickupId)
-        => _pickups.Remove(pickupId);
+    public void OnDestroyPickup(int pickupId) {
+        _pickups.Remove(pickupId);
+        _fakePickup.OnPickupDestroyed(pickupId);
+    }
 
     public void OnSpawnPlayer(int playerId) {
         var st = _players.Get(playerId);
@@ -391,6 +440,7 @@ public class AnticheatPlugin : IDisposable
         gm.PlayerClickTextDraw += OnPlayerClickTextDraw;
         gm.PlayerClickPlayerTextDraw += OnPlayerClickPlayerTextDraw;
         gm.PlayerSelectObject += OnPlayerSelectObject;
+        gm.PlayerKeyStateChanged += OnPlayerKeyStateChange;
         gm.VehicleMod += OnVehicleMod;
         gm.PlayerEnterExitModShop += OnPlayerEnterExitModShop;
         gm.VehiclePaintjobApplied += OnVehiclePaintjob;
@@ -401,10 +451,19 @@ public class AnticheatPlugin : IDisposable
         gm.DialogResponse += OnDialogResponse;
         gm.RconLoginAttempt += OnRconLoginAttempt;
 
-        _warnings.PunishmentRequired += OnPunishment;
+        _warnings.CheatDetected += (s, e) => _stats.RecordDetection(e.PlayerId, e.CheckName, e.Details);
+        _warnings.PunishmentRequired += (pid, check, action) =>
+        {
+            if (action == PunishAction.Kick) _stats.RecordKick(pid, check);
+            else if (action == PunishAction.Ban) _stats.RecordBan(pid, check);
+        };
 
         _timer = new Timer(5000);
-        _timer.Elapsed += (_, _) => { _afkGhost.Tick(); _ping.Tick(); };
+        _timer.Elapsed += (_, _) => {
+            _afkGhost.Tick();
+            _ping.Tick();
+            _codeVerification.Tick();
+        };
         _timer.AutoReset = true;
         _timer.Start();
     }
@@ -419,6 +478,8 @@ public class AnticheatPlugin : IDisposable
         if (!_fakeNpc.OnPlayerConnected(p)) return;
         _version.OnPlayerConnected(p);
         _reconnect.OnPlayerConnected(p);
+        _classSelection.OnPlayerConnected(p.Id);
+        _stats.RecordPlayerChecked(p.Id);
         var st = _players.GetOrCreate(p.Id);
         st.IsOnline = true;
         st.IpAddress = p.IP;
@@ -439,6 +500,7 @@ public class AnticheatPlugin : IDisposable
         _flood.ClearPlayer(p.Id);
         _nopSpawnPlayer.OnPlayerDisconnected(p.Id);
         _nopRemoveFromVehicle.OnPlayerDisconnected(p.Id);
+        _macroDetection.OnPlayerDisconnected(p.Id);
         _players.Remove(p.Id);
     }
 
@@ -466,6 +528,16 @@ public class AnticheatPlugin : IDisposable
         _invisible.OnPlayerUpdate(p);
         _parkourMod.OnPlayerUpdate(p);
         _unFreeze.OnPlayerUpdate(p);
+        _jetpack.OnPlayerUpdate(p);
+        _animationHack.OnPlayerUpdate(p);
+        _nitroHack.OnPlayerUpdate(p);
+        _interiorWeapon.OnPlayerUpdate(p);
+        _driveOnWater.OnPlayerUpdate(p);
+        _wallClip.OnPlayerUpdate(p);
+        _vehicleFlip.OnPlayerUpdate(p);
+        _infiniteRun.OnPlayerUpdate(p);
+        _gravityHack.OnPlayerUpdate(p);
+
         _nopGiveWeapon.OnPlayerUpdate(p);
         _nopSetAmmo.OnPlayerUpdate(p);
         _nopSetInterior.OnPlayerUpdate(p);
@@ -489,6 +561,13 @@ public class AnticheatPlugin : IDisposable
         _armour.OnPlayerSpawned(p);
         _money.OnPlayerSpawned(p);
         _weapon.OnPlayerSpawned(p);
+        _jetpack.OnPlayerSpawned(p.Id);
+        _animationHack.OnPlayerSpawned(p.Id);
+        _wallClip.OnPlayerSpawned(p.Id);
+        _infiniteRun.OnPlayerSpawned(p.Id);
+        _classSelection.OnPlayerSpawned(p.Id);
+        _gravityHack.OnPlayerSpawned(p.Id);
+
         _nopGiveWeapon.OnPlayerSpawned(p.Id);
         _nopSetAmmo.OnPlayerSpawned(p.Id);
         _nopSetInterior.OnPlayerSpawned(p.Id);
@@ -507,6 +586,12 @@ public class AnticheatPlugin : IDisposable
         if (sender is not BasePlayer p) return;
         _godMode.OnPlayerDied(p);
         _fakeKill.OnPlayerDied(p, e);
+        _jetpack.OnPlayerDied(p.Id);
+        _animationHack.OnPlayerDied(p.Id);
+        _infiniteRun.OnPlayerDied(p.Id);
+        _classSelection.OnPlayerDied(p.Id);
+        _gravityHack.OnPlayerDied(p.Id);
+
         _nopSetHealth.OnPlayerDied(p.Id);
         _nopSetArmour.OnPlayerDied(p.Id);
         _nopSetSpecialAction.OnPlayerDied(p.Id);
@@ -526,10 +611,12 @@ public class AnticheatPlugin : IDisposable
     private void OnPlayerWeaponShot(object? sender, WeaponShotEventArgs e)
     {
         if (sender is not BasePlayer p) return;
+        _macroDetection.OnPlayerWeaponShot(p, e);
         _ammo.OnPlayerWeaponShot(p, (int)e.Weapon);
         _rapidFire.OnPlayerWeaponShot(p, e);
         _proAim.OnPlayerWeaponShot(p, e);
         _carShot.OnPlayerWeaponShot(p, e);
+        _interiorWeapon.OnPlayerWeaponShot(p, e);
     }
 
     private void OnPlayerEnterVehicle(object? sender, EnterVehicleEventArgs e)
@@ -545,6 +632,11 @@ public class AnticheatPlugin : IDisposable
         st.VehicleId = e.Vehicle.Id;
         st.EnterVehicleTick = Environment.TickCount64;
         _nopSetPos.OnPlayerEnterVehicle(p.Id);
+        _nitroHack.OnPlayerEnterVehicle(p.Id, e.Vehicle.Id);
+        _driveOnWater.OnPlayerEnterVehicle(p.Id);
+        _vehicleFlip.OnPlayerEnterVehicle(p.Id, e.Vehicle.Id);
+        _infiniteRun.OnPlayerEnterVehicle(p.Id);
+        _gravityHack.OnPlayerEnterVehicle(p.Id);
     }
 
     private void OnPlayerExitVehicle(object? sender, PlayerVehicleEventArgs e)
@@ -556,6 +648,8 @@ public class AnticheatPlugin : IDisposable
         _nopPutInVehicle.OnPlayerExitVehicle(p.Id);
         st.RemoveFromVehicleTick = Environment.TickCount64;
         _nopSetPos.OnPlayerExitVehicle(p.Id);
+        _nitroHack.OnPlayerExitVehicle(p.Id);
+        _driveOnWater.OnPlayerExitVehicle(p.Id);
         _nopRemoveFromVehicle.OnPlayerExitVehicle(p.Id);
         st.VehicleId = -1;
     }
@@ -565,6 +659,7 @@ public class AnticheatPlugin : IDisposable
         if (sender is not BasePlayer p) return;
         if (!_cbFlood.Check(p, 11)) return;
         _vehicleTeleport.OnPlayerStateChanged(p, e);
+        _carwarp.OnPlayerStateChanged(p, e);
         var st = _players.Get(p.Id);
         if (st is null) return;
         if (e.NewState == PlayerState.OnFoot && e.OldState == PlayerState.Driving)
@@ -582,6 +677,7 @@ public class AnticheatPlugin : IDisposable
     private void OnPlayerText(object? sender, TextEventArgs e)
     {
         if (sender is not BasePlayer p) return;
+        _macroDetection.OnPlayerText(p, e.Text);
         if (!_cbFlood.Check(p, 16)) e.SendToPlayers = false;
     }
 
@@ -589,42 +685,49 @@ public class AnticheatPlugin : IDisposable
     {
         if (sender is not BasePlayer p) return;
         _cbFlood.Check(p, 5);
+        _macroDetection.OnPlayerCommandText(p, e.Text);
     }
 
     private void OnPlayerEnterCheckpoint(object? sender, EventArgs e)
     {
         if (sender is not BasePlayer p) return;
         _cbFlood.Check(p, 17);
+        _checkpointTeleport.OnPlayerEnterCheckpoint(p);
     }
 
     private void OnPlayerLeaveCheckpoint(object? sender, EventArgs e)
     {
         if (sender is not BasePlayer p) return;
         _cbFlood.Check(p, 18);
+        _checkpointTeleport.OnCheckpointDisabled(p.Id);
     }
 
     private void OnPlayerEnterRaceCheckpoint(object? sender, EventArgs e)
     {
         if (sender is not BasePlayer p) return;
         _cbFlood.Check(p, 21);
+        _checkpointTeleport.OnPlayerEnterRaceCheckpoint(p);
     }
 
     private void OnPlayerLeaveRaceCheckpoint(object? sender, EventArgs e)
     {
         if (sender is not BasePlayer p) return;
         _cbFlood.Check(p, 22);
+        _checkpointTeleport.OnRaceCheckpointDisabled(p.Id);
     }
 
     private void OnPlayerRequestSpawn(object? sender, RequestSpawnEventArgs e)
     {
         if (sender is not BasePlayer p) return;
         _cbFlood.Check(p, 19);
+        _classSelection.OnPlayerRequestSpawn(p, e);
     }
 
     private void OnPlayerPickUpPickup(object? sender, PickUpPickupEventArgs e)
     {
         if (sender is not BasePlayer p) return;
         if (!_cbFlood.Check(p, 8)) return;
+        _fakePickup.OnPlayerPickUpPickup(p, e);
         _vehicleTeleport.OnPlayerPickUpPickup(p, e);
         var pickup = _pickups.Get(e.Pickup.Id);
         if (pickup is null) return;
@@ -653,8 +756,7 @@ public class AnticheatPlugin : IDisposable
     {
         if (sender is not BasePlayer p) return;
         _cbFlood.Check(p, 9);
-        var st = _players.Get(p.Id);
-        if (st is not null) st.PendingClassResult = true;
+        _classSelection.OnPlayerRequestClass(p, e);
     }
 
     private void OnPlayerSelectedMenuRow(object? sender, MenuRowEventArgs e)
@@ -699,13 +801,25 @@ public class AnticheatPlugin : IDisposable
         _cbFlood.Check(p, 26);
     }
 
+    private void OnPlayerKeyStateChange(object? sender, KeyStateChangedEventArgs e)
+    {
+        if (sender is not BasePlayer p) return;
+        _macroDetection.OnPlayerKeyStateChange(p, e.NewKeys, e.OldKeys);
+    }
+
     private void OnVehicleMod(object? sender, VehicleModEventArgs e)
     {
         if (sender is not BaseVehicle v) return;
         if (e.Player is not BasePlayer p) return;
         if (!_cbFlood.Check(p, 12)) return;
+
         bool valid = _tuningCrasher.OnVehicleMod(v, p, e.ComponentId);
-        if (valid) _tuningHack.OnVehicleMod(v, p, e.ComponentId);
+        if (valid)
+        {
+            _tuningHack.OnVehicleMod(v, p, e.ComponentId);
+            _vehicleModHack.OnVehicleComponentAdded(v, p, e.ComponentId); // ADD THIS
+            _nitroHack.OnVehicleModAdded(v.Id, e.ComponentId);
+        }
     }
 
     private void OnPlayerEnterExitModShop(object? sender, EnterModShopEventArgs e)
@@ -739,6 +853,8 @@ public class AnticheatPlugin : IDisposable
         _cbFlood.Check(p, 15);
         _vehicles.Remove(v.Id);
         _nopSetVehicleHealth.OnVehicleDestroyed(v.Id);
+        _vehicleModHack.OnVehicleDestroyed(v.Id);
+        _carwarp.OnVehicleDestroyed(v.Id);
     }
 
     private void OnVehicleDamageStatusUpdated(object? sender, PlayerEventArgs e)
@@ -769,16 +885,196 @@ public class AnticheatPlugin : IDisposable
         _rcon.OnRconLoginAttempt(p, e.Password, e.SuccessfulLogin);
     }
 
-    private void OnPunishment(int playerId, string checkName, PunishAction action)
-    {
+    private void OnPunishment(int playerId, string checkName, PunishAction action) {
         var p = BasePlayer.Find(playerId);
         if (p is null) return;
-        switch (action)
-        {
-            case PunishAction.Kick: _logger.LogKick(playerId, checkName); p.Kick(); break;
-            case PunishAction.Ban: _logger.LogBan(playerId, checkName); p.Ban(); break;
+
+        // Check whitelist
+        if (IsWhitelisted(playerId)) {
+            _logger.Log($"Punishment skipped for whitelisted player {playerId}");
+            return;
+        }
+
+        var checkCfg = _config.GetCheck(checkName);
+        string message = string.IsNullOrEmpty(checkCfg.CustomMessage)
+            ? $"Anticheat: {checkName}"
+            : checkCfg.CustomMessage;
+
+        switch (action) {
+            case PunishAction.Kick:
+                _logger.LogKick(playerId, checkName);
+                _warnings.TrackKick(playerId); // Track for auto-ban
+
+                if (checkCfg.KickDelay > 0) {
+                    System.Threading.Tasks.Task.Delay(checkCfg.KickDelay).ContinueWith(_ => {
+                        var player = BasePlayer.Find(playerId);
+                        player?.Kick(message);
+                    });
+                } else {
+                    p.Kick(message);
+                }
+                break;
+
+            case PunishAction.Ban:
+                _logger.LogBan(playerId, checkName);
+                p.Ban(message);
+                break;
         }
     }
+
+    public void OnApplyAnimation(int playerId, int animLib, string animName)
+        => _animationHack.OnAnimationApplied(playerId, animLib, animName);
+
+    public void OnAddVehicleComponent(int vehicleId, int componentId)
+    => _vehicleModHack.OnServerAddComponent(vehicleId, componentId);
+
+    public void OnRemoveVehicleComponent(int vehicleId, int componentId)
+        => _vehicleModHack.OnServerRemoveComponent(vehicleId, componentId);
+
+    public void OnVehicleRespawn(int vehicleId) {
+        _vehicleModHack.OnVehicleRespawned(vehicleId);
+        _vehicleFlip.OnVehicleRespawned(vehicleId);
+    }
+
+    public bool VehicleHasComponent(int vehicleId, int componentId)
+        => _vehicleModHack.HasComponent(vehicleId, componentId);
+
+    public bool IsInteriorForbidden(int interiorId)
+        => _interiorWeapon.IsForbiddenInterior(interiorId);
+
+    public void AddForbiddenInterior(int interiorId)
+        => _interiorWeapon.AddForbiddenInterior(interiorId);
+
+    public void RemoveForbiddenInterior(int interiorId)
+        => _interiorWeapon.RemoveForbiddenInterior(interiorId);
+
+    public void OnSetPlayerCheckpoint(int playerId, float x, float y, float z, float size)
+        => _checkpointTeleport.OnCheckpointSet(playerId, x, y, z, size);
+
+    public void OnSetPlayerRaceCheckpoint(int playerId, float x, float y, float z, float nextX, float nextY, float nextZ, float size)
+        => _checkpointTeleport.OnRaceCheckpointSet(playerId, x, y, z, nextX, nextY, nextZ, size);
+
+    public void OnDisablePlayerCheckpoint(int playerId)
+        => _checkpointTeleport.OnCheckpointDisabled(playerId);
+
+    public void OnDisablePlayerRaceCheckpoint(int playerId)
+        => _checkpointTeleport.OnRaceCheckpointDisabled(playerId);
+
+    public bool IsPickupValid(int pickupId)
+        => _fakePickup.IsValidPickup(pickupId);
+
+    public int GetRegisteredPickupCount()
+        => _fakePickup.GetPickupCount();
+
+    public void OnAddPlayerClass(int classId)
+        => _classSelection.RegisterClass(classId);
+
+    public void OnClearPlayerClasses()
+        => _classSelection.ClearRegisteredClasses();
+
+    public bool IsValidClass(int classId)
+        => _classSelection.IsValidClass(classId);
+
+    public void SetEnabled(bool enabled)
+    {
+        _config.Enabled = enabled;
+        _events.RaiseAnticheatToggled(enabled);
+        _logger.Log($"Anticheat {(enabled ? "enabled" : "disabled")}");
+    }
+
+    public void SetCheckEnabled(string checkName, bool enabled)
+    {
+        var check = _config.GetCheck(checkName);
+        check.Enabled = enabled;
+        _events.RaiseCheckToggled(checkName, enabled);
+        _logger.Log($"Check '{checkName}' {(enabled ? "enabled" : "disabled")}");
+    }
+
+    public bool IsCheckEnabled(string checkName)
+        => _config.GetCheck(checkName).Enabled;
+
+    public void ReloadConfig()
+    {
+        var fresh = LoadConfig();
+        _config.Enabled = fresh.Enabled;
+        _config.MaxPing = fresh.MaxPing;
+        _config.LogPath = fresh.LogPath;
+        _config.SpeedHackVehResetDelay = fresh.SpeedHackVehResetDelay;
+        _config.MaxConnectsPerIp = fresh.MaxConnectsPerIp;
+        _config.MinReconnectSeconds = fresh.MinReconnectSeconds;
+        foreach (var (k, v) in fresh.Checks) _config.Checks[k] = v;
+        _events.RaiseConfigReloaded();
+        _logger.Log("Config reloaded via API");
+    }
+
+    public string[] GetAllCheckNames()
+        => _config.Checks.Keys.ToArray();
+
+    public CheckConfig GetCheckConfig(string checkName)
+        => _config.GetCheck(checkName);
+
+    public void OnSetVehiclePos(int vehicleId, float x, float y, float z)
+        => _carwarp.OnServerSetVehiclePos(vehicleId, x, y, z);
+
+    public void OnVehicleSpawn(int vehicleId, float x, float y, float z)
+        => _carwarp.OnVehicleSpawned(vehicleId, x, y, z);
+
+    public void RefreshCodeVerification()
+        => _codeVerification.RefreshHashes();
+
+    public Dictionary<string, bool> GetCodeVerificationStatus()
+        => _codeVerification.GetVerificationStatus();
+
+    public int GetVerificationFailures()
+        => _codeVerification.GetFailureCount();
+
+    public void AddWhitelistedIP(string ip) {
+        if (!_config.WhitelistedIPs.Contains(ip)) {
+            _config.WhitelistedIPs.Add(ip);
+            _logger.Log($"IP whitelisted: {ip}");
+        }
+    }
+
+    public void RemoveWhitelistedIP(string ip) {
+        if (_config.WhitelistedIPs.Remove(ip))
+            _logger.Log($"IP removed from whitelist: {ip}");
+    }
+
+    public void AddWhitelistedPlayer(int playerId) {
+        if (!_config.WhitelistedPlayerIds.Contains(playerId)) {
+            _config.WhitelistedPlayerIds.Add(playerId);
+            _logger.Log($"Player whitelisted: {playerId}");
+        }
+    }
+
+    public void RemoveWhitelistedPlayer(int playerId) {
+        if (_config.WhitelistedPlayerIds.Remove(playerId))
+            _logger.Log($"Player removed from whitelist: {playerId}");
+    }
+
+    public bool IsWhitelisted(int playerId) {
+        var st = _players.Get(playerId);
+        return _config.IsWhitelisted(playerId) ||
+               (st != null && _config.IsWhitelisted(st.IpAddress));
+    }
+
+    public int GetPlayerKickCount(int playerId)
+        => _warnings.GetTotalKicks(playerId);
+
+    public void UpdateCheckConfig(string checkName, Action<CheckConfig> configure) {
+        var check = _config.GetCheck(checkName);
+        configure(check);
+        _logger.Log($"Check '{checkName}' configuration updated");
+    }
+
+    public AntiCheatStats GetStatistics() => _stats;
+
+    public string GenerateStatsReport() => _stats.GenerateReport();
+
+    public PlayerCheatHistory? GetPlayerHistory(int playerId)
+        => _stats.GetPlayerHistory(playerId);
+
+    public void ResetStatistics() => _stats.Reset();
 
     public void Dispose()
     {

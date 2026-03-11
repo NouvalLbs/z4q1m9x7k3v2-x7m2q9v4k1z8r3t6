@@ -16,6 +16,8 @@ public class PlayerAcState
     public int SetArmour { get; set; } = -1;
 
     public int Money { get; set; }
+    public long MoneyGivenTick { get; set; }
+    public long MoneyTakenTick { get; set; }
 
     public float LastFacingAngle { get; set; } = -1f;
 
@@ -65,6 +67,75 @@ public class PlayerAcState
     public bool PendingDamageResult { get; set; }
     public bool PendingVehicleDamageResult { get; set; }
     public bool PendingClassResult { get; set; }
+    public bool JetpackAuthorized { get; set; }
+    public long JetpackGivenTick { get; set; }
+    public int LastAnimationIndex { get; set; }
+    public long LastAnimationChangeTick { get; set; }
+    public int AnimationSpamCount { get; set; }
+    public long LastServerAnimTick { get; set; }
+    public int NitroUseCount { get; set; }
+    public long LastNitroBoostTick { get; set; }
+    public float LastVehicleSpeed { get; set; }
+    public long LastInteriorChangeTick { get; set; }
+    public bool ShouldClearWeaponsOnInterior { get; set; }
+
+    // Checkpoint tracking ───────────────────────────────────────
+    public bool HasActiveCheckpoint { get; set; }
+    public float CheckpointX { get; set; }
+    public float CheckpointY { get; set; }
+    public float CheckpointZ { get; set; }
+    public float CheckpointSize { get; set; }
+    public float CheckpointEnterX { get; set; }
+    public float CheckpointEnterY { get; set; }
+    public float CheckpointEnterZ { get; set; }
+    public long CheckpointSetTick { get; set; }
+
+    // Race checkpoint tracking ───────────────────────────────────────
+    public bool HasActiveRaceCheckpoint { get; set; }
+    public float RaceCheckpointX { get; set; }
+    public float RaceCheckpointY { get; set; }
+    public float RaceCheckpointZ { get; set; }
+    public float RaceCheckpointSize { get; set; }
+    public float RaceCheckpointEnterX { get; set; }
+    public float RaceCheckpointEnterY { get; set; }
+    public float RaceCheckpointEnterZ { get; set; }
+    public long RaceCheckpointSetTick { get; set; }
+
+    public long LastPickupTick { get; set; }
+    public int LastPickupId { get; set; } = -1;
+
+    // Macro detection - timing queues
+    public Queue<long> ShotTimings { get; } = new();
+    public Queue<long> JumpTimings { get; } = new();
+    public Queue<long> SprintTimings { get; } = new();
+    public Queue<long> CommandTimings { get; } = new();
+    public Queue<long> ChatTimings { get; } = new();
+
+    // Chat spam detection
+    public string LastChatMessage { get; set; } = string.Empty;
+    public int DuplicateChatCount { get; set; }
+
+    public int DriveOnWaterCount { get; set; }
+
+    public bool IsSprinting { get; set; }
+    public long SprintStartTick { get; set; }
+    public long LastSprintEndTick { get; set; }
+    public long TotalSprintTime { get; set; }
+
+    public Queue<long> ClassChangeHistory { get; } = new();
+    public long LastClassChangeTick { get; set; }
+    public int SelectedClassId { get; set; } = -1;
+    public bool IsInClassSelection { get; set; }
+    public long ClassSelectionStartTick { get; set; }
+
+    public int AbnormalGravityCount { get; set; }
+    public int SlideDetectionCount { get; set; }
+    public int NoFrictionCount { get; set; }
+    public float LastHorizontalSpeed { get; set; }
+
+    public long LastCarwarpTick { get; set; }
+    public int TotalKicks { get; set; }
+    public int TotalBans { get; set; }
 
     // ── Anti-NOP: GivePlayerWeapon ───────────────────────────────────────
     public int[] NopSetWeapon { get; } = Enumerable.Repeat(-1, 13).ToArray();
