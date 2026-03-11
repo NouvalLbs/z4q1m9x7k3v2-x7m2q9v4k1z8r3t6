@@ -18,8 +18,7 @@ public class FlyHackCheck
     public FlyHackCheck(PlayerStateManager p, WarningManager w, AnticheatConfig c)
         => (_players, _warnings, _config) = (p, w, c);
 
-    public void OnPlayerUpdate(BasePlayer player)
-    {
+    public void OnPlayerUpdate(BasePlayer player) {
         if (!_config.Enabled) return;
         var st = _players.Get(player.Id);
         if (st is null || st.IsDead) return;
@@ -32,23 +31,17 @@ public class FlyHackCheck
         var vel = player.Velocity;
         var pState = player.State;
 
-        if (pState == PlayerState.OnFoot)
-        {
+        if (pState == PlayerState.OnFoot) {
             if (!_config.GetCheck("FlyHackOnfoot").Enabled) return;
 
-            // Izinkan jetpack
             if (player.SpecialAction == SpecialAction.Usejetpack) return;
 
-            // Parachute tidak ada sebagai SpecialAction di SampSharp;
-            // cek via animasi: AnimIndex 1133 = parachute deploy
             if (st.IsParachuting) return;
             if (player.SurfingVehicle is not null) return;
 
             if (vel.Z > MaxLiftZ)
                 _warnings.AddWarning(player.Id, "FlyHackOnfoot", $"vz={vel.Z:F3}");
-        }
-        else if (pState == PlayerState.Driving)
-        {
+        } else if (pState == PlayerState.Driving) {
             if (player.Vehicle is null) return;
 
             int model = (int)player.Vehicle.Model;
@@ -56,12 +49,25 @@ public class FlyHackCheck
             if (vType is 3 or 4 or 8) return;
 
             bool isBike = VehicleData.IsBike(model);
-            string checkName = isBike ? "FlyHackBike" : "FlyHackVehicle";
 
-            if (!_config.GetCheck(checkName).Enabled) return;
+            if (!_config.GetCheck("FlyHackVehicle").Enabled) return;
             if (now - st.VehicleVelocityTick < 2000) return;
+
             if (vel.Z > MaxLiftZ)
-                _warnings.AddWarning(player.Id, checkName, $"vz={vel.Z:F3} mdl={model}");
+            {
+                int currentWarnings = st.GetWarning("FlyHackVehicle");
+                int maxAllowed = isBike ? 10 : _config.GetCheck("FlyHackVehicle").MaxWarnings;
+
+                if (currentWarnings < maxAllowed - 1)
+                {
+                    st.AddWarning("FlyHackVehicle");
+                    _warnings.AddWarning(player.Id, "FlyHackVehicle", $"vz={vel.Z:F3} bike={isBike}");
+                }
+                else
+                {
+                    _warnings.AddWarning(player.Id, "FlyHackVehicle", $"vz={vel.Z:F3} bike={isBike}");
+                }
+            }
         }
     }
 }

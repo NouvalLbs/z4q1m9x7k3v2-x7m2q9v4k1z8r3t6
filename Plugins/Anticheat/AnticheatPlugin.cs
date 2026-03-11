@@ -52,7 +52,6 @@ public class AnticheatPlugin : IDisposable
     private FakeKillCheck _fakeKill = null!;
     private RapidFireCheck _rapidFire = null!;
     private ProAimCheck _proAim = null!;
-    private SilentAimCheck _silentAim = null!;
     private QuickTurnCheck _quickTurn = null!;
     private LagCompSpoofCheck _lagComp = null!;
     private CarShotCheck _carShot = null!;
@@ -135,7 +134,6 @@ public class AnticheatPlugin : IDisposable
         _fakeKill = new FakeKillCheck(_players, _warnings, _config);
         _rapidFire = new RapidFireCheck(_players, _warnings, _config);
         _proAim = new ProAimCheck(_players, _warnings, _config);
-        _silentAim = new SilentAimCheck(_players, _warnings, _config);
         _quickTurn = new QuickTurnCheck(_players, _warnings, _config);
         _lagComp = new LagCompSpoofCheck(_players, _warnings, _config);
         _carShot = new CarShotCheck(_players, _warnings, _config);
@@ -561,7 +559,6 @@ public class AnticheatPlugin : IDisposable
         _sandbox.OnPlayerDisconnected(p);
         _rcon.OnPlayerDisconnected(p.Id);
         _rapidFire.OnPlayerDisconnected(p.Id);
-        _silentAim.OnPlayerDisconnected(p.Id);
         _ping.OnPlayerDisconnected(p.Id);
         _seatFlood.OnPlayerDisconnected(p.Id);
         _dos.OnPlayerDisconnected(p.Id);
@@ -623,6 +620,11 @@ public class AnticheatPlugin : IDisposable
         if (st is not null) {
             st.CamMode = (int)p.CameraMode;
             st.Anim = p.GetAnimationIndex();
+
+            if (958 <= st.Anim && st.Anim <= 979)
+                st.IsParachuting = true;
+            else if (st.IsParachuting)
+                st.IsParachuting = false;
         }
 
         _nopGiveWeapon.OnPlayerUpdate(p);
