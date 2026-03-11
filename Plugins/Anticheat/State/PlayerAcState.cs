@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using SampSharp.GameMode.Definitions;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -78,6 +79,7 @@ public class PlayerAcState
     public float LastVehicleSpeed { get; set; }
     public long LastInteriorChangeTick { get; set; }
     public bool ShouldClearWeaponsOnInterior { get; set; }
+    public long LastBlacklistCheckTick { get; set; }
 
     // Checkpoint tracking ───────────────────────────────────────
     public bool HasActiveCheckpoint { get; set; }
@@ -121,6 +123,13 @@ public class PlayerAcState
     public long SprintStartTick { get; set; }
     public long LastSprintEndTick { get; set; }
     public long TotalSprintTime { get; set; }
+
+    public int VehicleSprintCount { get; set; }
+    public long LastVehicleSprintTick { get; set; }
+    public int ConsecutiveSilentAimHits { get; set; }
+    public Keys LastKeys { get; set; }
+    public long LastKeyChangeTick { get; set; }
+    public Queue<(Keys keys, long timestamp)> KeyPressHistory { get; } = new();
 
     public Queue<long> ClassChangeHistory { get; } = new();
     public long LastClassChangeTick { get; set; }

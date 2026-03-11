@@ -21,6 +21,12 @@ public class AnticheatConfig
     public int AutoSaveIntervalMinutes { get; set; } = 10;
     public bool EnableVerboseLogging { get; set; } = false;
     public int MaxWarningsBeforeBan { get; set; } = 10; // Global ban threshold
+    public List<int> BlacklistedWeapons { get; set; } = new();
+    public List<int> BlacklistedSkins { get; set; } = new();
+    public List<int> BlacklistedVehicleMods { get; set; } = new();
+    public List<int> BlacklistedVehicles { get; set; } = new();
+    public List<int> BlacklistedSpecialActions { get; set; } = new();
+    public List<string> BlacklistedAnimations { get; set; } = new();
 
     public Dictionary<string, CheckConfig> Checks { get; set; } = BuildDefaults();
 
@@ -60,12 +66,15 @@ public class AnticheatConfig
         ["LagCompSpoof"] = new(),
         ["QuickTurn"] = new(),
         ["RapidFire"] = new(),
+        ["SilentAim"] = new() { MaxWarnings = 2, Action = PunishAction.Kick },
         ["ProAim"] = new(),
         ["CarShot"] = new(),
         ["FullAiming"] = new(),
         ["FakeSpawn"] = new(),
         ["FakeKill"] = new(),
         ["AfkGhost"] = new(),
+        ["AFKBot"] = new() { MaxWarnings = 2, Action = PunishAction.Kick },
+        ["AFKBotPattern"] = new() { MaxWarnings = 2, Action = PunishAction.Kick },
         ["CarJack"] = new(),
         ["TuningHack"] = new(),
         ["TuningCrasher"] = new(),
@@ -90,9 +99,19 @@ public class AnticheatConfig
         ["AnimationHack"] = new(),
         ["NitroHack"] = new(),
         ["VehicleModHack"] = new(),
+        ["VehicleHealthHack"] = new(),
+        ["PaintJobHack"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
         ["InteriorWeaponHack"] = new(),
         ["InteriorWeaponShot"] = new(),
         ["InteriorWeaponClear"] = new() { Enabled = false },
+        ["BlacklistedWeapon"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
+        ["BlacklistedWeaponSlots"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
+        ["BlacklistedSkin"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
+        ["BlacklistedVehicleMod"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
+        ["BlacklistedVehicle"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
+        ["BlacklistedSpecialAction"] = new() { MaxWarnings = 2, Action = PunishAction.Kick },
+        ["BlacklistedAnimation"] = new() { MaxWarnings = 2, Action = PunishAction.Kick },
+        ["InteriorWeaponShot"] = new(),
         ["CheckpointTeleport"] = new(),
         ["RaceCheckpointTeleport"] = new(),
         ["FakePickup"] = new(),
@@ -108,6 +127,7 @@ public class AnticheatConfig
         ["InfiniteRun"] = new(),
         ["ClassSelectionSpam"] = new(),
         ["ClassSelectionExploit"] = new(),
+        ["VehicleSprint"] = new() { MaxWarnings = 5, Action = PunishAction.Warn },
         ["InvalidClassId"] = new() { Enabled = false },
         ["MoonGravity"] = new(),
         ["IceSlide"] = new(),

@@ -56,6 +56,7 @@ public class AnticheatPlugin : IDisposable
     private FakeKillCheck _fakeKill = null!;
     private RapidFireCheck _rapidFire = null!;
     private ProAimCheck _proAim = null!;
+    private SilentAimCheck _silentAim = null!;
     private QuickTurnCheck _quickTurn = null!;
     private LagCompSpoofCheck _lagComp = null!;
     private CarShotCheck _carShot = null!;
@@ -87,6 +88,8 @@ public class AnticheatPlugin : IDisposable
     private AnimationHackCheck _animationHack = null!;
     private NitroHackCheck _nitroHack = null!;
     private VehicleModHackCheck _vehicleModHack = null!;
+    private VehicleHealthCheck _vehicleHealth = null!;
+    private PaintJobCheck _paintJob = null!;
     private InteriorWeaponCheck _interiorWeapon = null!;
     private CheckpointTeleportCheck _checkpointTeleport = null!;
     private FakePickupCheck _fakePickup = null!;
@@ -95,9 +98,11 @@ public class AnticheatPlugin : IDisposable
     private WallClipCheck _wallClip = null!;
     private VehicleFlipCheck _vehicleFlip = null!;
     private InfiniteRunCheck _infiniteRun = null!;
+    private VehicleSprintCheck _vehicleSprint = null!;
     private ClassSelectionCheck _classSelection = null!;
     private GravityHackCheck _gravityHack = null!;
     private CarwarpCheck _carwarp = null!;
+    private BlacklistCheck _blacklist = null!;
     private CodeVerificationCheck _codeVerification = null!;
     private readonly AntiCheatStats _stats;
 
@@ -156,6 +161,7 @@ public class AnticheatPlugin : IDisposable
         _fakeKill = new FakeKillCheck(_players, _warnings, _config);
         _rapidFire = new RapidFireCheck(_warnings, _config);
         _proAim = new ProAimCheck(_players, _warnings, _config);
+        _silentAim = new SilentAimCheck(_players, _warnings, _config);
         _quickTurn = new QuickTurnCheck(_players, _warnings, _config);
         _lagComp = new LagCompSpoofCheck(_players, _warnings, _config);
         _carShot = new CarShotCheck(_players, _warnings, _config);
@@ -187,15 +193,19 @@ public class AnticheatPlugin : IDisposable
         _animationHack = new AnimationHackCheck(_players, _warnings, _config);
         _nitroHack = new NitroHackCheck(_players, _vehicles, _warnings, _config);
         _vehicleModHack = new VehicleModHackCheck(_players, _vehicles, _warnings, _config);
+        _vehicleHealth = new VehicleHealthCheck(_players, _vehicles, _warnings, _config);
+        _paintJob = new PaintJobCheck(_players, _vehicles, _warnings, _config);
         _interiorWeapon = new InteriorWeaponCheck(_players, _warnings, _config);
         _macroDetection = new MacroDetectionCheck(_players, _warnings, _config);
         _driveOnWater = new DriveOnWaterCheck(_players, _warnings, _config);
         _wallClip = new WallClipCheck(_players, _warnings, _config);
         _vehicleFlip = new VehicleFlipCheck(_players, _vehicles, _warnings, _config);
         _infiniteRun = new InfiniteRunCheck(_players, _warnings, _config);
+        _vehicleSprint = new VehicleSprintCheck(_players, _warnings, _config);
         _classSelection = new ClassSelectionCheck(_players, _warnings, _config);
         _gravityHack = new GravityHackCheck(_players, _warnings, _config);
         _carwarp = new CarwarpCheck(_players, _vehicles, _warnings, _config);
+        _blacklist = new BlacklistCheck(_players, _vehicles, _warnings, _config);
         _codeVerification = new CodeVerificationCheck(_config, _logger);
 
         _nopGiveWeapon = new NopGiveWeaponCheck(_players, _warnings, _config);
@@ -494,6 +504,7 @@ public class AnticheatPlugin : IDisposable
         _sandbox.OnPlayerDisconnected(p);
         _rcon.OnPlayerDisconnected(p.Id);
         _rapidFire.OnPlayerDisconnected(p.Id);
+        _silentAim.OnPlayerDisconnected(p.Id);
         _ping.OnPlayerDisconnected(p.Id);
         _seatFlood.OnPlayerDisconnected(p.Id);
         _dos.OnPlayerDisconnected(p.Id);
@@ -532,11 +543,14 @@ public class AnticheatPlugin : IDisposable
         _animationHack.OnPlayerUpdate(p);
         _nitroHack.OnPlayerUpdate(p);
         _interiorWeapon.OnPlayerUpdate(p);
+        _vehicleHealth.OnPlayerUpdate(p);
         _driveOnWater.OnPlayerUpdate(p);
         _wallClip.OnPlayerUpdate(p);
         _vehicleFlip.OnPlayerUpdate(p);
         _infiniteRun.OnPlayerUpdate(p);
+        _vehicleSprint.OnPlayerUpdate(p);
         _gravityHack.OnPlayerUpdate(p);
+        _blacklist.OnPlayerUpdate(p);
 
         _nopGiveWeapon.OnPlayerUpdate(p);
         _nopSetAmmo.OnPlayerUpdate(p);
@@ -565,6 +579,8 @@ public class AnticheatPlugin : IDisposable
         _animationHack.OnPlayerSpawned(p.Id);
         _wallClip.OnPlayerSpawned(p.Id);
         _infiniteRun.OnPlayerSpawned(p.Id);
+        _vehicleSprint.OnPlayerSpawned(p.Id);
+        _silentAim.OnPlayerSpawned(p.Id);
         _classSelection.OnPlayerSpawned(p.Id);
         _gravityHack.OnPlayerSpawned(p.Id);
 
@@ -589,6 +605,8 @@ public class AnticheatPlugin : IDisposable
         _jetpack.OnPlayerDied(p.Id);
         _animationHack.OnPlayerDied(p.Id);
         _infiniteRun.OnPlayerDied(p.Id);
+        _vehicleSprint.OnPlayerDied(p.Id);
+        _silentAim.OnPlayerDied(p.Id);
         _classSelection.OnPlayerDied(p.Id);
         _gravityHack.OnPlayerDied(p.Id);
 
@@ -615,6 +633,7 @@ public class AnticheatPlugin : IDisposable
         _ammo.OnPlayerWeaponShot(p, (int)e.Weapon);
         _rapidFire.OnPlayerWeaponShot(p, e);
         _proAim.OnPlayerWeaponShot(p, e);
+        _silentAim.OnPlayerWeaponShot(p, e);
         _carShot.OnPlayerWeaponShot(p, e);
         _interiorWeapon.OnPlayerWeaponShot(p, e);
     }
@@ -632,9 +651,12 @@ public class AnticheatPlugin : IDisposable
         st.VehicleId = e.Vehicle.Id;
         st.EnterVehicleTick = Environment.TickCount64;
         _nopSetPos.OnPlayerEnterVehicle(p.Id);
+        _blacklist.OnPlayerEnterVehicle(p, e.Vehicle.Id);
         _nitroHack.OnPlayerEnterVehicle(p.Id, e.Vehicle.Id);
         _driveOnWater.OnPlayerEnterVehicle(p.Id);
+        _vehicleHealth.OnPlayerEnterVehicle(p.Id, e.Vehicle.Id);
         _vehicleFlip.OnPlayerEnterVehicle(p.Id, e.Vehicle.Id);
+        _vehicleSprint.OnPlayerEnterVehicle(p.Id);
         _infiniteRun.OnPlayerEnterVehicle(p.Id);
         _gravityHack.OnPlayerEnterVehicle(p.Id);
     }
@@ -650,6 +672,8 @@ public class AnticheatPlugin : IDisposable
         _nopSetPos.OnPlayerExitVehicle(p.Id);
         _nitroHack.OnPlayerExitVehicle(p.Id);
         _driveOnWater.OnPlayerExitVehicle(p.Id);
+        _vehicleHealth.OnPlayerExitVehicle(p.Id, vehicle.Id);
+        _vehicleSprint.OnPlayerExitVehicle(p.Id);
         _nopRemoveFromVehicle.OnPlayerExitVehicle(p.Id);
         st.VehicleId = -1;
     }
@@ -660,6 +684,7 @@ public class AnticheatPlugin : IDisposable
         if (!_cbFlood.Check(p, 11)) return;
         _vehicleTeleport.OnPlayerStateChanged(p, e);
         _carwarp.OnPlayerStateChanged(p, e);
+        _blacklist.OnPlayerStateChanged(p, e);
         var st = _players.Get(p.Id);
         if (st is null) return;
         if (e.NewState == PlayerState.OnFoot && e.OldState == PlayerState.Driving)
@@ -801,10 +826,16 @@ public class AnticheatPlugin : IDisposable
         _cbFlood.Check(p, 26);
     }
 
-    private void OnPlayerKeyStateChange(object? sender, KeyStateChangedEventArgs e)
-    {
+    private void OnPlayerKeyStateChange(object? sender, KeyStateChangedEventArgs e) {
         if (sender is not BasePlayer p) return;
         _macroDetection.OnPlayerKeyStateChange(p, e.NewKeys, e.OldKeys);
+
+        var st = _players.Get(p.Id);
+        if (st is not null && e.NewKeys != e.OldKeys)
+        {
+            st.LastKeys = e.NewKeys;
+            st.LastKeyChangeTick = Environment.TickCount64;
+        }
     }
 
     private void OnVehicleMod(object? sender, VehicleModEventArgs e)
@@ -817,7 +848,8 @@ public class AnticheatPlugin : IDisposable
         if (valid)
         {
             _tuningHack.OnVehicleMod(v, p, e.ComponentId);
-            _vehicleModHack.OnVehicleComponentAdded(v, p, e.ComponentId); // ADD THIS
+            _vehicleModHack.OnVehicleComponentAdded(v, p, e.ComponentId);
+            _blacklist.OnVehicleModAdded(v, p, e.ComponentId);
             _nitroHack.OnVehicleModAdded(v.Id, e.ComponentId);
         }
     }
@@ -831,12 +863,11 @@ public class AnticheatPlugin : IDisposable
         st.IsInModShop = e.EnterExit == EnterExit.Entered;
     }
 
-    private void OnVehiclePaintjob(object? sender, VehiclePaintjobEventArgs e)
-    {
+    private void OnVehiclePaintjob(object? sender, VehiclePaintjobEventArgs e) {
         if (sender is not BaseVehicle v) return;
         if (e.Player is not BasePlayer p) return;
         if (!_cbFlood.Check(p, 13)) return;
-        _vehicles.GetOrCreate(v.Id).PaintJob = e.PaintjobId;
+        _paintJob.OnVehiclePaintjob(v, p, e.PaintjobId);
     }
 
     private void OnVehicleRespray(object? sender, VehicleResprayedEventArgs e)
@@ -854,6 +885,8 @@ public class AnticheatPlugin : IDisposable
         _vehicles.Remove(v.Id);
         _nopSetVehicleHealth.OnVehicleDestroyed(v.Id);
         _vehicleModHack.OnVehicleDestroyed(v.Id);
+        _vehicleHealth.OnVehicleDestroyed(v.Id);
+        _paintJob.OnVehicleDestroyed(v.Id);
         _carwarp.OnVehicleDestroyed(v.Id);
     }
 
@@ -922,8 +955,10 @@ public class AnticheatPlugin : IDisposable
         }
     }
 
-    public void OnApplyAnimation(int playerId, int animLib, string animName)
-        => _animationHack.OnAnimationApplied(playerId, animLib, animName);
+    public void OnApplyAnimation(int playerId, int animLib, string animName) {
+        _animationHack.OnAnimationApplied(playerId, animLib, animName);
+        _blacklist.OnAnimationApplied(playerId, animLib.ToString(), animName);
+    }
 
     public void OnAddVehicleComponent(int vehicleId, int componentId)
     => _vehicleModHack.OnServerAddComponent(vehicleId, componentId);
@@ -934,6 +969,8 @@ public class AnticheatPlugin : IDisposable
     public void OnVehicleRespawn(int vehicleId) {
         _vehicleModHack.OnVehicleRespawned(vehicleId);
         _vehicleFlip.OnVehicleRespawned(vehicleId);
+        _vehicleHealth.OnVehicleRespawned(vehicleId);
+        _paintJob.OnVehicleRespawned(vehicleId);
     }
 
     public bool VehicleHasComponent(int vehicleId, int componentId)
@@ -1075,6 +1112,32 @@ public class AnticheatPlugin : IDisposable
         => _stats.GetPlayerHistory(playerId);
 
     public void ResetStatistics() => _stats.Reset();
+    public void AddBlacklistedWeapon(int weaponId) => _blacklist.AddBlacklistedWeapon(weaponId);
+    public void RemoveBlacklistedWeapon(int weaponId) => _blacklist.RemoveBlacklistedWeapon(weaponId);
+    public void AddBlacklistedSkin(int skin) => _blacklist.AddBlacklistedSkin(skin);
+    public void RemoveBlacklistedSkin(int skin) => _blacklist.RemoveBlacklistedSkin(skin);
+    public void AddBlacklistedVehicleMod(int componentId) => _blacklist.AddBlacklistedVehicleMod(componentId);
+    public void RemoveBlacklistedVehicleMod(int componentId) => _blacklist.RemoveBlacklistedVehicleMod(componentId);
+    public void AddBlacklistedVehicle(int model) => _blacklist.AddBlacklistedVehicle(model);
+    public void RemoveBlacklistedVehicle(int model) => _blacklist.RemoveBlacklistedVehicle(model);
+    public void AddBlacklistedSpecialAction(int action) => _blacklist.AddBlacklistedSpecialAction(action);
+    public void RemoveBlacklistedSpecialAction(int action) => _blacklist.RemoveBlacklistedSpecialAction(action);
+    public void AddBlacklistedAnimation(string animLib, string animName) => _blacklist.AddBlacklistedAnimation(animLib, animName);
+    public void RemoveBlacklistedAnimation(string animLib, string animName) => _blacklist.RemoveBlacklistedAnimation(animLib, animName);
+
+    public bool IsWeaponBlacklisted(int weaponId) => _blacklist.IsWeaponBlacklisted(weaponId);
+    public bool IsSkinBlacklisted(int skin) => _blacklist.IsSkinBlacklisted(skin);
+    public bool IsVehicleModBlacklisted(int componentId) => _blacklist.IsVehicleModBlacklisted(componentId);
+    public bool IsVehicleBlacklisted(int model) => _blacklist.IsVehicleBlacklisted(model);
+
+    public void OnSetVehiclePaintjob(int vehicleId, int paintjobId)
+    => _paintJob.OnServerSetPaintjob(vehicleId, paintjobId);
+
+    public bool IsValidPaintjob(int model, int paintjobId)
+        => PaintJobCheck.IsValidPaintjob(model, paintjobId);
+
+    public bool VehicleSupportsPaintjob(int model)
+        => PaintJobCheck.VehicleSupportsPaintjob(model);
 
     public void Dispose()
     {
