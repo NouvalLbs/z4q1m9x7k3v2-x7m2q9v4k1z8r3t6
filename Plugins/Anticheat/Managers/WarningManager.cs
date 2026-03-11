@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.Anticheat.Core;
-using ProjectSMP.Plugins.Anticheat.Events;
 using ProjectSMP.Plugins.Anticheat.Utilities;
 using System;
 
@@ -13,8 +12,7 @@ public class WarningManager
     private readonly AnticheatConfig _config;
     private readonly AcLogger _logger;
 
-    public event EventHandler<CheatDetectedEventArgs>? CheatDetected;
-    public event Action<int, string, PunishAction>? PunishmentRequired;
+    public Action<int, string, PunishAction>? PunishmentRequired;
 
     public WarningManager(PlayerStateManager players, AnticheatConfig config, AcLogger logger)
     {
@@ -35,27 +33,12 @@ public class WarningManager
         int count = state.AddWarning(checkName);
         _logger.LogCheat(playerId, checkName, count, details);
 
-        // Determine suggested action
-        PunishAction suggestedAction = count >= cfg.MaxWarnings ? cfg.Action : PunishAction.Warn;
-
-        // Fire event with ability to override
-        var eventArgs = new CheatDetectedEventArgs(playerId, checkName, count, details, suggestedAction);
-        CheatDetected?.Invoke(this, eventArgs);
-
-        // Check if punishment was canceled
-        if (eventArgs.Cancel)
-            return CheckResult.Warn;
-
-        // Use override action if provided
-        PunishAction finalAction = eventArgs.OverrideAction ?? suggestedAction;
-
-        if (count < cfg.MaxWarnings && finalAction == PunishAction.Warn)
-            return CheckResult.Warn;
+        if (count < cfg.MaxWarnings) return CheckResult.Warn;
 
         state.ResetWarning(checkName);
-        PunishmentRequired?.Invoke(playerId, checkName, finalAction);
+        PunishmentRequired?.Invoke(playerId, checkName, cfg.Action);
 
-        return finalAction switch
+        return cfg.Action switch
         {
             PunishAction.Ban => CheckResult.Ban,
             PunishAction.Kick => CheckResult.Kick,

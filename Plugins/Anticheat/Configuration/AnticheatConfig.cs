@@ -11,25 +11,10 @@ public class AnticheatConfig
     public int MinReconnectSeconds { get; set; } = 12;
     public int SpeedHackVehResetDelay { get; set; } = 3;
 
-    // NEW: Enhanced configuration
-    public List<string> WhitelistedIPs { get; set; } = new();
-    public List<int> WhitelistedPlayerIds { get; set; } = new();
-    public bool EnableAdminImmunity { get; set; } = true;
-    public bool EnableDiscordWebhook { get; set; } = false;
-    public string DiscordWebhookUrl { get; set; } = "";
-    public bool EnableAutoSave { get; set; } = true;
-    public int AutoSaveIntervalMinutes { get; set; } = 10;
-    public bool EnableVerboseLogging { get; set; } = false;
-    public int MaxWarningsBeforeBan { get; set; } = 10; // Global ban threshold
-
     public Dictionary<string, CheckConfig> Checks { get; set; } = BuildDefaults();
 
     public CheckConfig GetCheck(string name) =>
         Checks.TryGetValue(name, out var c) ? c : Checks[name] = new CheckConfig();
-
-    public bool IsWhitelisted(string ip) => WhitelistedIPs.Contains(ip);
-
-    public bool IsWhitelisted(int playerId) => WhitelistedPlayerIds.Contains(playerId);
 
     private static Dictionary<string, CheckConfig> BuildDefaults() => new()
     {
@@ -86,11 +71,6 @@ public class AnticheatConfig
         ["ParkourMod"] = new() { Enabled = false },
         ["UnFreeze"] = new() { Enabled = false },
         ["FakeNpc"] = new() { Enabled = false },
-        ["JetpackHack"] = new(),
-        ["NitroHack"] = new(),
-        ["VehicleModHack"] = new(),
-        ["VehicleHealthHack"] = new(),
-        ["PaintJobHack"] = new() { MaxWarnings = 1, Action = PunishAction.Kick },
 
         // Anti-NOP checks
         ["NopGiveWeapon"] = new() { MaxWarnings = 8 },

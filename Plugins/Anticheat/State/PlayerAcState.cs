@@ -67,8 +67,6 @@ public class PlayerAcState
     public bool PendingDamageResult { get; set; }
     public bool PendingVehicleDamageResult { get; set; }
     public bool PendingClassResult { get; set; }
-    public bool JetpackAuthorized { get; set; }
-    public long JetpackGivenTick { get; set; }
 
     public int ConsecutiveSilentAimHits { get; set; }
 

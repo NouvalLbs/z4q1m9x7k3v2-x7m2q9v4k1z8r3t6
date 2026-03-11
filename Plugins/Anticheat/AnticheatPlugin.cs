@@ -10,7 +10,6 @@ using ProjectSMP.Plugins.Anticheat.Checks.Spawn;
 using ProjectSMP.Plugins.Anticheat.Checks.Vehicle;
 using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.Anticheat.Data;
-using ProjectSMP.Plugins.Anticheat.Events;
 using ProjectSMP.Plugins.Anticheat.Managers;
 using ProjectSMP.Plugins.Anticheat.Utilities;
 using SampSharp.GameMode;
@@ -34,7 +33,6 @@ public class AnticheatPlugin : IDisposable
     private readonly FloodRateLimiter _flood;
     private readonly AcLogger _logger;
     private readonly AnticheatConfig _config;
-    private readonly AnticheatEvents _events;
     private FileSystemWatcher? _watcher;
     private Timer? _timer;
 
@@ -81,7 +79,6 @@ public class AnticheatPlugin : IDisposable
     private ParkourModCheck _parkourMod = null!;
     private UnFreezeCheck _unFreeze = null!;
     private FakeNpcCheck _fakeNpc = null!;
-    private JetpackCheck _jetpack = null!;
 
     // ── Anti-NOP ─────────────────────────────────────────────────────────
     private NopGiveWeaponCheck _nopGiveWeapon = null!;
@@ -100,7 +97,6 @@ public class AnticheatPlugin : IDisposable
     public PlayerStateManager Players => _players;
     public WarningManager Warnings => _warnings;
     public AnticheatConfig Config => _config;
-    public AnticheatEvents Events => _events;
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -116,7 +112,6 @@ public class AnticheatPlugin : IDisposable
         _flood = flood;
         _logger = logger;
         _config = config;
-        _events = new AnticheatEvents();
     }
 
     private void InitChecks()
@@ -164,7 +159,6 @@ public class AnticheatPlugin : IDisposable
         _parkourMod = new ParkourModCheck(_players, _warnings, _config);
         _unFreeze = new UnFreezeCheck(_players, _warnings, _config);
         _fakeNpc = new FakeNpcCheck(_config, _logger);
-        _jetpack = new JetpackCheck(_players, _warnings, _config);
 
         _nopGiveWeapon = new NopGiveWeaponCheck(_players, _warnings, _config);
         _nopSetAmmo = new NopSetAmmoCheck(_players, _warnings, _config);
@@ -372,7 +366,6 @@ public class AnticheatPlugin : IDisposable
     public void RegisterEvents(BaseMode gm)
     {
         InitChecks();
-        _events.Wire(_warnings);
 
         gm.PlayerConnected += OnPlayerConnected;
         gm.PlayerDisconnected += OnPlayerDisconnected;
@@ -476,7 +469,6 @@ public class AnticheatPlugin : IDisposable
         _invisible.OnPlayerUpdate(p);
         _parkourMod.OnPlayerUpdate(p);
         _unFreeze.OnPlayerUpdate(p);
-        _jetpack.OnPlayerUpdate(p);
 
         _nopGiveWeapon.OnPlayerUpdate(p);
         _nopSetAmmo.OnPlayerUpdate(p);
@@ -501,7 +493,6 @@ public class AnticheatPlugin : IDisposable
         _armour.OnPlayerSpawned(p);
         _money.OnPlayerSpawned(p);
         _weapon.OnPlayerSpawned(p);
-        _jetpack.OnPlayerSpawned(p.Id);
         _silentAim.OnPlayerSpawned(p.Id);
 
         _nopGiveWeapon.OnPlayerSpawned(p.Id);
@@ -522,7 +513,6 @@ public class AnticheatPlugin : IDisposable
         if (sender is not BasePlayer p) return;
         _godMode.OnPlayerDied(p);
         _fakeKill.OnPlayerDied(p, e);
-        _jetpack.OnPlayerDied(p.Id);
         _silentAim.OnPlayerDied(p.Id);
 
         _nopSetHealth.OnPlayerDied(p.Id);
@@ -792,34 +782,18 @@ public class AnticheatPlugin : IDisposable
         _rcon.OnRconLoginAttempt(p, e.Password, e.SuccessfulLogin);
     }
 
-    private void OnPunishment(int playerId, string checkName, PunishAction action) {
+    private void OnPunishment(int playerId, string checkName, PunishAction action)
+    {
         var p = BasePlayer.Find(playerId);
         if (p is null) return;
 
-        // Check whitelist
-        if (IsWhitelisted(playerId)) {
-            _logger.Log($"Punishment skipped for whitelisted player {playerId}");
-            return;
-        }
+        string message = $"Anticheat: {checkName}";
 
-        var checkCfg = _config.GetCheck(checkName);
-        string message = string.IsNullOrEmpty(checkCfg.CustomMessage)
-            ? $"Anticheat: {checkName}"
-            : checkCfg.CustomMessage;
-
-        switch (action) {
+        switch (action)
+        {
             case PunishAction.Kick:
                 _logger.LogKick(playerId, checkName);
-                // _warnings.TrackKick(playerId); // Track for auto-ban
-
-                if (checkCfg.KickDelay > 0) {
-                    System.Threading.Tasks.Task.Delay(checkCfg.KickDelay).ContinueWith(_ => {
-                        var player = BasePlayer.Find(playerId);
-                        player?.Kick(message);
-                    });
-                } else {
-                    p.Kick(message);
-                }
+                p.Kick(message);
                 break;
 
             case PunishAction.Ban:
@@ -827,74 +801,6 @@ public class AnticheatPlugin : IDisposable
                 p.Ban(message);
                 break;
         }
-    }
-
-    public void SetEnabled(bool enabled)
-    {
-        _config.Enabled = enabled;
-        _events.RaiseAnticheatToggled(enabled);
-        _logger.Log($"Anticheat {(enabled ? "enabled" : "disabled")}");
-    }
-
-    public void SetCheckEnabled(string checkName, bool enabled)
-    {
-        var check = _config.GetCheck(checkName);
-        check.Enabled = enabled;
-        _events.RaiseCheckToggled(checkName, enabled);
-        _logger.Log($"Check '{checkName}' {(enabled ? "enabled" : "disabled")}");
-    }
-
-    public bool IsCheckEnabled(string checkName)
-        => _config.GetCheck(checkName).Enabled;
-
-    public void ReloadConfig()
-    {
-        var fresh = LoadConfig();
-        _config.Enabled = fresh.Enabled;
-        _config.MaxPing = fresh.MaxPing;
-        _config.LogPath = fresh.LogPath;
-        _config.SpeedHackVehResetDelay = fresh.SpeedHackVehResetDelay;
-        _config.MaxConnectsPerIp = fresh.MaxConnectsPerIp;
-        _config.MinReconnectSeconds = fresh.MinReconnectSeconds;
-        foreach (var (k, v) in fresh.Checks) _config.Checks[k] = v;
-        _events.RaiseConfigReloaded();
-        _logger.Log("Config reloaded via API");
-    }
-
-    public string[] GetAllCheckNames()
-        => _config.Checks.Keys.ToArray();
-
-    public CheckConfig GetCheckConfig(string checkName)
-        => _config.GetCheck(checkName);
-
-    public void AddWhitelistedIP(string ip) {
-        if (!_config.WhitelistedIPs.Contains(ip)) {
-            _config.WhitelistedIPs.Add(ip);
-            _logger.Log($"IP whitelisted: {ip}");
-        }
-    }
-
-    public void RemoveWhitelistedIP(string ip) {
-        if (_config.WhitelistedIPs.Remove(ip))
-            _logger.Log($"IP removed from whitelist: {ip}");
-    }
-
-    public void AddWhitelistedPlayer(int playerId) {
-        if (!_config.WhitelistedPlayerIds.Contains(playerId)) {
-            _config.WhitelistedPlayerIds.Add(playerId);
-            _logger.Log($"Player whitelisted: {playerId}");
-        }
-    }
-
-    public void RemoveWhitelistedPlayer(int playerId) {
-        if (_config.WhitelistedPlayerIds.Remove(playerId))
-            _logger.Log($"Player removed from whitelist: {playerId}");
-    }
-
-    public bool IsWhitelisted(int playerId) {
-        var st = _players.Get(playerId);
-        return _config.IsWhitelisted(playerId) ||
-               (st != null && _config.IsWhitelisted(st.IpAddress));
     }
 
     public void UpdateCheckConfig(string checkName, Action<CheckConfig> configure) {
