@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using ProjectSMP.Plugins.Anticheat.Checks.AntiCrash;
 using ProjectSMP.Plugins.Anticheat.Checks.AntiFlood;
+using ProjectSMP.Plugins.Anticheat.Checks.AntiNop;
 using ProjectSMP.Plugins.Anticheat.Checks.Combat;
 using ProjectSMP.Plugins.Anticheat.Checks.Movement;
 using ProjectSMP.Plugins.Anticheat.Checks.Player;
@@ -80,6 +81,20 @@ public class AnticheatPlugin : IDisposable
     private UnFreezeCheck _unFreeze = null!;
     private FakeNpcCheck _fakeNpc = null!;
 
+    // ── Anti-NOP ─────────────────────────────────────────────────────────
+    private NopGiveWeaponCheck _nopGiveWeapon = null!;
+    private NopSetAmmoCheck _nopSetAmmo = null!;
+    private NopSetInteriorCheck _nopSetInterior = null!;
+    private NopSetHealthCheck _nopSetHealth = null!;
+    private NopSetVehicleHealthCheck _nopSetVehicleHealth = null!;
+    private NopSetArmourCheck _nopSetArmour = null!;
+    private NopSetSpecialActionCheck _nopSetSpecialAction = null!;
+    private NopPutPlayerInVehicleCheck _nopPutInVehicle = null!;
+    private NopToggleSpectatingCheck _nopToggleSpectating = null!;
+    private NopSpawnPlayerCheck _nopSpawnPlayer = null!;
+    private NopSetPlayerPosCheck _nopSetPos = null!;
+    private NopRemoveFromVehicleCheck _nopRemoveFromVehicle = null!;
+
     public PlayerStateManager Players => _players;
     public WarningManager Warnings => _warnings;
     public AnticheatConfig Config => _config;
@@ -150,6 +165,19 @@ public class AnticheatPlugin : IDisposable
         _parkourMod = new ParkourModCheck(_players, _warnings, _config);
         _unFreeze = new UnFreezeCheck(_players, _warnings, _config);
         _fakeNpc = new FakeNpcCheck(_config, _logger);
+
+        _nopGiveWeapon = new NopGiveWeaponCheck(_players, _warnings, _config);
+        _nopSetAmmo = new NopSetAmmoCheck(_players, _warnings, _config);
+        _nopSetInterior = new NopSetInteriorCheck(_players, _warnings, _config);
+        _nopSetHealth = new NopSetHealthCheck(_players, _warnings, _config);
+        _nopSetVehicleHealth = new NopSetVehicleHealthCheck(_players, _vehicles, _warnings, _config);
+        _nopSetArmour = new NopSetArmourCheck(_players, _warnings, _config);
+        _nopSetSpecialAction = new NopSetSpecialActionCheck(_players, _warnings, _config);
+        _nopPutInVehicle = new NopPutPlayerInVehicleCheck(_players, _warnings, _config);
+        _nopToggleSpectating = new NopToggleSpectatingCheck(_players, _warnings, _config);
+        _nopSpawnPlayer = new NopSpawnPlayerCheck(_players, _warnings, _config);
+        _nopSetPos = new NopSetPlayerPosCheck(_players, _warnings, _config);
+        _nopRemoveFromVehicle = new NopRemoveFromVehicleCheck(_players, _warnings, _config);
     }
 
     private void InitHotReload(string configPath)
@@ -216,16 +244,29 @@ public class AnticheatPlugin : IDisposable
     {
         _weapon.OnWeaponGiven(playerId, weaponId, ammo);
         _ammo.OnAmmoGiven(playerId, weaponId, ammo);
+        _nopGiveWeapon.OnWeaponGiven(playerId, weaponId, ammo);
     }
 
+    public void OnSetPlayerAmmo(int playerId, int weaponId, int ammo)
+        => _nopSetAmmo.OnSetPlayerAmmo(playerId, weaponId, ammo);
+
+    public void OnSetPlayerInterior(int playerId, int interiorId)
+        => _nopSetInterior.OnSetPlayerInterior(playerId, interiorId);
+
     public void OnResetPlayerWeapons(int playerId)
-        => _weapon.OnWeaponsReset(playerId);
+    {
+        _weapon.OnWeaponsReset(playerId);
+        _nopGiveWeapon.OnWeaponsReset(playerId);
+        _nopSetAmmo.OnWeaponsReset(playerId);
+    }
 
     public void OnShowPlayerDialog(int playerId, int dialogId)
         => _dialogHack.OnDialogShown(playerId, dialogId);
 
-    public void OnSetPlayerSpecialAction(int playerId, int action)
-        => _specialAction.OnSpecialActionSet(playerId, action);
+    public void OnSetPlayerSpecialAction(int playerId, int action) {
+        _specialAction.OnSpecialActionSet(playerId, action);
+        _nopSetSpecialAction.OnSetPlayerSpecialAction(playerId, action);
+    }
 
     public void OnSetPlayerHealth(int playerId, float health)
     {
@@ -233,7 +274,11 @@ public class AnticheatPlugin : IDisposable
         if (st is null) return;
         st.SetHealth = (int)health;
         st.SetHealthTick = Environment.TickCount64;
+        _nopSetHealth.OnSetPlayerHealth(playerId, health);
     }
+
+    public void OnSetVehicleHealth(int vehicleId, float health)
+        => _nopSetVehicleHealth.OnSetVehicleHealth(vehicleId, health);
 
     public void OnSetPlayerArmour(int playerId, float armour)
     {
@@ -241,14 +286,18 @@ public class AnticheatPlugin : IDisposable
         if (st is null) return;
         st.SetArmour = (int)armour;
         st.SetArmourTick = Environment.TickCount64;
+        _nopSetArmour.OnSetPlayerArmour(playerId, armour);
     }
 
-    public void OnSetPlayerPos(int playerId)
-    {
+    public void OnSetPlayerPos(int playerId, float x, float y, float z) {
         var st = _players.Get(playerId);
         if (st is null) return;
         st.SetPosTick = Environment.TickCount64;
+        _nopSetPos.OnSetPlayerPos(playerId, x, y, z);
     }
+
+    public void OnRemovePlayerFromVehicle(int playerId)
+        => _nopRemoveFromVehicle.OnRemovePlayerFromVehicle(playerId);
 
     public void OnPutPlayerInVehicle(int playerId, int vehicleId)
     {
@@ -256,6 +305,14 @@ public class AnticheatPlugin : IDisposable
         if (st is null) return;
         st.VehicleId = vehicleId;
         st.PutInVehicleTick = Environment.TickCount64;
+        _nopPutInVehicle.OnPutPlayerInVehicle(playerId, vehicleId);
+    }
+
+    public void OnTogglePlayerSpectating(int playerId, bool toggle)
+    {
+        var st = _players.Get(playerId);
+        if (st is not null) st.SpectateTick = Environment.TickCount64;
+        _nopToggleSpectating.OnTogglePlayerSpectating(playerId, toggle);
     }
 
     public void OnPlayerVelocitySet(int playerId)
@@ -283,10 +340,10 @@ public class AnticheatPlugin : IDisposable
     public void OnDestroyPickup(int pickupId)
         => _pickups.Remove(pickupId);
 
-    public void OnSpawnPlayer(int playerId)
-    {
+    public void OnSpawnPlayer(int playerId) {
         var st = _players.Get(playerId);
         if (st is not null) st.SpawnSetFlag = 1;
+        _nopSpawnPlayer.OnSpawnPlayer(playerId);
     }
 
     public void OnTogglePlayerControllable(int playerId, bool toggle)
@@ -380,6 +437,8 @@ public class AnticheatPlugin : IDisposable
         _seatFlood.OnPlayerDisconnected(p.Id);
         _dos.OnPlayerDisconnected(p.Id);
         _flood.ClearPlayer(p.Id);
+        _nopSpawnPlayer.OnPlayerDisconnected(p.Id);
+        _nopRemoveFromVehicle.OnPlayerDisconnected(p.Id);
         _players.Remove(p.Id);
     }
 
@@ -407,6 +466,18 @@ public class AnticheatPlugin : IDisposable
         _invisible.OnPlayerUpdate(p);
         _parkourMod.OnPlayerUpdate(p);
         _unFreeze.OnPlayerUpdate(p);
+        _nopGiveWeapon.OnPlayerUpdate(p);
+        _nopSetAmmo.OnPlayerUpdate(p);
+        _nopSetInterior.OnPlayerUpdate(p);
+        _nopSetHealth.OnPlayerUpdate(p);
+        _nopSetVehicleHealth.OnPlayerUpdate(p);
+        _nopSetArmour.OnPlayerUpdate(p);
+        _nopSetSpecialAction.OnPlayerUpdate(p);
+        _nopPutInVehicle.OnPlayerUpdate(p);
+        _nopToggleSpectating.OnPlayerUpdate(p);
+        _nopSpawnPlayer.OnPlayerUpdate(p);
+        _nopSetPos.OnPlayerUpdate(p);
+        _nopRemoveFromVehicle.OnPlayerUpdate(p);
     }
 
     private void OnPlayerSpawned(object? sender, SpawnEventArgs e)
@@ -418,6 +489,17 @@ public class AnticheatPlugin : IDisposable
         _armour.OnPlayerSpawned(p);
         _money.OnPlayerSpawned(p);
         _weapon.OnPlayerSpawned(p);
+        _nopGiveWeapon.OnPlayerSpawned(p.Id);
+        _nopSetAmmo.OnPlayerSpawned(p.Id);
+        _nopSetInterior.OnPlayerSpawned(p.Id);
+        _nopSetHealth.OnPlayerSpawned(p.Id);
+        _nopSetArmour.OnPlayerSpawned(p.Id);
+        _nopSetSpecialAction.OnPlayerSpawned(p.Id);
+        _nopPutInVehicle.OnPlayerSpawned(p.Id);
+        _nopToggleSpectating.OnPlayerSpawned(p.Id);
+        _nopSpawnPlayer.OnPlayerSpawned(p.Id);
+        _nopSetPos.OnPlayerSpawned(p.Id);
+        _nopRemoveFromVehicle.OnPlayerSpawned(p.Id);
     }
 
     private void OnPlayerDied(object? sender, DeathEventArgs e)
@@ -425,6 +507,13 @@ public class AnticheatPlugin : IDisposable
         if (sender is not BasePlayer p) return;
         _godMode.OnPlayerDied(p);
         _fakeKill.OnPlayerDied(p, e);
+        _nopSetHealth.OnPlayerDied(p.Id);
+        _nopSetArmour.OnPlayerDied(p.Id);
+        _nopSetSpecialAction.OnPlayerDied(p.Id);
+        _nopPutInVehicle.OnPlayerDied(p.Id);
+        _nopToggleSpectating.OnPlayerDied(p.Id);
+        _nopSetPos.OnPlayerDied(p.Id);
+        _nopRemoveFromVehicle.OnPlayerDied(p.Id);
     }
 
     private void OnPlayerTakeDamage(object? sender, DamageEventArgs e)
@@ -455,6 +544,7 @@ public class AnticheatPlugin : IDisposable
         if (st is null) return;
         st.VehicleId = e.Vehicle.Id;
         st.EnterVehicleTick = Environment.TickCount64;
+        _nopSetPos.OnPlayerEnterVehicle(p.Id);
     }
 
     private void OnPlayerExitVehicle(object? sender, PlayerVehicleEventArgs e)
@@ -463,7 +553,10 @@ public class AnticheatPlugin : IDisposable
         if (!_cbFlood.Check(p, 7)) return;
         var st = _players.Get(p.Id);
         if (st is null) return;
+        _nopPutInVehicle.OnPlayerExitVehicle(p.Id);
         st.RemoveFromVehicleTick = Environment.TickCount64;
+        _nopSetPos.OnPlayerExitVehicle(p.Id);
+        _nopRemoveFromVehicle.OnPlayerExitVehicle(p.Id);
         st.VehicleId = -1;
     }
 
@@ -645,6 +738,7 @@ public class AnticheatPlugin : IDisposable
         if (e.Player is not BasePlayer p) return;
         _cbFlood.Check(p, 15);
         _vehicles.Remove(v.Id);
+        _nopSetVehicleHealth.OnVehicleDestroyed(v.Id);
     }
 
     private void OnVehicleDamageStatusUpdated(object? sender, PlayerEventArgs e)

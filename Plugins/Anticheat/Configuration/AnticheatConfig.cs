@@ -69,5 +69,19 @@ public class AnticheatConfig
         ["ParkourMod"] = new() { Enabled = false },
         ["UnFreeze"] = new() { Enabled = false },
         ["FakeNpc"] = new() { Enabled = false },
+
+        // ── Anti-NOP ─────────────────────────────────────────────────────
+        ["NopGiveWeapon"] = new() { MaxWarnings = 8 },
+        ["NopSetAmmo"] = new() { MaxWarnings = 8 },
+        ["NopSetInterior"] = new() { MaxWarnings = 8 },
+        ["NopSetHealth"] = new() { MaxWarnings = 8 },
+        ["NopSetVehicleHealth"] = new() { MaxWarnings = 8 },
+        ["NopSetArmour"] = new() { MaxWarnings = 8 },
+        ["NopSetSpecialAction"] = new() { MaxWarnings = 8 },
+        ["NopPutInVehicle"] = new() { MaxWarnings = 8 },
+        ["NopToggleSpectating"] = new() { MaxWarnings = 8 },
+        ["NopSpawnPlayer"] = new() { MaxWarnings = 8 },
+        ["NopSetPos"] = new() { MaxWarnings = 8 },
+        ["NopRemoveFromVehicle"] = new() { MaxWarnings = 8 },
     };
 }
