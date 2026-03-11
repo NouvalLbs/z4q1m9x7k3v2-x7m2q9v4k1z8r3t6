@@ -61,4 +61,13 @@ public class NopSetVehicleHealthCheck
         var vst = _vehicles.Get(vehicleId);
         if (vst is not null) vst.NopSetHealthExpected = -1f;
     }
+
+    public void OnRepairVehicle(int vehicleId)
+    {
+        var vst = _vehicles.Get(vehicleId);
+        if (vst is null) return;
+
+        vst.NopSetHealthExpected = 1000f;
+        vst.NopSetHealthDeadline = Environment.TickCount64 + DeadlineMs;
+    }
 }

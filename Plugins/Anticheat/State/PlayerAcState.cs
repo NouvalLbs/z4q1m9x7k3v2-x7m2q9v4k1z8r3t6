@@ -36,19 +36,28 @@ public class PlayerAcState
     public int SpawnAmmo1 { get; set; }
     public int SpawnAmmo2 { get; set; }
     public int SpawnAmmo3 { get; set; }
+    public float SpawnPosX { get; set; }
+    public float SpawnPosY { get; set; }
+    public float SpawnPosZ { get; set; }
+    public bool HasSpawnPos { get; set; }
 
     public int VehicleId { get; set; } = -1;
+    public int LastVehicleModel { get; set; }
 
     public int NextDialog { get; set; } = -1;
 
     public string IpAddress { get; set; } = string.Empty;
 
     public long PutInVehicleTick { get; set; }
+    public float PutInVehiclePosX { get; set; }
+    public float PutInVehiclePosY { get; set; }
+    public float PutInVehiclePosZ { get; set; }
     public long SetHealthTick { get; set; }
     public long DamageTick { get; set; }
     public long SetArmourTick { get; set; }
     public long SetSpecialActionTick { get; set; }
     public long ResetWeaponsTick { get; set; }
+    public long ReloadTick { get; set; }
     public long RemoveFromVehicleTick { get; set; }
     public long VehicleVelocityTick { get; set; }
     public long PlayerVelocityTick { get; set; }
@@ -64,6 +73,12 @@ public class PlayerAcState
     public bool IsSpectating { get; set; }
     public bool IsInModShop { get; set; }
     public bool IsFrozen { get; set; }
+    public bool StuntBonusEnabled { get; set; } = true;
+    public bool IsParachuting { get; set; }
+    public float DropJpX { get; set; }
+    public float DropJpY { get; set; }
+    public long DropJpTick { get; set; }
+    public bool WasJetpacking { get; set; }
     public bool PendingDamageResult { get; set; }
     public bool PendingVehicleDamageResult { get; set; }
     public bool PendingClassResult { get; set; }
@@ -98,6 +113,7 @@ public class PlayerAcState
     // ── Anti-NOP: PutPlayerInVehicle ─────────────────────────────────────
     public int NopPutInVehicleExpected { get; set; } = -1;
     public long NopPutInVehicleDeadline { get; set; }
+    public int NopPutInVehicleSeat { get; set; } = -1;
 
     // ── Anti-NOP: TogglePlayerSpectating ────────────────────────────────
     public int NopToggleSpectatingExpected { get; set; } = -1;
@@ -113,6 +129,7 @@ public class PlayerAcState
     public float NopSetPosY { get; set; }
     public float NopSetPosZ { get; set; }
     public long NopSetPosDeadline { get; set; }
+    public bool TpToZ { get; set; }
 
     // ── Anti-NOP: RemovePlayerFromVehicle ────────────────────────────────
     public bool NopRemoveFromVehiclePending { get; set; }

@@ -79,6 +79,7 @@ public class AnticheatPlugin : IDisposable
     private ParkourModCheck _parkourMod = null!;
     private UnFreezeCheck _unFreeze = null!;
     private FakeNpcCheck _fakeNpc = null!;
+    private AfkGhostCheck _afkGhost = null!;
 
     // ── Anti-NOP ─────────────────────────────────────────────────────────
     private NopGiveWeaponCheck _nopGiveWeapon = null!;
@@ -130,7 +131,7 @@ public class AnticheatPlugin : IDisposable
         _invisible = new InvisibleCheck(_players, _warnings, _config);
         _fakeSpawn = new FakeSpawnCheck(_players, _warnings, _config);
         _fakeKill = new FakeKillCheck(_players, _warnings, _config);
-        _rapidFire = new RapidFireCheck(_warnings, _config);
+        _rapidFire = new RapidFireCheck(_players, _warnings, _config);
         _proAim = new ProAimCheck(_players, _warnings, _config);
         _silentAim = new SilentAimCheck(_players, _warnings, _config);
         _quickTurn = new QuickTurnCheck(_players, _warnings, _config);
@@ -159,6 +160,7 @@ public class AnticheatPlugin : IDisposable
         _parkourMod = new ParkourModCheck(_players, _warnings, _config);
         _unFreeze = new UnFreezeCheck(_players, _warnings, _config);
         _fakeNpc = new FakeNpcCheck(_config, _logger);
+        _afkGhost = new AfkGhostCheck(_players, _warnings, _config);
 
         _nopGiveWeapon = new NopGiveWeaponCheck(_players, _warnings, _config);
         _nopSetAmmo = new NopSetAmmoCheck(_players, _warnings, _config);
@@ -279,6 +281,85 @@ public class AnticheatPlugin : IDisposable
     public void OnSetVehicleHealth(int vehicleId, float health)
         => _nopSetVehicleHealth.OnSetVehicleHealth(vehicleId, health);
 
+    public void OnRepairVehicle(int vehicleId)
+        => _nopSetVehicleHealth.OnRepairVehicle(vehicleId);
+
+    public void OnUpdateVehicleDamageStatus(int vehicleId, int panels, int doors, int lights, int tires)
+    {
+        var vst = _vehicles.GetOrCreate(vehicleId);
+        vst.Panels = panels;
+        vst.Doors = doors;
+        vst.Lights = lights;
+        vst.Tires = tires;
+    }
+
+    public void OnChangeVehiclePaintjob(int vehicleId, int paintjobId)
+    {
+        var vst = _vehicles.GetOrCreate(vehicleId);
+        vst.Paintjob = paintjobId;
+    }
+
+    public void OnLinkVehicleToInterior(int vehicleId, int interiorId)
+    {
+        var vst = _vehicles.GetOrCreate(vehicleId);
+        vst.Interior = interiorId % 256;
+    }
+
+    public void OnSetVehicleParamsEx(int vehicleId, bool doorsLocked)
+    {
+        var vst = _vehicles.GetOrCreate(vehicleId);
+        vst.DoorsLocked = doorsLocked;
+    }
+
+    public void OnSetVehicleParamsForPlayer(int vehicleId, int playerId, bool doorsLocked)
+    {
+        var vst = _vehicles.GetOrCreate(vehicleId);
+        vst.DoorsLockedPerPlayer[playerId] = doorsLocked;
+    }
+
+    public void OnSetVehicleToRespawn(int vehicleId)
+    {
+        var vst = _vehicles.Get(vehicleId);
+        if (vst is not null)
+        {
+            vst.NopSetHealthExpected = -1f;
+            vst.Panels = 0;
+            vst.Doors = 0;
+            vst.Lights = 0;
+            vst.Tires = 0;
+            vst.Paintjob = 3;
+        }
+
+        long graceUntil = Environment.TickCount64 + 2650;
+        foreach (var (_, st) in _players.All)
+        {
+            if (st.VehicleId == vehicleId)
+            {
+                st.SetPosTick = graceUntil;
+                st.VehicleVelocityTick = graceUntil;
+                st.VehicleId = -1;
+            }
+        }
+    }
+
+    public void OnEnableStuntBonusForAll(bool enable)
+    {
+        foreach (var (_, st) in _players.All)
+            st.StuntBonusEnabled = enable;
+    }
+
+    public void OnEnableStuntBonusForPlayer(int playerId, bool enable)
+    {
+        var st = _players.Get(playerId);
+        if (st is not null) st.StuntBonusEnabled = enable;
+    }
+
+    public void OnPlayerSpectatePlayerOrVehicle(int playerId) {
+        var st = _players.Get(playerId);
+        if (st is null) return;
+        st.SpectateTick = Environment.TickCount64 + 2650;
+    }
+
     public void OnSetPlayerArmour(int playerId, float armour)
     {
         var st = _players.Get(playerId);
@@ -295,16 +376,43 @@ public class AnticheatPlugin : IDisposable
         _nopSetPos.OnSetPlayerPos(playerId, x, y, z);
     }
 
+    public void OnSetPlayerPosFindZ(int playerId, float x, float y, float z)
+    {
+        var st = _players.Get(playerId);
+        if (st is null) return;
+        st.SetPosTick = Environment.TickCount64;
+        st.TpToZ = true;
+        _nopSetPos.OnSetPlayerPos(playerId, x, y, z);
+    }
+
+    public void OnSetVehiclePos(int vehicleId, float x, float y, float z)
+    {
+        long now = Environment.TickCount64;
+        foreach (var (playerId, st) in _players.All)
+        {
+            if (st.VehicleId != vehicleId) continue;
+            st.SetPosTick = now;
+            st.VehicleVelocityTick = now;
+            _nopSetPos.OnSetPlayerPos(playerId, x, y, z);
+        }
+    }
+
     public void OnRemovePlayerFromVehicle(int playerId)
         => _nopRemoveFromVehicle.OnRemovePlayerFromVehicle(playerId);
 
-    public void OnPutPlayerInVehicle(int playerId, int vehicleId)
+    public void OnPutPlayerInVehicle(int playerId, int vehicleId, int seatId = 0)
     {
         var st = _players.Get(playerId);
         if (st is null) return;
         st.VehicleId = vehicleId;
         st.PutInVehicleTick = Environment.TickCount64;
-        _nopPutInVehicle.OnPutPlayerInVehicle(playerId, vehicleId);
+        var vpos = BaseVehicle.Find(vehicleId)?.Position;
+        if (vpos is not null) {
+            st.PutInVehiclePosX = vpos.Value.X;
+            st.PutInVehiclePosY = vpos.Value.Y;
+            st.PutInVehiclePosZ = vpos.Value.Z;
+        }
+        _nopPutInVehicle.OnPutPlayerInVehicle(playerId, vehicleId, seatId);
     }
 
     public void OnTogglePlayerSpectating(int playerId, bool toggle) {
@@ -352,13 +460,17 @@ public class AnticheatPlugin : IDisposable
     public void OnTogglePlayerControllable(int playerId, bool toggle)
         => _unFreeze.OnPlayerFrozen(playerId, !toggle);
 
-    public void OnSetPlayerSpawnInfo(int playerId, int weapon1, int ammo1, int weapon2, int ammo2, int weapon3, int ammo3)
+    public void OnSetPlayerSpawnInfo(int playerId, float x, float y, float z, int weapon1, int ammo1, int weapon2, int ammo2, int weapon3, int ammo3)
     {
         var st = _players.Get(playerId);
         if (st is null) return;
         st.SpawnWeapon1 = weapon1; st.SpawnAmmo1 = ammo1;
         st.SpawnWeapon2 = weapon2; st.SpawnAmmo2 = ammo2;
         st.SpawnWeapon3 = weapon3; st.SpawnAmmo3 = ammo3;
+        st.SpawnPosX = x;
+        st.SpawnPosY = y;
+        st.SpawnPosZ = z;
+        st.HasSpawnPos = true;
     }
 
     // ── RegisterEvents ───────────────────────────────────────────────────
@@ -407,6 +519,7 @@ public class AnticheatPlugin : IDisposable
         _timer = new Timer(5000);
         _timer.Elapsed += (_, _) => {
             _ping.Tick();
+            _afkGhost.Tick();
         };
         _timer.AutoReset = true;
         _timer.Start();
@@ -424,6 +537,7 @@ public class AnticheatPlugin : IDisposable
         _reconnect.OnPlayerConnected(p);
         var st = _players.GetOrCreate(p.Id);
         st.IsOnline = true;
+        st.StuntBonusEnabled = true;
         st.IpAddress = p.IP;
         _logger.Log($"Player {p.Id} connected from {p.IP}");
     }
@@ -494,6 +608,7 @@ public class AnticheatPlugin : IDisposable
         _money.OnPlayerSpawned(p);
         _weapon.OnPlayerSpawned(p);
         _silentAim.OnPlayerSpawned(p.Id);
+        _afkGhost.OnPlayerSpawned(p.Id);
 
         _nopGiveWeapon.OnPlayerSpawned(p.Id);
         _nopSetAmmo.OnPlayerSpawned(p.Id);
@@ -514,6 +629,7 @@ public class AnticheatPlugin : IDisposable
         _godMode.OnPlayerDied(p);
         _fakeKill.OnPlayerDied(p, e);
         _silentAim.OnPlayerDied(p.Id);
+        _afkGhost.OnPlayerDied(p.Id);
 
         _nopSetHealth.OnPlayerDied(p.Id);
         _nopSetArmour.OnPlayerDied(p.Id);
@@ -750,6 +866,16 @@ public class AnticheatPlugin : IDisposable
         if (sender is not BaseVehicle v) return;
         if (e.Player is not BasePlayer p) return;
         _cbFlood.Check(p, 15);
+        int model = (int)v.Model;
+        long graceUntil = Environment.TickCount64 + 2650;
+        foreach (var (_, st) in _players.All) {
+            if (st.VehicleId == v.Id) {
+                st.LastVehicleModel = model;
+                st.SetPosTick = graceUntil;
+                st.RemoveFromVehicleTick = graceUntil;
+                st.VehicleId = -1;
+            }
+        }
         _vehicles.Remove(v.Id);
         _nopSetVehicleHealth.OnVehicleDestroyed(v.Id);
     }

@@ -29,7 +29,18 @@ public class FakeSpawnCheck
                        || now - st.SpawnTick > 30_000;
 
         if (!validSpawn)
-            _warnings.AddWarning(player.Id, "FakeSpawn", $"isDead={st.IsDead} setFlag={st.SpawnSetFlag}");
+            _warnings.AddWarning(player.Id, "FakeSpawn",
+                $"isDead={st.IsDead} setFlag={st.SpawnSetFlag}");
+        else if (st.HasSpawnPos)
+        {
+            var pos = player.Position;
+            float dist = MathF.Sqrt(
+                (pos.X - st.SpawnPosX) * (pos.X - st.SpawnPosX) +
+                (pos.Y - st.SpawnPosY) * (pos.Y - st.SpawnPosY));
+            if (dist > 5f)
+                _warnings.AddWarning(player.Id, "FakeSpawn",
+                    $"spawnPos dist={dist:F1}");
+        }
 
         st.IsDead = false;
         st.SpawnSetFlag = 0;

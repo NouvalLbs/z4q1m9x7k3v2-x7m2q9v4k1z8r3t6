@@ -17,12 +17,13 @@ public class NopPutPlayerInVehicleCheck
     public NopPutPlayerInVehicleCheck(PlayerStateManager p, WarningManager w, AnticheatConfig c)
         => (_players, _warnings, _config) = (p, w, c);
 
-    public void OnPutPlayerInVehicle(int playerId, int vehicleId)
+    public void OnPutPlayerInVehicle(int playerId, int vehicleId, int seatId = 0)
     {
         var st = _players.Get(playerId);
         if (st is null) return;
 
         st.NopPutInVehicleExpected = vehicleId;
+        st.NopPutInVehicleSeat = seatId;
         st.NopPutInVehicleDeadline = Environment.TickCount64 + DeadlineMs;
     }
 
@@ -41,13 +42,22 @@ public class NopPutPlayerInVehicleCheck
         var pState = player.State;
 
         bool inExpectedVehicle = (pState == PlayerState.Driving || pState == PlayerState.Passenger)
-                              && player.Vehicle is not null
-                              && player.Vehicle.Id == st.NopPutInVehicleExpected;
+                      && player.Vehicle is not null
+                      && player.Vehicle.Id == st.NopPutInVehicleExpected;
 
         if (!inExpectedVehicle)
+        {
             _warnings.AddWarning(player.Id, "NopPutInVehicle",
                 $"expected=veh:{st.NopPutInVehicleExpected} state={pState} " +
                 $"got=veh:{(player.Vehicle?.Id.ToString() ?? "none")}");
+        }
+        else if (st.NopPutInVehicleSeat >= 0)
+        {
+            int actualSeat = player.VehicleSeat;
+            if (actualSeat != st.NopPutInVehicleSeat)
+                _warnings.AddWarning(player.Id, "NopPutInVehicle",
+                    $"expected=seat:{st.NopPutInVehicleSeat} got=seat:{actualSeat}");
+        }
 
         st.NopPutInVehicleExpected = -1;
     }

@@ -39,7 +39,26 @@ public class AirBreakCheck
         if (pState == PlayerState.OnFoot)
         {
             if (!_config.GetCheck("AirBreakOnfoot").Enabled) return;
-            if (player.AnimationIndex == 1133) return;
+
+            bool isJetpacking = player.SpecialAction == SpecialAction.Usejetpack;
+
+            if (isJetpacking)
+            {
+                st.WasJetpacking = true;
+                return;
+            }
+
+            if (st.WasJetpacking && !isJetpacking)
+            {
+                st.DropJpX = pos.X;
+                st.DropJpY = pos.Y;
+                st.DropJpTick = now;
+                st.WasJetpacking = false;
+            }
+
+            if (st.DropJpTick > 0 && now - st.DropJpTick < 3000) return;
+
+            if (st.IsParachuting) return;
             if (player.SurfingVehicle is not null) return;
             if (zDiff > MaxZGainNoVelocity && MathF.Abs(vel.Z) < 0.05f)
                 _warnings.AddWarning(player.Id, "AirBreakOnfoot", $"dz={zDiff:F2} vz={vel.Z:F3}");

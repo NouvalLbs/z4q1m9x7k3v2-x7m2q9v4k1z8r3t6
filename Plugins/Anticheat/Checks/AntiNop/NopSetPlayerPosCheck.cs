@@ -37,6 +37,7 @@ public class NopSetPlayerPosCheck
 
         var st = _players.Get(player.Id);
         if (st is null || st.IsDead || !st.NopSetPosPending) return;
+        if (st.TpToZ) { st.NopSetPosPending = false; st.TpToZ = false; return; }
 
         long now = Environment.TickCount64;
         if (now < st.NopSetPosDeadline) return;

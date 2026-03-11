@@ -69,6 +69,7 @@ public class AmmoCheck
         player.GetWeaponData(slot, out _, out int ammo);
         st.PreShotAmmo[slot] = ammo;
         st.ShotAmmoTick[slot] = Environment.TickCount64;
+        if (ammo <= 1) st.ReloadTick = Environment.TickCount64;
     }
 
     public void OnAmmoGiven(int playerId, int weaponId, int ammo)

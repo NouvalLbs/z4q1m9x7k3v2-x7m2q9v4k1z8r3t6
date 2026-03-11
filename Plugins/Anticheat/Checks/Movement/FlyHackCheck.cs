@@ -41,8 +41,7 @@ public class FlyHackCheck
 
             // Parachute tidak ada sebagai SpecialAction di SampSharp;
             // cek via animasi: AnimIndex 1133 = parachute deploy
-            if (player.AnimationIndex == 1133) return;
-
+            if (st.IsParachuting) return;
             if (player.SurfingVehicle is not null) return;
 
             if (vel.Z > MaxLiftZ)

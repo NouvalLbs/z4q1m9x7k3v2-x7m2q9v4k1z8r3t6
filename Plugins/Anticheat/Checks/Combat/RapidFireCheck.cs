@@ -20,9 +20,10 @@ public class RapidFireCheck
     private readonly ConcurrentDictionary<int, (int WepId, long Tick)> _lastShot = new();
     private readonly WarningManager _warnings;
     private readonly AnticheatConfig _config;
+    private readonly PlayerStateManager _players;
 
-    public RapidFireCheck(WarningManager w, AnticheatConfig c)
-        => (_warnings, _config) = (w, c);
+    public RapidFireCheck(PlayerStateManager p, WarningManager w, AnticheatConfig c)
+        => (_players, _warnings, _config) = (p, w, c);
 
     public void OnPlayerWeaponShot(BasePlayer player, WeaponShotEventArgs e)
     {
@@ -37,8 +38,12 @@ public class RapidFireCheck
         {
             long elapsed = now - prev.Tick;
             if (elapsed < minMs)
-                _warnings.AddWarning(player.Id, "RapidFire",
-                    $"wid={wid} elapsed={elapsed}ms min={minMs}ms");
+            {
+                var st = _players.Get(player.Id);
+                if (st is null || now - st.ReloadTick > 2000)
+                    _warnings.AddWarning(player.Id, "RapidFire",
+                        $"wid={wid} elapsed={elapsed}ms min={minMs}ms");
+            }
         }
 
         _lastShot[player.Id] = (wid, now);
