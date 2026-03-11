@@ -49,17 +49,19 @@ public class FlyHackCheck
         }
         else if (pState == PlayerState.Driving)
         {
-            if (!_config.GetCheck("FlyHackVehicle").Enabled) return;
             if (player.Vehicle is null) return;
 
             int model = (int)player.Vehicle.Model;
             byte vType = VehicleData.GetType(model);
-            // Skip: helicopter, plane, RC aircraft
             if (vType is 3 or 4 or 8) return;
 
+            bool isBike = VehicleData.IsBike(model);
+            string checkName = isBike ? "FlyHackBike" : "FlyHackVehicle";
+
+            if (!_config.GetCheck(checkName).Enabled) return;
             if (now - st.VehicleVelocityTick < 2000) return;
             if (vel.Z > MaxLiftZ)
-                _warnings.AddWarning(player.Id, "FlyHackVehicle", $"vz={vel.Z:F3} mdl={model}");
+                _warnings.AddWarning(player.Id, checkName, $"vz={vel.Z:F3} mdl={model}");
         }
     }
 }

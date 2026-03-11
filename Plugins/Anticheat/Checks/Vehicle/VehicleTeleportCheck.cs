@@ -15,12 +15,13 @@ public class VehicleTeleportCheck
     private const float MaxVehicleToPlayerDist = 15f;
 
     private readonly PlayerStateManager _players;
+    private readonly VehicleStateManager _vehicles;
     private readonly PickupStateManager _pickups;
     private readonly WarningManager _warnings;
     private readonly AnticheatConfig _config;
 
-    public VehicleTeleportCheck(PlayerStateManager p, PickupStateManager pk, WarningManager w, AnticheatConfig c)
-        => (_players, _pickups, _warnings, _config) = (p, pk, w, c);
+    public VehicleTeleportCheck(PlayerStateManager p, VehicleStateManager v, PickupStateManager pk, WarningManager w, AnticheatConfig c)
+        => (_players, _vehicles, _pickups, _warnings, _config) = (p, v, pk, w, c);
 
     public void OnPlayerEnterVehicle(BasePlayer player, EnterVehicleEventArgs e)
     {
@@ -64,7 +65,21 @@ public class VehicleTeleportCheck
             || now - st.PutInVehicleTick < 2000 || now - st.RemoveFromVehicleTick < 1500) return;
         var pos = player.Position;
         float dist = VectorMath.Dist(st.X, st.Y, st.Z, pos.X, pos.Y, pos.Z);
-        if (dist > MaxVehicleToPlayerDist)
-            _warnings.AddWarning(player.Id, "TeleportVehicleToPlayer", $"d={dist:F1}");
+
+        if (dist > MaxVehicleToPlayerDist) {
+            bool isRespawn = false;
+
+            if (player.Vehicle is not null) {
+                var vst = _vehicles.Get(player.Vehicle.Id);
+                if (vst is not null) {
+                    float spawnDist = VectorMath.Dist(pos.X, pos.Y, pos.Z,
+                        vst.SpawnPosX, vst.SpawnPosY, vst.SpawnPosZ);
+                    if (spawnDist < 15.0f) isRespawn = true;
+                }
+            }
+
+            if (!isRespawn)
+                _warnings.AddWarning(player.Id, "TeleportVehicleToPlayer", $"d={dist:F1}");
+        }
     }
 }

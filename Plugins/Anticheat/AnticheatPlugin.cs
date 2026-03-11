@@ -80,6 +80,8 @@ public class AnticheatPlugin : IDisposable
     private UnFreezeCheck _unFreeze = null!;
     private FakeNpcCheck _fakeNpc = null!;
     private AfkGhostCheck _afkGhost = null!;
+    private CameraHackCheck _cameraHack = null!;
+    private AnimationHackCheck _animationHack = null!;
 
     // ── Anti-NOP ─────────────────────────────────────────────────────────
     private NopGiveWeaponCheck _nopGiveWeapon = null!;
@@ -119,7 +121,7 @@ public class AnticheatPlugin : IDisposable
     {
         _airBreak = new AirBreakCheck(_players, _warnings, _config);
         _teleport = new TeleportCheck(_players, _warnings, _config);
-        _speedHack = new SpeedHackCheck(_players, _warnings, _config);
+        _speedHack = new SpeedHackCheck(_players, _vehicles, _warnings, _config);
         _flyHack = new FlyHackCheck(_players, _warnings, _config);
         _health = new HealthCheck(_players, _warnings, _config);
         _armour = new ArmourCheck(_players, _warnings, _config);
@@ -140,7 +142,7 @@ public class AnticheatPlugin : IDisposable
         _fullAiming = new FullAimingCheck(_players, _warnings, _config);
         _cjRun = new CjRunCheck(_players, _warnings, _config);
         _carJack = new CarJackCheck(_players, _warnings, _config);
-        _vehicleTeleport = new VehicleTeleportCheck(_players, _pickups, _warnings, _config);
+        _vehicleTeleport = new VehicleTeleportCheck(_players, _vehicles, _pickups, _warnings, _config);
         _tuningHack = new TuningHackCheck(_players, _warnings, _config);
         _reconnect = new ReconnectCheck(_warnings, _config, _logger);
         _ping = new PingCheck(_warnings, _config, _logger);
@@ -161,6 +163,8 @@ public class AnticheatPlugin : IDisposable
         _unFreeze = new UnFreezeCheck(_players, _warnings, _config);
         _fakeNpc = new FakeNpcCheck(_config, _logger);
         _afkGhost = new AfkGhostCheck(_players, _warnings, _config);
+        _cameraHack = new CameraHackCheck(_players, _warnings, _config);
+        _animationHack = new AnimationHackCheck(_players, _warnings, _config);
 
         _nopGiveWeapon = new NopGiveWeaponCheck(_players, _warnings, _config);
         _nopSetAmmo = new NopSetAmmoCheck(_players, _warnings, _config);
@@ -328,6 +332,13 @@ public class AnticheatPlugin : IDisposable
             vst.Lights = 0;
             vst.Tires = 0;
             vst.Paintjob = 3;
+        }
+
+        var veh = BaseVehicle.Find(vehicleId);
+        if (veh is not null) {
+            var pos = veh.Position;
+            GetVehicleZAngle(vehicleId, out float angle);
+            _vehicles.SetSpawnPosition(vehicleId, pos.X, pos.Y, pos.Z, angle);
         }
 
         long graceUntil = Environment.TickCount64 + 2650;
@@ -567,6 +578,28 @@ public class AnticheatPlugin : IDisposable
         if (!_dos.OnPlayerUpdate(p)) return;
         _airBreak.OnPlayerUpdate(p);
         _teleport.OnPlayerUpdate(p);
+        if (p.Vehicle is not null && p.State == PlayerState.Driving) {
+            var veh = p.Vehicle;
+            var vst = _vehicles.Get(veh.Id);
+            if (vst is not null) {
+                var vel = veh.Velocity;
+                var pos = veh.Position;
+
+                if (VehicleData.IsTrailer((int)veh.Model)) {
+                    vst.TrSpeed = (int)(VectorMath.Speed(vel.X, vel.Y, vel.Z) * 100.0f);
+                    vst.TrPosDiff = VectorMath.Dist(pos.X, pos.Y, pos.Z, vst.TrPosX, vst.TrPosY, vst.TrPosZ);
+                    vst.TrPosX = pos.X;
+                    vst.TrPosY = pos.Y;
+                    vst.TrPosZ = pos.Z;
+                    vst.TrVelX = vel.X;
+                    vst.TrVelY = vel.Y;
+                    vst.TrVelZ = vel.Z;
+                } else {
+                    vst.TrSpeed = -1;
+                    vst.TrSpeedDiff = 0;
+                }
+            }
+        }
         _speedHack.OnPlayerUpdate(p);
         _flyHack.OnPlayerUpdate(p);
         _health.OnPlayerUpdate(p);
@@ -581,8 +614,16 @@ public class AnticheatPlugin : IDisposable
         _weaponCrasher.OnPlayerUpdate(p);
         _specialAction.OnPlayerUpdate(p);
         _invisible.OnPlayerUpdate(p);
+        _cameraHack.OnPlayerUpdate(p);
+        _animationHack.OnPlayerUpdate(p);
         _parkourMod.OnPlayerUpdate(p);
         _unFreeze.OnPlayerUpdate(p);
+
+        var st = _players.Get(p.Id);
+        if (st is not null) {
+            st.CamMode = (int)p.CameraMode;
+            st.Anim = p.GetAnimationIndex();
+        }
 
         _nopGiveWeapon.OnPlayerUpdate(p);
         _nopSetAmmo.OnPlayerUpdate(p);
@@ -930,6 +971,16 @@ public class AnticheatPlugin : IDisposable
         var check = _config.GetCheck(checkName);
         configure(check);
         _logger.Log($"Check '{checkName}' configuration updated");
+    }
+
+    private void GetVehicleZAngle(int vehicleId, out float angle) {
+        var veh = BaseVehicle.Find(vehicleId);
+        if (veh is not null) {
+            var rot = veh.Rotation;
+            angle = rot.Z;
+        } else {
+            angle = 0.0f;
+        }
     }
 
     public void Dispose()

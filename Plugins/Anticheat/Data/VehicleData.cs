@@ -49,7 +49,9 @@ public static class VehicleData
     public static bool IsBoat(int modelId) => GetType(modelId) == 1;
     public static bool IsHelicopter(int modelId) => GetType(modelId) == 3;
     public static bool IsAircraft(int modelId) => GetType(modelId) == 4;
-    public static bool IsTrailer(int modelId) => GetType(modelId) == 10;
+    public static bool IsTrailer(int modelId) {
+        return modelId is 435 or 450 or 569 or 570 or 584 or 590 or 591 or 606 or 607 or 608 or 610 or 611;
+    }
     public static bool IsRC(int modelId) => GetType(modelId) == 8;
     public static bool IsTrain(int m) => m is 537 or 538 or 569 or 570 or 590 or 591;
     public static bool IsRemoteControl(int m) => m is 441 or 464 or 465 or 501 or 564 or 594;

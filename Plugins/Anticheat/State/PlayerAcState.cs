@@ -20,6 +20,8 @@ public class PlayerAcState
     public long MoneyGivenTick { get; set; }
 
     public float LastFacingAngle { get; set; } = -1f;
+    public int CamMode { get; set; }
+    public int Anim { get; set; }
 
     public int SetSpecialActionId { get; set; } = -1;
 

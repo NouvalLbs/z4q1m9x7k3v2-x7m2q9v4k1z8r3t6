@@ -79,10 +79,12 @@ public class SilentAimCheck
 
         if (angleDiff > MaxAngleDifference)
         {
-            float verticalAngle = MathF.Atan2(
-                targetPos.Z - shooterPos.Z,
-                VectorMath.Dist2D(shooterPos.X, shooterPos.Y, targetPos.X, targetPos.Y)
-            ) * (180f / MathF.PI);
+            float verticalAngle = VectorMath.ElevationAngle(
+                shooterPos.Z,
+                targetPos.X - shooterPos.X,
+                targetPos.Y - shooterPos.Y,
+                targetPos.Z
+            );
 
             float absVertical = MathF.Abs(verticalAngle);
 

@@ -4,6 +4,7 @@ using ProjectSMP.Plugins.Anticheat.Managers;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.World;
 using System;
+using System.Numerics;
 
 namespace ProjectSMP.Plugins.Anticheat.Checks.Player;
 
@@ -78,6 +79,24 @@ public class AmmoCheck
         if (st is null || !WeaponData.IsValid(weaponId)) return;
         int slot = WeaponData.Slot[weaponId];
         st.GiveAmmoTick[slot] = Environment.TickCount64;
-        st.Ammo[slot] += ammo;
+
+        if (WeaponData.SlotSharesAmmo(slot)) {
+            st.Ammo[slot] += ammo;
+        } else {
+            var player = BasePlayer.Find(playerId);
+            if (player is null) return;
+
+            player.GetWeaponData(slot, out _, out int currentAmmo);
+            int currentWeapon = st.Ammo[slot] > 0 ? st.Weapons[slot] : 0;
+
+            if (currentWeapon == weaponId || currentWeapon == 0)
+            {
+                st.Ammo[slot] += ammo;
+            }
+            else
+            {
+                st.Ammo[slot] = ammo;
+            }
+        }
     }
 }

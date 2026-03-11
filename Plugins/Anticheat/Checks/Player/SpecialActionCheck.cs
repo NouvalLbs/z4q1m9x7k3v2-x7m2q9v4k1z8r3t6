@@ -36,6 +36,17 @@ public class SpecialActionCheck
 
         if (!allowed)
             _warnings.AddWarning(player.Id, "SpecialActionHack", $"sa={sa}");
+        else {
+            int anim = st.Anim;
+
+            if (sa == (int)SpecialAction.Usejetpack) {
+                bool validJetpackAnim = (1128 <= anim && anim <= 1134) || (1538 <= anim && anim <= 1544);
+                if (!validJetpackAnim && anim != 0) {
+                    _warnings.AddWarning(player.Id, "SpecialActionHack",
+                        $"jetpack invalidAnim={anim}");
+                }
+            }
+        }
     }
 
     public void OnSpecialActionSet(int playerId, int action)

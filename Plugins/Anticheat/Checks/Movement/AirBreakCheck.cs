@@ -1,5 +1,6 @@
 ﻿using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.Anticheat.Managers;
+using ProjectSMP.Plugins.Anticheat.Utilities;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.World;
 using System;
@@ -41,22 +42,32 @@ public class AirBreakCheck
             if (!_config.GetCheck("AirBreakOnfoot").Enabled) return;
 
             bool isJetpacking = player.SpecialAction == SpecialAction.Usejetpack;
+            int anim = st.Anim;
 
-            if (isJetpacking)
-            {
+            if (isJetpacking) {
+                bool validJetpackAnim = (1128 <= anim && anim <= 1134) || (1538 <= anim && anim <= 1544);
+                if (!validJetpackAnim && anim != 0) {
+                    if (_config.GetCheck("AirBreakOnfoot").Enabled) {
+                        _warnings.AddWarning(player.Id, "AirBreakOnfoot",
+                            $"fakeJetpack anim={anim}");
+                    }
+                }
                 st.WasJetpacking = true;
                 return;
             }
 
-            if (st.WasJetpacking && !isJetpacking)
-            {
+            if (st.WasJetpacking && !isJetpacking) {
                 st.DropJpX = pos.X;
                 st.DropJpY = pos.Y;
                 st.DropJpTick = now;
                 st.WasJetpacking = false;
             }
 
-            if (st.DropJpTick > 0 && now - st.DropJpTick < 3000) return;
+            if (st.DropJpTick > 0 && now - st.DropJpTick < 3000) {
+                float dropDist = VectorMath.Dist2D(pos.X, pos.Y, st.DropJpX, st.DropJpY);
+                if (dropDist > 50.0f) st.DropJpTick = 0;
+                else return;
+            }
 
             if (st.IsParachuting) return;
             if (player.SurfingVehicle is not null) return;

@@ -20,4 +20,11 @@ public class VehicleStateManager
     public bool Exists(int vehicleId) => _states.ContainsKey(vehicleId);
 
     public IEnumerable<KeyValuePair<int, VehicleAcState>> All => _states;
+    public void SetSpawnPosition(int vehicleId, float x, float y, float z, float angle) {
+        var vst = GetOrCreate(vehicleId);
+        vst.SpawnPosX = x;
+        vst.SpawnPosY = y;
+        vst.SpawnPosZ = z;
+        vst.SpawnZAngle = angle;
+    }
 }

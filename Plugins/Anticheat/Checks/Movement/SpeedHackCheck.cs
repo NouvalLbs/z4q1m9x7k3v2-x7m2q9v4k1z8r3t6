@@ -21,10 +21,11 @@ public class SpeedHackCheck
 
     private readonly PlayerStateManager _players;
     private readonly WarningManager _warnings;
+    private readonly VehicleStateManager _vehicles;
     private readonly AnticheatConfig _config;
 
-    public SpeedHackCheck(PlayerStateManager p, WarningManager w, AnticheatConfig c)
-        => (_players, _warnings, _config) = (p, w, c);
+    public SpeedHackCheck(PlayerStateManager p, VehicleStateManager v, WarningManager w, AnticheatConfig c)
+        => (_players, _vehicles, _warnings, _config) = (p, v, w, c);
 
     public void OnPlayerUpdate(BasePlayer player)
     {
@@ -51,8 +52,22 @@ public class SpeedHackCheck
             if (!_config.GetCheck("SpeedHackVehicle").Enabled) return;
             long delayMs = _config.SpeedHackVehResetDelay * 1000L;
             if (now - st.VehicleVelocityTick < delayMs) return;
-            int model = player.Vehicle is not null ? (int)player.Vehicle.Model : -1;
+
+            if (player.Vehicle is null) return;
+            int model = (int)player.Vehicle.Model;
             float limit = model >= 400 ? GetLimit(model) : MaxVehicleDefault;
+
+            var vst = _vehicles.Get(player.Vehicle.Id);
+            if (vst is not null && vst.TrSpeed != -1) {
+                int currentSpeed = (int)(spd * 100.0f);
+                int speedDiff = currentSpeed - vst.TrSpeed;
+                if (speedDiff > 0)
+                {
+                    if (speedDiff > vst.TrSpeedDiff) vst.TrSpeedDiff = speedDiff;
+                    spd -= vst.TrSpeedDiff / 100.0f;
+                }
+            }
+
             if (spd > limit)
                 _warnings.AddWarning(player.Id, "SpeedHackVehicle", $"spd={spd:F3} lim={limit:F2} mdl={model}");
         }
