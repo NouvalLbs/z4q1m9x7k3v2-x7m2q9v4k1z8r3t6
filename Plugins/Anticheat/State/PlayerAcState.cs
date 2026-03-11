@@ -146,6 +146,18 @@ public class PlayerAcState
     public int TotalKicks { get; set; }
     public int TotalBans { get; set; }
 
+    public int LastWeaponId { get; set; }
+    public long LastWeaponSwitchTick { get; set; }
+    public Queue<long> WeaponSwitchHistory { get; } = new();
+    public string LastAnimLib { get; set; } = string.Empty;
+    public string LastAnimName { get; set; } = string.Empty;
+    public Queue<long> ObjectCreateHistory { get; } = new();
+    public Queue<long> TextDrawCreateHistory { get; } = new();
+    public Queue<long> Text3DCreateHistory { get; } = new();
+    public int CurrentMenuId { get; set; } = -1;
+    public long MenuShownTick { get; set; }
+    public Queue<long> MenuResponseHistory { get; } = new();
+
     // ── Anti-NOP: GivePlayerWeapon ───────────────────────────────────────
     public int[] NopSetWeapon { get; } = Enumerable.Repeat(-1, 13).ToArray();
     public long[] NopSetWeaponDeadline { get; } = new long[13];

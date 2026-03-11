@@ -1,4 +1,5 @@
 ﻿using ProjectSMP.Plugins.Anticheat.Configuration;
+using ProjectSMP.Plugins.Anticheat.Data;
 using ProjectSMP.Plugins.Anticheat.Managers;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.World;
@@ -69,13 +70,50 @@ public class AnimationHackCheck
             st.AnimationSpamCount = 0;
     }
 
-    public void OnAnimationApplied(int playerId, int animLib, string animName)
-    {
+    public void OnAnimationApplied(int playerId, string animLib, string animName) {
+        if (!_config.Enabled) return;
+
         var st = _players.Get(playerId);
         if (st is null) return;
 
-        // Mark as server-authorized
-        st.LastServerAnimTick = Environment.TickCount64;
+        var player = BasePlayer.Find(playerId);
+        if (player is null) return;
+
+        long now = Environment.TickCount64;
+
+        if (_config.GetCheck("InvalidAnimLibrary").Enabled)
+        {
+            if (!AnimationData.IsValidLibrary(animLib))
+            {
+                _warnings.AddWarning(playerId, "InvalidAnimLibrary",
+                    $"lib={animLib}");
+                return;
+            }
+        }
+
+        if (_config.GetCheck("DangerousAnimation").Enabled)
+        {
+            if (AnimationData.IsDangerousAnimation(animLib, animName))
+            {
+                _warnings.AddWarning(playerId, "DangerousAnimation",
+                    $"anim={animLib}:{animName}");
+            }
+        }
+
+        if (_config.GetCheck("VehicleAnimationHack").Enabled)
+        {
+            var pState = player.State;
+            if ((pState == PlayerState.Driving || pState == PlayerState.Passenger) &&
+                AnimationData.IsIncompatibleWithVehicle(animLib))
+            {
+                _warnings.AddWarning(playerId, "VehicleAnimationHack",
+                    $"anim={animLib}:{animName} state={pState}");
+            }
+        }
+
+        st.LastAnimLib = animLib;
+        st.LastAnimName = animName;
+        st.LastServerAnimTick = now;
     }
 
     public void OnPlayerSpawned(int playerId)

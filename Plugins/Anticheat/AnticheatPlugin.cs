@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text.Json;
 using System.Timers;
 
@@ -105,6 +106,12 @@ public class AnticheatPlugin : IDisposable
     private BlacklistCheck _blacklist = null!;
     private CodeVerificationCheck _codeVerification = null!;
     private readonly AntiCheatStats _stats;
+    private WeaponDamageCheck _weaponDamage = null!;
+    private WeaponSwitchCheck _weaponSwitch = null!;
+    private ObjectCrasherCheck _objectCrasher = null!;
+    private TextDrawCrasherCheck _textDrawCrasher = null!;
+    private Text3DCrasherCheck _text3DCrasher = null!;
+    private MenuCrasherCheck _menuCrasher = null!;
 
     // ── Anti-NOP ─────────────────────────────────────────────────────────
     private NopGiveWeaponCheck _nopGiveWeapon = null!;
@@ -207,6 +214,12 @@ public class AnticheatPlugin : IDisposable
         _carwarp = new CarwarpCheck(_players, _vehicles, _warnings, _config);
         _blacklist = new BlacklistCheck(_players, _vehicles, _warnings, _config);
         _codeVerification = new CodeVerificationCheck(_config, _logger);
+        _weaponDamage = new WeaponDamageCheck(_players, _warnings, _config);
+        _weaponSwitch = new WeaponSwitchCheck(_players, _warnings, _config);
+        _objectCrasher = new ObjectCrasherCheck(_players, _warnings, _config);
+        _textDrawCrasher = new TextDrawCrasherCheck(_players, _warnings, _config);
+        _text3DCrasher = new Text3DCrasherCheck(_players, _warnings, _config);
+        _menuCrasher = new MenuCrasherCheck(_players, _warnings, _config);
 
         _nopGiveWeapon = new NopGiveWeaponCheck(_players, _warnings, _config);
         _nopSetAmmo = new NopSetAmmoCheck(_players, _warnings, _config);
@@ -512,6 +525,8 @@ public class AnticheatPlugin : IDisposable
         _nopSpawnPlayer.OnPlayerDisconnected(p.Id);
         _nopRemoveFromVehicle.OnPlayerDisconnected(p.Id);
         _macroDetection.OnPlayerDisconnected(p.Id);
+        _objectCrasher.OnPlayerDisconnected(p.Id);
+        _text3DCrasher.OnPlayerDisconnected(p.Id);
         _players.Remove(p.Id);
     }
 
@@ -551,6 +566,7 @@ public class AnticheatPlugin : IDisposable
         _vehicleSprint.OnPlayerUpdate(p);
         _gravityHack.OnPlayerUpdate(p);
         _blacklist.OnPlayerUpdate(p);
+        _weaponSwitch.OnPlayerUpdate(p);
 
         _nopGiveWeapon.OnPlayerUpdate(p);
         _nopSetAmmo.OnPlayerUpdate(p);
@@ -624,6 +640,7 @@ public class AnticheatPlugin : IDisposable
         if (sender is not BasePlayer p) return;
         _godMode.OnPlayerTakeDamage(p, e);
         _lagComp.OnPlayerTakeDamage(p, e);
+        _weaponDamage.OnPlayerTakeDamage(p, e);
     }
 
     private void OnPlayerWeaponShot(object? sender, WeaponShotEventArgs e)
@@ -787,13 +804,15 @@ public class AnticheatPlugin : IDisposable
     private void OnPlayerSelectedMenuRow(object? sender, MenuRowEventArgs e)
     {
         if (sender is not BasePlayer p) return;
-        _cbFlood.Check(p, 10);
+        if (!_cbFlood.Check(p, 10)) return;
+        _menuCrasher.OnPlayerMenuResponse(p, e);
     }
 
     private void OnPlayerExitedMenu(object? sender, EventArgs e)
     {
         if (sender is not BasePlayer p) return;
-        _cbFlood.Check(p, 20);
+        if (!_cbFlood.Check(p, 20)) return;
+        _menuCrasher.OnPlayerExitMenu(p.Id);
     }
 
     private void OnPlayerClickMap(object? sender, PositionEventArgs e)
@@ -955,9 +974,9 @@ public class AnticheatPlugin : IDisposable
         }
     }
 
-    public void OnApplyAnimation(int playerId, int animLib, string animName) {
+    public void OnApplyAnimation(int playerId, string animLib, string animName) {
         _animationHack.OnAnimationApplied(playerId, animLib, animName);
-        _blacklist.OnAnimationApplied(playerId, animLib.ToString(), animName);
+        _blacklist.OnAnimationApplied(playerId, animLib, animName);
     }
 
     public void OnAddVehicleComponent(int vehicleId, int componentId)
@@ -1138,6 +1157,54 @@ public class AnticheatPlugin : IDisposable
 
     public bool VehicleSupportsPaintjob(int model)
         => PaintJobCheck.VehicleSupportsPaintjob(model);
+
+    public bool ValidateObjectCreate(int playerId, int modelId, float x, float y, float z, float drawDistance)
+    {
+        var player = BasePlayer.Find(playerId);
+        if (player is null) return false;
+
+        bool valid = _objectCrasher.ValidateObjectCreate(player, modelId, x, y, z, drawDistance);
+        if (valid) _objectCrasher.OnObjectCreated(playerId);
+        return valid;
+    }
+
+    public void OnObjectDestroyed(int playerId)
+        => _objectCrasher.OnObjectDestroyed(playerId);
+
+    public bool ValidateTextDraw(int playerId, string text)
+    {
+        var player = BasePlayer.Find(playerId);
+        if (player is null) return false;
+        return _textDrawCrasher.ValidateTextDraw(player, text);
+    }
+
+    public bool Validate3DText(int playerId, string text, float x, float y, float z, float drawDistance, int color)
+    {
+        var player = BasePlayer.Find(playerId);
+        if (player is null) return false;
+
+        bool valid = _text3DCrasher.Validate3DText(player, text, x, y, z, drawDistance, color);
+        if (valid) _text3DCrasher.On3DTextCreated(playerId);
+        return valid;
+    }
+
+    public void On3DTextDestroyed(int playerId)
+        => _text3DCrasher.On3DTextDestroyed(playerId);
+
+    public void OnMenuCreated(int menuId, int rows, int columns)
+    {
+        if (_menuCrasher.ValidateMenuCreate(rows, columns))
+            _menuCrasher.OnMenuCreated(menuId, rows, columns);
+    }
+
+    public void OnMenuDestroyed(int menuId)
+        => _menuCrasher.OnMenuDestroyed(menuId);
+
+    public void OnPlayerShowMenu(int playerId, int menuId)
+        => _menuCrasher.OnPlayerShowMenu(playerId, menuId);
+
+    public bool ValidateMenuCreate(int rows, int columns)
+        => _menuCrasher.ValidateMenuCreate(rows, columns);
 
     public void Dispose()
     {
