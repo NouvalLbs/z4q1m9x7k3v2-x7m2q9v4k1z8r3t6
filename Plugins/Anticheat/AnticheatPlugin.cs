@@ -607,7 +607,6 @@ public class AnticheatPlugin : IDisposable
         _armour.OnPlayerSpawned(p);
         _money.OnPlayerSpawned(p);
         _weapon.OnPlayerSpawned(p);
-        _silentAim.OnPlayerSpawned(p.Id);
         _afkGhost.OnPlayerSpawned(p.Id);
 
         _nopGiveWeapon.OnPlayerSpawned(p.Id);
@@ -628,7 +627,6 @@ public class AnticheatPlugin : IDisposable
         if (sender is not BasePlayer p) return;
         _godMode.OnPlayerDied(p);
         _fakeKill.OnPlayerDied(p, e);
-        _silentAim.OnPlayerDied(p.Id);
         _afkGhost.OnPlayerDied(p.Id);
 
         _nopSetHealth.OnPlayerDied(p.Id);
@@ -653,7 +651,6 @@ public class AnticheatPlugin : IDisposable
         _ammo.OnPlayerWeaponShot(p, (int)e.Weapon);
         _rapidFire.OnPlayerWeaponShot(p, e);
         _proAim.OnPlayerWeaponShot(p, e);
-        _silentAim.OnPlayerWeaponShot(p, e);
         _carShot.OnPlayerWeaponShot(p, e);
     }
 

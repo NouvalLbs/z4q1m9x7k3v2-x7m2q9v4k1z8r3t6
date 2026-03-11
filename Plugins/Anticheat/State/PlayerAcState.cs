@@ -83,8 +83,6 @@ public class PlayerAcState
     public bool PendingVehicleDamageResult { get; set; }
     public bool PendingClassResult { get; set; }
 
-    public int ConsecutiveSilentAimHits { get; set; }
-
     // ── Anti-NOP: GivePlayerWeapon ───────────────────────────────────────
     public int[] NopSetWeapon { get; } = Enumerable.Repeat(-1, 13).ToArray();
     public long[] NopSetWeaponDeadline { get; } = new long[13];

@@ -16,7 +16,6 @@ public class SilentAimCheck
     private const float MaxVerticalAngleDiff = 30f;
     private const float MinDistanceForCheck = 5f;
     private const float MaxSilentAimDistance = 150f;
-    private const int ConsecutiveHitsThreshold = 3;
 
     private static readonly HashSet<int> _validWeapons = new()
     {
@@ -58,12 +57,6 @@ public class SilentAimCheck
             targetPos.X, targetPos.Y, targetPos.Z
         );
 
-        if (distance < MinDistanceForCheck || distance > MaxSilentAimDistance)
-        {
-            st.ConsecutiveSilentAimHits = 0;
-            return;
-        }
-
         float expectedAngle = MathF.Atan2(
             targetPos.Y - shooterPos.Y,
             targetPos.X - shooterPos.X
@@ -72,12 +65,9 @@ public class SilentAimCheck
         float playerAngle = player.Angle;
         float angleDiff = AngleHelper.Diff(expectedAngle, playerAngle);
 
-        if (player.State == PlayerState.OnFoot)
-        {
+        if (player.State == PlayerState.OnFoot) {
             CheckOnFootSilentAim(player, st, angleDiff, distance, weaponId, targetPos, shooterPos);
-        }
-        else if (player.State == PlayerState.Driving)
-        {
+        } else if (player.State == PlayerState.Driving) {
             CheckVehicleSilentAim(player, st, angleDiff, distance, weaponId);
         }
     }
@@ -98,34 +88,14 @@ public class SilentAimCheck
 
             if (absVertical > MaxVerticalAngleDiff && isAiming)
             {
-                st.ConsecutiveSilentAimHits++;
-
-                if (st.ConsecutiveSilentAimHits >= ConsecutiveHitsThreshold)
-                {
-                    _warnings.AddWarning(player.Id, "SilentAim",
-                        $"angle={angleDiff:F1}° vert={absVertical:F1}° dist={distance:F1} wid={weaponId} hits={st.ConsecutiveSilentAimHits}");
-                    st.ConsecutiveSilentAimHits = 0;
-                }
+                _warnings.AddWarning(player.Id, "SilentAim",
+                    $"angle={angleDiff:F1}° vert={absVertical:F1}° dist={distance:F1} wid={weaponId}");
             }
             else if (!isAiming)
             {
-                st.ConsecutiveSilentAimHits++;
-
-                if (st.ConsecutiveSilentAimHits >= ConsecutiveHitsThreshold - 1)
-                {
-                    _warnings.AddWarning(player.Id, "SilentAim",
-                        $"no aim angle={angleDiff:F1}° dist={distance:F1} wid={weaponId}");
-                    st.ConsecutiveSilentAimHits = 0;
-                }
+                _warnings.AddWarning(player.Id, "SilentAim",
+                    $"no aim angle={angleDiff:F1}° dist={distance:F1} wid={weaponId}");
             }
-            else
-            {
-                st.ConsecutiveSilentAimHits = 0;
-            }
-        }
-        else
-        {
-            st.ConsecutiveSilentAimHits = 0;
         }
     }
 
@@ -133,39 +103,8 @@ public class SilentAimCheck
     {
         if (angleDiff > MaxAngleDifference * 1.5f)
         {
-            st.ConsecutiveSilentAimHits++;
-
-            if (st.ConsecutiveSilentAimHits >= ConsecutiveHitsThreshold)
-            {
-                _warnings.AddWarning(player.Id, "SilentAim",
-                    $"vehicle angle={angleDiff:F1}° dist={distance:F1} wid={weaponId}");
-                st.ConsecutiveSilentAimHits = 0;
-            }
+            _warnings.AddWarning(player.Id, "SilentAim",
+                $"vehicle angle={angleDiff:F1}° dist={distance:F1} wid={weaponId}");
         }
-        else
-        {
-            st.ConsecutiveSilentAimHits = 0;
-        }
-    }
-
-    public void OnPlayerSpawned(int playerId)
-    {
-        var st = _players.Get(playerId);
-        if (st is not null)
-            st.ConsecutiveSilentAimHits = 0;
-    }
-
-    public void OnPlayerDied(int playerId)
-    {
-        var st = _players.Get(playerId);
-        if (st is not null)
-            st.ConsecutiveSilentAimHits = 0;
-    }
-
-    public void OnPlayerDisconnected(int playerId)
-    {
-        var st = _players.Get(playerId);
-        if (st is not null)
-            st.ConsecutiveSilentAimHits = 0;
     }
 }
