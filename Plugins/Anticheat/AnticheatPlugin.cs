@@ -27,6 +27,7 @@ namespace ProjectSMP.Plugins.Anticheat;
 
 public class AnticheatPlugin : IDisposable
 {
+    private readonly bool _weaponConfigMode;
     private readonly PlayerStateManager _players;
     private readonly VehicleStateManager _vehicles;
     private readonly PickupStateManager _pickups;
@@ -107,7 +108,10 @@ public class AnticheatPlugin : IDisposable
         Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
     };
 
-    public AnticheatPlugin(PlayerStateManager players, VehicleStateManager vehicles, PickupStateManager pickups, WarningManager warnings, FloodRateLimiter flood, AcLogger logger, AnticheatConfig config) {
+    public AnticheatPlugin(PlayerStateManager players, VehicleStateManager vehicles,
+        PickupStateManager pickups, WarningManager warnings, FloodRateLimiter flood,
+        AcLogger logger, AnticheatConfig config, bool weaponConfigMode = false)
+    {
         _players = players;
         _vehicles = vehicles;
         _pickups = pickups;
@@ -115,6 +119,7 @@ public class AnticheatPlugin : IDisposable
         _flood = flood;
         _logger = logger;
         _config = config;
+        _weaponConfigMode = weaponConfigMode;
     }
 
     private void InitChecks()
@@ -123,7 +128,7 @@ public class AnticheatPlugin : IDisposable
         _teleport = new TeleportCheck(_players, _warnings, _config);
         _speedHack = new SpeedHackCheck(_players, _vehicles, _warnings, _config);
         _flyHack = new FlyHackCheck(_players, _warnings, _config);
-        _health = new HealthCheck(_players, _warnings, _config);
+        _health = new HealthCheck(_players, _warnings, _config, this);
         _armour = new ArmourCheck(_players, _warnings, _config);
         _money = new MoneyCheck(_players, _warnings, _config);
         _weapon = new WeaponCheck(_players, _warnings, _config);
@@ -205,8 +210,7 @@ public class AnticheatPlugin : IDisposable
         };
     }
 
-    public static AnticheatPlugin Create(string configPath = "AntiCheat.json")
-    {
+    public static AnticheatPlugin Create(string configPath = "AntiCheat.json", bool weaponConfigMode = false) {
         var cfg = LoadConfig(configPath);
         var players = new PlayerStateManager();
         var vehicles = new VehicleStateManager();
@@ -214,7 +218,13 @@ public class AnticheatPlugin : IDisposable
         var logger = new AcLogger(cfg);
         var flood = new FloodRateLimiter();
         var warnings = new WarningManager(players, cfg, logger);
-        var plugin = new AnticheatPlugin(players, vehicles, pickups, warnings, flood, logger, cfg);
+        var plugin = new AnticheatPlugin(players, vehicles, pickups, warnings, flood, logger, cfg, weaponConfigMode);
+
+        if (weaponConfigMode)
+        {
+            plugin.ConfigureForWeaponConfig();
+        }
+
         plugin.InitHotReload(configPath);
         return plugin;
     }
@@ -483,11 +493,30 @@ public class AnticheatPlugin : IDisposable
         st.HasSpawnPos = true;
     }
 
+    private void ConfigureForWeaponConfig()
+    {
+        _config.GetCheck("HealthHackOnfoot").Enabled = false;
+        _config.GetCheck("HealthHackVehicle").Enabled = false;
+        _config.GetCheck("ArmourHack").Enabled = false;
+        _config.GetCheck("GodModeOnfoot").Enabled = false;
+        _config.GetCheck("GodModeVehicle").Enabled = false;
+        _config.GetCheck("NopSetHealth").Enabled = false;
+        _config.GetCheck("NopSetArmour").Enabled = false;
+        _config.GetCheck("FakeKill").Enabled = false;
+        _config.GetCheck("FakeSpawn").Enabled = false;
+
+        _logger.Log("[AC] WeaponConfig Integration Mode Enabled");
+    }
+
     // ── RegisterEvents ───────────────────────────────────────────────────
 
     public void RegisterEvents(BaseMode gm)
     {
         InitChecks();
+
+        if (_weaponConfigMode) {
+            Integration.WeaponConfigBridge.Initialize(_players);
+        }
 
         gm.PlayerConnected += OnPlayerConnected;
         gm.PlayerDisconnected += OnPlayerDisconnected;
@@ -989,8 +1018,11 @@ public class AnticheatPlugin : IDisposable
         }
     }
 
-    public void Dispose()
-    {
+    public void Dispose() {
+        if (_weaponConfigMode) {
+            Integration.WeaponConfigBridge.Shutdown();
+        }
+
         _timer?.Stop();
         _timer?.Dispose();
         _watcher?.Dispose();

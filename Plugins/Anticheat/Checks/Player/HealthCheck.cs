@@ -15,14 +15,20 @@ public class HealthCheck
     private readonly PlayerStateManager _players;
     private readonly WarningManager _warnings;
     private readonly AnticheatConfig _config;
+    private readonly AnticheatPlugin _plugin;
 
-    public HealthCheck(PlayerStateManager p, WarningManager w, AnticheatConfig c)
-        => (_players, _warnings, _config) = (p, w, c);
+    public HealthCheck(PlayerStateManager p, WarningManager w, AnticheatConfig c, AnticheatPlugin plugin) {
+        _players = p;
+        _warnings = w;
+        _config = c;
+        _plugin = plugin;
+    }
 
     public void OnPlayerUpdate(BasePlayer player)
     {
         var st = _players.Get(player.Id);
         if (st is null || st.IsDead || !_config.Enabled) return;
+        if (!_config.GetCheck("HealthHackOnfoot").Enabled && !_config.GetCheck("HealthHackVehicle").Enabled) return;
 
         long now = Environment.TickCount64;
         float hp = player.Health;

@@ -32,6 +32,10 @@ public class GodModeCheck
     {
         var st = _players.Get(player.Id);
         if (st is null || !_config.Enabled || !st.PendingDamageResult) return;
+        if (!_config.GetCheck("GodModeOnfoot").Enabled && !_config.GetCheck("GodModeVehicle").Enabled) {
+            st.PendingDamageResult = false;
+            return;
+        }
 
         if (st.IsDead) { st.PendingDamageResult = false; return; }
 
