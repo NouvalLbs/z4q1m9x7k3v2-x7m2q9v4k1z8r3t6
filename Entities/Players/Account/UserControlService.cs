@@ -86,18 +86,20 @@ namespace ProjectSMP.Entities.Players.Account
 
         private static void ShowInvalidNameDialog(Player player)
         {
-            DialogManager.ShowMessage(player,
+            player.ShowMessage(
                 L("AUTH", "INVALID_NAME_TITLE"),
-                L("AUTH", "INVALID_NAME_MSG", player.Name),
-                L("GENERAL", "BTN_OK"));
+                L("AUTH", "INVALID_NAME_MSG", player.Name))
+                .WithButtons(L("GENERAL", "BTN_OK"))
+                .Show();
         }
 
         private static void ShowNotRegisteredDialog(Player player)
         {
-            DialogManager.ShowMessage(player,
+            player.ShowMessage(
                 L("AUTH", "NOT_REGISTERED_TITLE"),
-                L("AUTH", "NOT_REGISTERED_MSG", player.Name),
-                L("GENERAL", "BTN_OK"));
+                L("AUTH", "NOT_REGISTERED_MSG", player.Name))
+                .WithButtons(L("GENERAL", "BTN_OK"))
+                .Show();
         }
 
         private static void ShowActivateDialog(Player player, string? errKey = null)
@@ -106,9 +108,9 @@ namespace ProjectSMP.Entities.Players.Account
             var body = L("AUTH", "ACTIVATE_MSG", session.UCP);
             if (errKey != null) body += $"\n{{FF0000}}" + L("AUTH", errKey);
 
-            DialogManager.ShowInput(player, L("AUTH", "ACTIVATE_TITLE"), body,
-                btnLeft: L("GENERAL", "BTN_INPUT"), btnRight: L("GENERAL", "BTN_CANCEL"),
-                onResponse: e =>
+            player.ShowInput(L("AUTH", "ACTIVATE_TITLE"), body)
+                .WithButtons(L("GENERAL", "BTN_INPUT"), L("GENERAL", "BTN_CANCEL"))
+                .Show(e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { KickDelayed(player); return; }
                     HandleActivate(player, e.InputText);
@@ -117,11 +119,17 @@ namespace ProjectSMP.Entities.Players.Account
 
         private static void ShowRegisterDialog(Player player, string? errorType = null)
         {
-            var msgKey = errorType switch { null => "REGISTER_MSG", "short" => "REGISTER_MSG_SHORT", _ => "REGISTER_MSG_INVALID" };
+            var msgKey = errorType switch
+            {
+                null => "REGISTER_MSG",
+                "short" => "REGISTER_MSG_SHORT",
+                _ => "REGISTER_MSG_INVALID"
+            };
 
-            DialogManager.ShowInput(player, L("AUTH", "REGISTER_TITLE"), L("AUTH", msgKey),
-                isPassword: true, btnLeft: L("GENERAL", "BTN_REGISTER"), btnRight: L("GENERAL", "BTN_ABORT"),
-                onResponse: e =>
+            player.ShowInput(L("AUTH", "REGISTER_TITLE"), L("AUTH", msgKey))
+                .AsPassword()
+                .WithButtons(L("GENERAL", "BTN_REGISTER"), L("GENERAL", "BTN_ABORT"))
+                .Show(e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { KickDelayed(player); return; }
                     HandleRegisterAsync(player, e.InputText);
@@ -132,10 +140,12 @@ namespace ProjectSMP.Entities.Players.Account
         {
             var session = _sessions[player.Id];
 
-            DialogManager.ShowInput(player, L("AUTH", "LOGIN_TITLE"),
-                L("AUTH", "LOGIN_MSG", session.UCP, session.LoginAttempt),
-                isPassword: true, btnLeft: L("GENERAL", "BTN_LOGIN"), btnRight: L("GENERAL", "BTN_ABORT"),
-                onResponse: e =>
+            player.ShowInput(
+                L("AUTH", "LOGIN_TITLE"),
+                L("AUTH", "LOGIN_MSG", session.UCP, session.LoginAttempt))
+                .AsPassword()
+                .WithButtons(L("GENERAL", "BTN_LOGIN"), L("GENERAL", "BTN_ABORT"))
+                .Show(e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { KickDelayed(player); return; }
                     HandleLogin(player, e.InputText);
@@ -211,7 +221,7 @@ namespace ProjectSMP.Entities.Players.Account
         private static async void KickAfterAsync(Player player, int delayMs, CancellationToken ct)
         {
             try { await Task.Delay(delayMs, ct); if (!player.IsDisposed) player.Kick(); }
-            catch (System.OperationCanceledException) { }
+            catch (OperationCanceledException) { }
         }
 
         private static void KickDelayed(Player player)

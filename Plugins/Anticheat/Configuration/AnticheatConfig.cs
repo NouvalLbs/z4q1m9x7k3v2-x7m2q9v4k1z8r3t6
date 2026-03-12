@@ -57,7 +57,6 @@ public class AnticheatConfig
         ["TuningCrasher"] = new() { MaxWarnings = 3 },
         ["Reconnect"] = new() { MaxWarnings = 3 },
         ["HighPing"] = new() { MaxWarnings = 8 },
-        ["DialogHack"] = new() { MaxWarnings = 3 },
         ["Sandbox"] = new() { MaxWarnings = 3 },
         ["InvalidVersion"] = new() { MaxWarnings = 3 },
         ["RconHack"] = new() { MaxWarnings = 3 },

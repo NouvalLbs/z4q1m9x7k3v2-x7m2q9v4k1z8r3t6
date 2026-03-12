@@ -1010,6 +1010,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static void ResyncPlayer(Player p)
         {
             if (!_states.TryGetValue(p.Id, out var s)) return;
+            try {
+                Anticheat.Integration.WeaponConfigBridge.OnPlayerResync(p.Id);
+            }
+            catch { }
+
             s.ResyncCts?.Cancel();
             s.BeingResynced = true;
             s.ResyncSnap = CaptureSnapshot(p, s);

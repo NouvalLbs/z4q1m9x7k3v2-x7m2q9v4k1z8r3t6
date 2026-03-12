@@ -46,8 +46,6 @@ public class PlayerAcState
     public int VehicleId { get; set; } = -1;
     public int LastVehicleModel { get; set; }
 
-    public int NextDialog { get; set; } = -1;
-
     public string IpAddress { get; set; } = string.Empty;
 
     public long PutInVehicleTick { get; set; }

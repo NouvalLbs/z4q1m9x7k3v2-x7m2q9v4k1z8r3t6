@@ -1,10 +1,12 @@
 ﻿using ProjectSMP.Core;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.Anticheat;
+using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Events;
+using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using System;
 using System.Threading.Tasks;
@@ -17,9 +19,15 @@ namespace ProjectSMP
         protected override void OnInitialized(EventArgs e) {
             base.OnInitialized(e);
 
+            // Initialize Weapon Config
+            var (wcCfg, wcWeapons) = WeaponConfigLoader.Load();
+            WeaponConfigService.Init(wcCfg, wcWeapons);
+            WeaponConfigHealthBar.Init();
+
             // Initialize Anticheat
-            _anticheat = AnticheatPlugin.Create("anticheat.json");
+            _anticheat = AnticheatPlugin.Create(configPath: "AntiCheat.json", weaponConfigMode: true);
             _anticheat.RegisterEvents(this);
+            _anticheat.Warnings.PunishmentRequired += OnAnticheatPunishment;
 
             // Initialize Primary Config
             ConfigManager.Load();
@@ -34,16 +42,44 @@ namespace ProjectSMP
             // Initialize TextDrawManager
             TextDrawManager.Init();
 
-            // Initialize Weapon Config
-            var (wcCfg, wcWeapons) = WeaponConfigLoader.Load();
-            WeaponConfigService.Init(wcCfg, wcWeapons);
-            WeaponConfigHealthBar.Init();
-
             // Initialize Garage Blocker
             GarageBlockerService.Init();
 
             // Initialize Database Manager
             Task.Run(DatabaseManager.InitAsync).GetAwaiter().GetResult();
+        }
+
+        private void OnAnticheatPunishment(int playerId, string checkName, PunishAction action)
+        {
+            var player = BasePlayer.Find(playerId);
+            if (player is null) return;
+
+            string message = $"{{FF0000}}[ANTICHEAT] {checkName}";
+
+            switch (action)
+            {
+                case PunishAction.Kick:
+                    player.SendClientMessage(Color.Red, message);
+                    Console.WriteLine($"[AC-KICK] {player.Name} (ID:{playerId}) - {checkName}");
+
+                    // Delay kick agar message terkirim
+                    Task.Delay(100).ContinueWith(_ =>
+                    {
+                        BasePlayer.Find(playerId)?.Kick();
+                    });
+                    break;
+
+                case PunishAction.Ban:
+                    player.SendClientMessage(Color.Red, message);
+                    Console.WriteLine($"[AC-BAN] {player.Name} (ID:{playerId}) - {checkName}");
+
+                    // Delay ban agar message terkirim
+                    Task.Delay(100).ContinueWith(_ =>
+                    {
+                        BasePlayer.Find(playerId)?.Ban();
+                    });
+                    break;
+            }
         }
 
         protected override void OnVehicleSpawned(BaseVehicle vehicle, EventArgs e)

@@ -246,12 +246,12 @@ namespace ProjectSMP.Entities.Players.Character
             if (list.Count < MaxChars)
                 rows.Add(new[] { L(player, "CHAR", "LIST_CREATE_BTN"), "", "" });
 
-            DialogManager.ShowTabList(player,
+            player.ShowTabList(
                 L(player, "CHAR", "LIST_TITLE"),
-                new[] { L(player, "CHAR", "LIST_COL_NAME"), L(player, "CHAR", "LIST_COL_LEVEL"), L(player, "CHAR", "LIST_COL_LOGIN") },
-                rows.ToArray(),
-                L(player, "GENERAL", "BTN_SELECT"), L(player, "GENERAL", "BTN_QUIT"),
-                e =>
+                new[] { L(player, "CHAR", "LIST_COL_NAME"), L(player, "CHAR", "LIST_COL_LEVEL"), L(player, "CHAR", "LIST_COL_LOGIN") })
+                .WithRows(rows.ToArray())
+                .WithButtons(L(player, "GENERAL", "BTN_SELECT"), L(player, "GENERAL", "BTN_QUIT"))
+                .Show(e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { player.Kick(); return; }
                     if (!_lists.TryGetValue(player.Id, out var l)) return;
@@ -266,9 +266,9 @@ namespace ProjectSMP.Entities.Players.Character
                 ? L(player, "CHAR", "CREATE_NAME_TAKEN_MSG")
                 : L(player, "CHAR", "CREATE_NAME_MSG");
 
-            DialogManager.ShowInput(player, L(player, "CHAR", "CREATE_NAME_TITLE"), body,
-                btnLeft: L(player, "GENERAL", "BTN_CREATE"), btnRight: L(player, "GENERAL", "BTN_EXIT"),
-                onResponse: e =>
+            player.ShowInput(L(player, "CHAR", "CREATE_NAME_TITLE"), body)
+                .WithButtons(L(player, "GENERAL", "BTN_CREATE"), L(player, "GENERAL", "BTN_EXIT"))
+                .Show(e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { player.Kick(); return; }
                     HandleCreateNameAsync(player, e.InputText);
@@ -318,11 +318,10 @@ namespace ProjectSMP.Entities.Players.Character
         {
             if (!_creations.TryGetValue(player.Id, out var c)) return;
 
-            DialogManager.ShowTabList(player,
+            player.ShowTabList(
                 L(player, "CHAR", "SETTINGS_TITLE"),
-                new[] { L(player, "CHAR", "SETTINGS_COL_DATA"), L(player, "CHAR", "SETTINGS_COL_VALUE") },
-                new[]
-                {
+                new[] { L(player, "CHAR", "SETTINGS_COL_DATA"), L(player, "CHAR", "SETTINGS_COL_VALUE") })
+                .WithRows(new[] {
                     new[] { L(player, "CHAR", "SETTINGS_ROW_NAME"),      $"{{ffffff}}{c.Name}" },
                     new[] { L(player, "CHAR", "SETTINGS_ROW_BIRTHDATE"), $"{{ffffff}}{c.BirthDate}" },
                     new[] { L(player, "CHAR", "SETTINGS_ROW_GENDER"),    $"{{ffffff}}{FmtGender(player, c.Gender)}" },
@@ -330,12 +329,10 @@ namespace ProjectSMP.Entities.Players.Character
                     new[] { L(player, "CHAR", "SETTINGS_ROW_HAIR"),      $"{{ffffff}}{c.Hair}" },
                     new[] { L(player, "CHAR", "SETTINGS_ROW_EYE"),       $"{{ffffff}}{c.Eye}" },
                     new[] { L(player, "CHAR", "SETTINGS_ROW_CREATE"),    "" }
-                },
-                L(player, "GENERAL", "BTN_SELECT"), L(player, "GENERAL", "BTN_CANCEL"),
-                e =>
-                {
-                    if (e.DialogButton != DialogButton.Left)
-                    {
+                })
+                .WithButtons(L(player, "GENERAL", "BTN_SELECT"), L(player, "GENERAL", "BTN_CANCEL"))
+                .Show(e => {
+                    if (e.DialogButton != DialogButton.Left) {
                         _lists.TryGetValue(player.Id, out var l);
                         ShowCharListDialog(player, l ?? new());
                         return;
@@ -376,9 +373,9 @@ namespace ProjectSMP.Entities.Players.Character
             var body = L(player, "CHAR", "BIRTHDATE_MSG");
             if (errKey != null) body += $"\n{{ff0000}}(!) " + L(player, "CHAR", errKey);
 
-            DialogManager.ShowInput(player, L(player, "CHAR", "BIRTHDATE_TITLE"), body,
-                btnLeft: L(player, "GENERAL", "BTN_SELECT"), btnRight: L(player, "GENERAL", "BTN_CANCEL"),
-                onResponse: e =>
+            player.ShowInput(L(player, "CHAR", "BIRTHDATE_TITLE"), body)
+                .WithButtons(L(player, "GENERAL", "BTN_SELECT"), L(player, "GENERAL", "BTN_CANCEL"))
+                .Show(e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { ShowSettingsDialog(player); return; }
                     HandleBirthDate(player, e.InputText);
@@ -404,11 +401,12 @@ namespace ProjectSMP.Entities.Players.Character
 
         private static void ShowGenderDialog(Player player)
         {
-            DialogManager.ShowList(player,
+            player.ShowList(
                 L(player, "CHAR", "GENDER_TITLE"),
-                new[] { L(player, "CHAR", "GENDER_MALE"), L(player, "CHAR", "GENDER_FEMALE") },
-                L(player, "GENERAL", "BTN_INPUT"), L(player, "GENERAL", "BTN_CANCEL"),
-                e =>
+                L(player, "CHAR", "GENDER_MALE"),
+                L(player, "CHAR", "GENDER_FEMALE"))
+                .WithButtons(L(player, "GENERAL", "BTN_INPUT"), L(player, "GENERAL", "BTN_CANCEL"))
+                .Show(e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { ShowSettingsDialog(player); return; }
                     if (!_creations.TryGetValue(player.Id, out var c)) return;
@@ -444,9 +442,9 @@ namespace ProjectSMP.Entities.Players.Character
             var body = L(player, "CHAR", "HEIGHT_MSG");
             if (errKey != null) body += $"\n{{ff0000}}(!) " + L(player, "CHAR", errKey);
 
-            DialogManager.ShowInput(player, L(player, "CHAR", "HEIGHT_TITLE"), body,
-                btnLeft: L(player, "GENERAL", "BTN_INPUT"), btnRight: L(player, "GENERAL", "BTN_CANCEL"),
-                onResponse: e =>
+            player.ShowInput(L(player, "CHAR", "HEIGHT_TITLE"), body)
+                .WithButtons(L(player, "GENERAL", "BTN_INPUT"), L(player, "GENERAL", "BTN_CANCEL"))
+                .Show(e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { ShowSettingsDialog(player); return; }
                     HandleHeight(player, e.InputText);
@@ -462,13 +460,15 @@ namespace ProjectSMP.Entities.Players.Character
             ShowSettingsDialog(player);
         }
 
-        private static void ShowEyeColorDialog(Player player)
-        {
-            DialogManager.ShowList(player,
+        private static void ShowEyeColorDialog(Player player) {
+            player.ShowList(
                 L(player, "CHAR", "EYE_TITLE"),
-                new[] { L(player, "CHAR", "EYE_BLACK"), L(player, "CHAR", "EYE_BROWN"), L(player, "CHAR", "EYE_BLUE"), L(player, "CHAR", "EYE_GRAY") },
-                L(player, "GENERAL", "BTN_SELECT"), L(player, "GENERAL", "BTN_CANCEL"),
-                e =>
+                L(player, "CHAR", "EYE_BLACK"),
+                L(player, "CHAR", "EYE_BROWN"),
+                L(player, "CHAR", "EYE_BLUE"),
+                L(player, "CHAR", "EYE_GRAY"))
+                .WithButtons(L(player, "GENERAL", "BTN_SELECT"), L(player, "GENERAL", "BTN_CANCEL"))
+                .Show(e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { ShowSettingsDialog(player); return; }
                     if (!_creations.TryGetValue(player.Id, out var c)) return;
@@ -479,11 +479,12 @@ namespace ProjectSMP.Entities.Players.Character
 
         private static void ShowSpawnSelectorDialog(Player player)
         {
-            DialogManager.ShowList(player,
+            player.ShowList(
                 L(player, "CHAR", "SPAWN_TITLE"),
-                new[] { L(player, "CHAR", "SPAWN_AIRPORT"), L(player, "CHAR", "SPAWN_STATION") },
-                L(player, "CHAR", "SPAWN_BTN"), "",
-                e =>
+                L(player, "CHAR", "SPAWN_AIRPORT"),
+                L(player, "CHAR", "SPAWN_STATION"))
+                .WithButtons(L(player, "CHAR", "SPAWN_BTN"), "")
+                .Show(e =>
                 {
                     if (e.DialogButton != DialogButton.Left) { ShowSpawnSelectorDialog(player); return; }
                     if (!_creations.TryGetValue(player.Id, out var c)) return;

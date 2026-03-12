@@ -64,7 +64,6 @@ public class AnticheatPlugin : IDisposable
     private TuningHackCheck _tuningHack = null!;
     private ReconnectCheck _reconnect = null!;
     private PingCheck _ping = null!;
-    private DialogHackCheck _dialogHack = null!;
     private VersionCheck _version = null!;
     private SandboxProtection _sandbox = null!;
     private RconProtection _rcon = null!;
@@ -150,13 +149,12 @@ public class AnticheatPlugin : IDisposable
         _tuningHack = new TuningHackCheck(_players, _warnings, _config);
         _reconnect = new ReconnectCheck(_warnings, _config, _logger);
         _ping = new PingCheck(_warnings, _config, _logger);
-        _dialogHack = new DialogHackCheck(_players, _warnings, _config);
+        _dialogCrasher = new DialogCrasherCheck(_warnings, _config);
         _version = new VersionCheck(_config, _logger);
         _sandbox = new SandboxProtection(_config, _logger);
         _rcon = new RconProtection(_warnings, _config, _logger);
         _tuningCrasher = new TuningCrasherCheck(_warnings, _config);
         _seatCrasher = new InvalidSeatCrasherCheck(_warnings, _config);
-        _dialogCrasher = new DialogCrasherCheck(_players, _warnings, _config);
         _attachCrasher = new AttachedObjectCrasherCheck(_warnings, _config);
         _weaponCrasher = new WeaponCrasherCheck(_players, _warnings, _config);
         _connFlood = new ConnectionFloodCheck(_config, _logger);
@@ -273,9 +271,6 @@ public class AnticheatPlugin : IDisposable
         _nopGiveWeapon.OnWeaponsReset(playerId);
         _nopSetAmmo.OnWeaponsReset(playerId);
     }
-
-    public void OnShowPlayerDialog(int playerId, int dialogId)
-        => _dialogHack.OnDialogShown(playerId, dialogId);
 
     public void OnSetPlayerSpecialAction(int playerId, int action) {
         _specialAction.OnSpecialActionSet(playerId, action);
@@ -966,12 +961,10 @@ public class AnticheatPlugin : IDisposable
         _cbFlood.Check(p, 25);
     }
 
-    private void OnDialogResponse(object? sender, DialogResponseEventArgs e)
-    {
+    private void OnDialogResponse(object? sender, DialogResponseEventArgs e) {
         if (sender is not BasePlayer p) return;
         if (!_cbFlood.Check(p, 0)) return;
-        bool valid = _dialogCrasher.OnDialogResponse(p, e);
-        if (valid) _dialogHack.OnDialogResponse(p, e);
+        _dialogCrasher.OnDialogResponse(p, e);
     }
 
     private void OnRconLoginAttempt(object? sender, RconLoginAttemptEventArgs e)
