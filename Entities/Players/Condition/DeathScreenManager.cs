@@ -67,18 +67,20 @@ namespace ProjectSMP.Entities.Players.Condition
                 td?.Show();
         }
 
-        public static void UpdateStatus(Player player, bool canRespawn)
+        public static void UpdateStatus(Player player, int stage)
         {
             if (!_deathScreens.TryGetValue(player.Id, out var tds)) return;
 
-            if (canRespawn)
+            if (stage == 2)
             {
                 if (tds[9] != null) tds[9].Text = "Respawn_in";
+                if (tds[10] != null) tds[10].Text = "/death_untuk_respawn";
                 if (tds[11] != null) tds[11].Text = "KAMU_PINGSAN_DAN_SEKARAT";
             }
             else
             {
                 if (tds[9] != null) tds[9].Text = "Bleeding_out";
+                if (tds[10] != null) tds[10].Text = "/death_belum_tersedia";
                 if (tds[11] != null) tds[11].Text = "KAMU_PINGSAN_DAN_MENGALAMI_PENDARAHAN";
             }
 
@@ -132,7 +134,7 @@ namespace ProjectSMP.Entities.Players.Condition
         {
             var td = new PlayerTextDraw(player, new Vector2(x, y), text)
             {
-                Font = TextDrawFont.Diploma,
+                Font = TextDrawFont.Pricedown,
                 LetterSize = new Vector2(0.312497f, 1.549997f),
                 Width = 400.0f,
                 Height = 17.0f,

@@ -29,6 +29,9 @@ namespace ProjectSMP.Entities.Players.Character
     public class CharCondition
     {
         public int DyingTime, RespawnTime, Injured;
+        public int DyingStage;
+        public string DeathAnimLib = "PED";
+        public string DeathAnimName = "FLOOR_HIT";
         public int Cough, CoughTime;
         public int Migrain, MigrainTime, MigrainUsed;
         public int Fever, FeverTime, FeverUsed;

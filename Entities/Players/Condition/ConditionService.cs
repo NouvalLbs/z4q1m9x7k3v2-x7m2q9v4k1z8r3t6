@@ -45,11 +45,20 @@ namespace ProjectSMP.Entities.Players.Condition
 
         public static void HandleDeath(Player player)
         {
-            if (player.Condition.DyingTime <= 0 || player.Condition.DyingTime > 3420)
-                player.Condition.DyingTime = 3600;
+            if (player.Condition.Injured < 1)
+            {
+                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu tidak terluka.");
+                return;
+            }
+
+            if (player.Condition.DyingStage == 1)
+            {
+                player.SendClientMessage(Color.White, "{C6E2FF}<Death>{FFFFFF} Tunggu hingga stage 2.");
+                return;
+            }
 
             _hospitalRespawn[player.Id] = true;
-            player.SpawnPlayerSafe();
+            WeaponConfigService.ForceRespawnFromDeath(player);
         }
 
         private static void OnTimerTick(object sender, System.EventArgs e)
@@ -73,28 +82,28 @@ namespace ProjectSMP.Entities.Players.Condition
 
             var uptime = player.Condition.DyingTime;
             var dyingCount = GetDyingTime(uptime);
-            var isInjured = player.Condition.Injured;
 
-            if (isInjured == 1)
+            if (player.Condition.Injured == 1)
             {
                 var minutes = dyingCount / 60;
                 var seconds = dyingCount % 60;
-
                 DeathScreenManager.UpdateTimer(player, minutes, seconds);
 
-                if (uptime <= 3420)
+                if (player.Condition.DyingStage == 1 && uptime == 0)
                 {
-                    if (uptime == 3420)
-                    {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Death>{ffffff} Sekarang kamu bisa respawn, ketik {FFFF00}/death{ffffff} untuk respawn ke rumah sakit terdekat.");
-                    }
-                    DeathScreenManager.UpdateStatus(player, true);
+                    player.Condition.DyingStage = 2;
+                    player.Condition.DyingTime = 600;
+                    player.Condition.DeathAnimLib = "PED";
+                    player.Condition.DeathAnimName = "FLOOR_HIT";
+                    player.ApplyAnimationSafe("PED", "FLOOR_HIT", 4.0f, false, false, false, true, 0, true);
+                    DeathScreenManager.UpdateStatus(player, 2);
+                    player.SendClientMessage(Color.White, "{C6E2FF}<Death>{ffffff} Kamu bisa respawn, ketik {FFFF00}/death{ffffff}");
                 }
 
-                if (uptime == 0)
+                if (player.Condition.DyingStage == 2 && uptime == 0)
                 {
                     _hospitalRespawn[player.Id] = true;
-                    player.SpawnPlayerSafe();
+                    WeaponConfigService.ForceRespawnFromDeath(player);
                 }
             }
         }
@@ -104,19 +113,18 @@ namespace ProjectSMP.Entities.Players.Condition
             if (e.Player.Condition.Injured == 0)
             {
                 SaveDeathPosition(e.Player);
+                e.Player.Condition.DyingStage = 1;
+                e.Player.Condition.DyingTime = 3600;
+                e.Player.Condition.DeathAnimLib = e.AnimLib;
+                e.Player.Condition.DeathAnimName = e.AnimName;
             }
 
-            e.Player.ToggleControllableSafe(false);
             e.Player.Condition.Injured = 1;
-
             NeedsHudManager.HideHud(e.Player);
             DeathScreenManager.Destroy(e.Player);
             DeathScreenManager.Create(e.Player);
 
-            if (e.Player.Condition.DyingTime == 0)
-                e.Player.Condition.DyingTime = 3600;
-
-            e.RespawnTime = 60 * 60 * 1000;
+            e.RespawnTime = e.Player.Condition.DyingTime * 1000;
         }
 
         private static void OnPlayerDeathFinished(object sender, DeathFinishedArgs e)
@@ -145,9 +153,10 @@ namespace ProjectSMP.Entities.Players.Condition
         private static void AfterDeathInit(Player player)
         {
             player.Condition.Injured = 0;
+            player.Condition.DyingStage = 0;
 
-            player.Vitals.Hunger = 50;
-            player.Vitals.Energy = 50;
+            NeedsService.SetHunger(player, 50);
+            NeedsService.SetEnergy(player, 50);
 
             player.SetHealthSafe(50, 0);
 
@@ -160,6 +169,9 @@ namespace ProjectSMP.Entities.Players.Condition
             player.ToggleControllableSafe(true);
             player.SetVirtualWorldSafe(0);
             player.SetInteriorSafe(0);
+
+            player.SetPositionSafe(1182.8778f, -1324.2023f, 13.5784f);
+            player.Angle = 269.8747f;
 
             player.ClearAnimationsSafe();
             player.Condition.DyingTime = 0;
@@ -191,30 +203,15 @@ namespace ProjectSMP.Entities.Players.Condition
         {
             if (player.Condition.Injured == 1 && player.Condition.DyingTime > 0)
             {
-                player.ToggleControllableSafe(false);
-                player.ResetWeaponsSafe();
+                var animLib = player.Condition.DyingStage == 1
+                    ? player.Condition.DeathAnimLib
+                    : "PED";
+                var animName = player.Condition.DyingStage == 1
+                    ? player.Condition.DeathAnimName
+                    : "FLOOR_HIT";
 
-                var animLib = "PED";
-                var animName = "FLOOR_HIT";
-                player.ApplyAnimationSafe(animLib, animName, 4.0f, false, false, false, true, 0, true);
-
-                NeedsHudManager.HideHud(player);
-                DeathScreenManager.Create(player);
-
-                var dyingCount = GetDyingTime(player.Condition.DyingTime);
-                var minutes = dyingCount / 60;
-                var seconds = dyingCount % 60;
-                DeathScreenManager.UpdateTimer(player, minutes, seconds);
-
-                if (player.Condition.DyingTime <= 3420)
-                {
-                    DeathScreenManager.UpdateStatus(player, true);
-                    player.SendClientMessage(Color.White, "{C6E2FF}<Death>{ffffff} Kamu masih dalam kondisi sekarat. Ketik {FFFF00}/death{ffffff} untuk respawn.");
-                }
-                else
-                {
-                    DeathScreenManager.UpdateStatus(player, false);
-                }
+                WeaponConfigService.ResumeDeath(player, player.Condition.DyingTime, animLib, animName);
+                DeathScreenManager.UpdateStatus(player, player.Condition.DyingStage);
             }
         }
 
