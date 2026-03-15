@@ -1,4 +1,5 @@
-﻿using ProjectSMP.Plugins.Streamer;
+﻿using ProjectSMP.Extensions;
+using ProjectSMP.Plugins.Streamer;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
@@ -67,11 +68,11 @@ namespace ProjectSMP.Features.CinematicCamera {
         public static void Start(BasePlayer player) {
             Stop(player);
 
-            player.SetSpawnInfo(255, 1, new Vector3(0f, 0f, -5f), 0f);
-            player.ToggleControllable(false);
+            player.SetSpawnInfoSafe(255, 1, 0f, 0f, -5f, 0f);
+            player.ToggleControllableSafe(false);
 
             if (player is Player p)
-                p.WcToggleSpectating(true);
+                p.ToggleSpectatingSafe(true);
             else
                 player.ToggleSpectating(true);
 
@@ -111,11 +112,11 @@ namespace ProjectSMP.Features.CinematicCamera {
             player.Interior = 0;
 
             if (player is Player p) {
-                p.SetWcVirtualWorld(0);
-                p.WcSetPos(loc.PlayerPosition);
+                p.SetVirtualWorldSafe(0);
+                p.SetPositionSafe(loc.PlayerPosition);
             } else {
-                player.VirtualWorld = 0;
-                player.Position = loc.PlayerPosition;
+                player.SetVirtualWorldSafe(0);
+                player.SetPositionSafe(loc.PlayerPosition);
             }
 
             player.InterpolateCameraPosition(loc.CameraFrom, loc.CameraTo, InterpolateDuration, CameraCut.Cut);

@@ -1,8 +1,10 @@
 ﻿using ProjectSMP.Core;
+using ProjectSMP.Extensions;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.Anticheat;
 using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.GarageBlocker;
+using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Events;
@@ -29,6 +31,11 @@ namespace ProjectSMP
             _anticheat.RegisterEvents(this);
             _anticheat.Warnings.PunishmentRequired += OnAnticheatPunishment;
 
+            // Initialize Safe Extensions
+            SafeServerExtensions.Initialize(_anticheat);
+            SafeVehicleExtensions.Initialize(_anticheat);
+            SafeNativeExtensions.Initialize(_anticheat);
+
             // Initialize Primary Config
             ConfigManager.Load();
             ConfigManager.ApplyGameConfig(this);
@@ -47,6 +54,11 @@ namespace ProjectSMP
 
             // Initialize Database Manager
             Task.Run(DatabaseManager.InitAsync).GetAwaiter().GetResult();
+
+            // Initialize RealtimeClock
+            RealtimeClockService.Init();
+            RealtimeClockService.SetInterval(10000, restartTimer: false);
+            RealtimeClockService.Sync(serverTime: true);
         }
 
         private void OnAnticheatPunishment(int playerId, string checkName, PunishAction action)
@@ -97,6 +109,7 @@ namespace ProjectSMP
         protected override void OnExited(EventArgs e) {
             WeaponConfigHealthBar.Dispose();
             PreviewModelDialog.Dispose();
+            RealtimeClockService.Dispose();
             base.OnExited(e);
         }
     }

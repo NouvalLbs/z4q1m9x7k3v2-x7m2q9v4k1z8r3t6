@@ -1,9 +1,11 @@
 ﻿#nullable enable
 using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Character;
-using ProjectSMP.Features.CinematicCamera;
+using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank;
+using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.PreviewModelDialog;
+using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Events;
@@ -25,6 +27,7 @@ namespace ProjectSMP
             WeaponConfigService.PlayerDeathFinished += OnDeathFinished;
             CinematicCameraService.Start(this);
             UserControlService.InitAsync(this);
+            RealtimeClockService.OnPlayerConnect(Id);
         }
 
         public override void OnDisconnected(DisconnectEventArgs e)
@@ -36,6 +39,7 @@ namespace ProjectSMP
             UserControlService.Cleanup(this);
             CharacterService.Cleanup(this);
             WeaponConfigService.OnDisconnect(this);
+            RealtimeClockService.OnPlayerDisconnect(Id);
             base.OnDisconnected(e);
         }
 
@@ -63,7 +67,7 @@ namespace ProjectSMP
                     Z = p.Z,
                     A = Angle,
                     Interior = Interior,
-                    World = this.GetWcVirtualWorld()
+                    World = this.GetVirtualWorldSafe()
                 };
             }
             WeaponConfigService.OnDeath(this, e.Killer as Player, (int)e.DeathReason);
@@ -73,12 +77,9 @@ namespace ProjectSMP
         {
             base.OnRequestClass(e);
             WeaponConfigService.OnRequestClass(this);
-
             if (!IsCharLoaded || WeaponConfigService.IsPlayerInClassSelection(this)) return;
 
-            SetSpawnInfo(0, CharSkin,
-                new Vector3(CharSpawnPos.X, CharSpawnPos.Y, CharSpawnPos.Z),
-                CharSpawnPos.A);
+            SetSpawnInfo(0, CharSkin, new Vector3(CharSpawnPos.X, CharSpawnPos.Y, CharSpawnPos.Z), CharSpawnPos.A);
             Spawn();
         }
 
@@ -115,8 +116,7 @@ namespace ProjectSMP
             }
             else
             {
-                WeaponConfigService.HandleGiveDamage(this, e.OtherPlayer as Player,
-                    e.Amount, (int)e.Weapon, (int)e.BodyPart);
+                WeaponConfigService.HandleGiveDamage(this, e.OtherPlayer as Player, e.Amount, (int)e.Weapon, (int)e.BodyPart);
             }
             base.OnGiveDamage(e);
         }
@@ -129,14 +129,7 @@ namespace ProjectSMP
 
         public override void OnWeaponShot(WeaponShotEventArgs e)
         {
-            WeaponConfigService.HandleWeaponShot(
-                this,
-                (int)e.Weapon,
-                (int)e.BulletHitType,
-                e.HitId,
-                Position,
-                e.Position);
-
+            WeaponConfigService.HandleWeaponShot(this, (int)e.Weapon, (int)e.BulletHitType, e.HitId, Position, e.Position);
             if (WeaponConfigService.IsBulletWeapon((int)e.Weapon))
                 e.PreventDamage = true;
 

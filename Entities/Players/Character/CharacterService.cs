@@ -1,7 +1,9 @@
 ﻿#nullable enable
 using ProjectSMP.Core;
+using ProjectSMP.Extensions;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.PreviewModelDialog;
+using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.Streamer;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
@@ -24,7 +26,7 @@ namespace ProjectSMP.Entities.Players.Character
 
     public class CharCondition
     {
-        public int DyingTime, RespawnTime, Hospital, Injured;
+        public int DyingTime, RespawnTime, Injured;
         public int Cough, CoughTime;
         public int Migrain, MigrainTime, MigrainUsed;
         public int Fever, FeverTime, FeverUsed;
@@ -170,22 +172,27 @@ namespace ProjectSMP.Entities.Players.Character
         {
             if (!player.IsCharLoaded) return;
 
-            player.ToggleControllable(true);
+            player.ToggleControllableSafe(true);
             player.Score = player.Level;
+            player.Color = Color.White;
+            player.Name = player.Username;
 
             for (var i = 0; i < 50; i++) player.SendClientMessage(Color.White, "");
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_1"));
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_2", player.Username));
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_3"));
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_LAST_LOGIN", player.LastLogin));
+
+            // Initialize Clock & Weather
+            RealtimeClockService.OnPlayerSpawn(player.Id);
         }
 
         public static async Task SaveAsync(Player player)
         {
             if (!player.IsCharLoaded) return;
 
-            player.Vitals.Health = player.Health;
-            player.Vitals.Armour = player.Armour;
+            player.Vitals.Health = player.GetHealthSafe();
+            player.Vitals.Armour = player.GetArmourSafe();
 
             var pos = new CharPosition
             {
@@ -194,7 +201,7 @@ namespace ProjectSMP.Entities.Players.Character
                 Z = player.Position.Z,
                 A = player.Angle,
                 Interior = player.Interior,
-                World = player.VirtualWorld
+                World = player.GetVirtualWorldSafe()
             };
 
             await DatabaseManager.ExecuteAsync(
@@ -301,11 +308,11 @@ namespace ProjectSMP.Entities.Players.Character
         private static void EnterCreationScene(Player player)
         {
             CinematicCameraService.Stop(player);
-            player.Interior = 14;
-            player.VirtualWorld = player.Id;
+            player.SetInteriorSafe(14);
+            player.SetVirtualWorldSafe(player.Id);
 
             var pos = new Vector3(255.306320f, -41.813072f, 1002.023437f);
-            player.Position = pos;
+            player.SetPositionSafe(pos);
             player.Angle = 257.241699f;
             player.CameraPosition = pos;
             player.SetCameraLookAt(pos, CameraCut.Cut);
@@ -599,23 +606,20 @@ namespace ProjectSMP.Entities.Players.Character
         private static void SpawnCharacter(Player player)
         {
             CinematicCameraService.Stop(player);
-            player.ToggleSpectating(false);
-            player.Interior = player.CharSpawnPos.Interior;
-            player.VirtualWorld = player.CharSpawnPos.World;
-            player.SetSpawnInfo(0, player.CharSkin,
-                new Vector3(player.CharSpawnPos.X, player.CharSpawnPos.Y, player.CharSpawnPos.Z),
-                player.CharSpawnPos.A);
-            player.Spawn();
+            player.ToggleSpectatingSafe(false);
+            player.SetInteriorSafe(player.CharSpawnPos.Interior);
+            player.SetVirtualWorldSafe(player.CharSpawnPos.World);
+            player.SetSpawnInfoSafe(0, player.CharSkin, player.CharSpawnPos.X, player.CharSpawnPos.Y, player.CharSpawnPos.Z, player.CharSpawnPos.A);
+            player.SpawnPlayerSafe();
         }
         public static void RespawnCharacter(Player player)
         {
             if (!player.IsCharLoaded) return;
             var pos = player.CharSpawnPos;
-            player.Interior = pos.Interior;
-            player.VirtualWorld = pos.World;
-            player.SetSpawnInfo(0, player.CharSkin,
-                new Vector3(pos.X, pos.Y, pos.Z), pos.A);
-            player.ToggleSpectating(false);
+            player.SetInteriorSafe(pos.Interior);
+            player.SetVirtualWorldSafe(pos.World);
+            player.SetSpawnInfoSafe(0, player.CharSkin, pos.X, pos.Y, pos.Z, pos.A);
+            player.ToggleSpectatingSafe(false);
         }
 
         private static void ApplyToPlayer(Player player, RawCharRow r)
