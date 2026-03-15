@@ -1,5 +1,7 @@
 ﻿#nullable enable
 using ProjectSMP.Core;
+using ProjectSMP.Entities.Players.Condition;
+using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.PreviewModelDialog;
@@ -183,8 +185,11 @@ namespace ProjectSMP.Entities.Players.Character
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_3"));
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_LAST_LOGIN", player.LastLogin));
 
-            // Initialize Clock & Weather
             RealtimeClockService.OnPlayerSpawn(player.Id);
+            NeedsService.OnPlayerSpawn(player);
+
+            ConditionService.RegisterPlayer(player);
+            ConditionService.RestoreDeathState(player);
         }
 
         public static async Task SaveAsync(Player player)

@@ -1,6 +1,8 @@
 ﻿#nullable enable
 using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Character;
+using ProjectSMP.Entities.Players.Condition;
+using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank;
 using ProjectSMP.Features.CinematicCamera;
@@ -40,6 +42,8 @@ namespace ProjectSMP
             CharacterService.Cleanup(this);
             WeaponConfigService.OnDisconnect(this);
             RealtimeClockService.OnPlayerDisconnect(Id);
+            NeedsService.OnPlayerDisconnect(this);
+            ConditionService.UnregisterPlayer(this);
             base.OnDisconnected(e);
         }
 

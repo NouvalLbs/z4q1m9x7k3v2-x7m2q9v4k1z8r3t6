@@ -1,4 +1,6 @@
 ﻿using ProjectSMP.Core;
+using ProjectSMP.Entities.Players.Condition;
+using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.Anticheat;
@@ -59,6 +61,12 @@ namespace ProjectSMP
             RealtimeClockService.Init();
             RealtimeClockService.SetInterval(10000, restartTimer: false);
             RealtimeClockService.Sync(serverTime: true);
+            
+            // Initialize Needs Service
+            NeedsService.Initialize();
+
+            // Initialize Condition Service
+            ConditionService.Initialize();
         }
 
         private void OnAnticheatPunishment(int playerId, string checkName, PunishAction action)
@@ -110,6 +118,8 @@ namespace ProjectSMP
             WeaponConfigHealthBar.Dispose();
             PreviewModelDialog.Dispose();
             RealtimeClockService.Dispose();
+            NeedsService.Dispose();
+            ConditionService.Dispose();
             base.OnExited(e);
         }
     }
