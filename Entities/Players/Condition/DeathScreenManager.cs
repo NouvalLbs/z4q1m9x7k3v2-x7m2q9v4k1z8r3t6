@@ -2,6 +2,7 @@
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Display;
 using SampSharp.GameMode.SAMP;
+using System;
 using System.Collections.Generic;
 
 namespace ProjectSMP.Entities.Players.Condition
@@ -30,7 +31,7 @@ namespace ProjectSMP.Entities.Players.Condition
             tds[8] = CreateText(player, 342.5f, 427.0f, "0", TextDrawFont.Slim, 0.179164f, 1.599997f);
 
             tds[9] = CreateText(player, 321.0f, 415.0f, "Bleeding_out", TextDrawFont.Slim, 0.133331f, 0.699998f);
-            tds[10] = CreateText(player, 321.0f, 406.0f, "/death_untuk_respawn", TextDrawFont.Slim, 0.133331f, 0.699998f);
+            tds[10] = CreateText(player, 321.0f, 406.0f, "/death_belum_tersedia", TextDrawFont.Slim, 0.133331f, 0.699998f);
             tds[11] = CreateMainText(player, 321.0f, 389.0f, "KAMU_PINGSAN_DAN_MENGALAMI_PENDARAHAN");
 
             _deathScreens[player.Id] = tds;

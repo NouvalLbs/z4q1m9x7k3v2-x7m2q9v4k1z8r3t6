@@ -4,7 +4,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
 {
     public static partial class WeaponConfigService
     {
-        public static void ResumeDeath(Player p, int remainingTimeSeconds, string animLib = "PED", string animName = "FLOOR_HIT")
+        public static void ResumeDeath(Player p, string animLib = "PED", string animName = "FLOOR_HIT")
         {
             if (!_states.TryGetValue(p.Id, out var s)) return;
 
@@ -20,7 +20,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 AnimLib = animLib,
                 AnimName = animName,
                 AnimLock = true,
-                RespawnTime = remainingTimeSeconds * 1000
+                RespawnTime = int.MaxValue
             };
             PlayerPrepareDeath?.Invoke(null, prep);
             if (prep.Cancel) return;

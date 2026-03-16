@@ -37,6 +37,14 @@ namespace ProjectSMP.Plugins.RealtimeClock
             clock.Show();
         }
 
+        public static void SetVisible(int playerId, bool show)
+        {
+            if (show)
+                Create(playerId);
+            else
+                Destroy(playerId);
+        }
+
         public static void Destroy(int playerId)
         {
             if (!_clocks.TryGetValue(playerId, out var clock)) return;

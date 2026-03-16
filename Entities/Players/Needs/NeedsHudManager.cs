@@ -211,7 +211,7 @@ namespace ProjectSMP.Entities.Players.Needs
                 "Armour" => player.Vitals.Armour,
                 "Hunger" => player.Vitals.Hunger,
                 "Thirst" => player.Vitals.Energy,
-                "Stress" => 0f,
+                "Stress" => player.Vitals.Stress,
                 _ => 0f
             };
         }

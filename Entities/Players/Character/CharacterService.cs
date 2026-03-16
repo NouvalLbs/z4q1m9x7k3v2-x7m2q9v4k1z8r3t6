@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 namespace ProjectSMP.Entities.Players.Character
 {
     public class CharPosition { public float X, Y, Z, A; public int Interior, World; }
-    public class CharVitals { public float MaxHealth = 100, Health = 100, Armour, Hunger = 100, Energy = 100; }
+    public class CharVitals { public float MaxHealth = 100, Health = 100, Armour, Hunger = 100, Energy = 100, Stress = 0; }
     public class CharPlaytime { public int Hours, Minutes, Seconds; }
     public class CharBackpack { public int Enabled, Slots = 32, MaxWeight = 60000; }
     public class CharPhone { public int Number, Off, Credit; }
@@ -28,7 +28,7 @@ namespace ProjectSMP.Entities.Players.Character
 
     public class CharCondition
     {
-        public int DyingTime, RespawnTime, Injured;
+        public int DyingTime, Injured;
         public int DyingStage;
         public string DeathAnimLib = "PED";
         public string DeathAnimName = "FLOOR_HIT";
@@ -188,11 +188,15 @@ namespace ProjectSMP.Entities.Players.Character
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_3"));
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_LAST_LOGIN", player.LastLogin));
 
-            RealtimeClockService.OnPlayerSpawn(player.Id);
+            RealtimeClockService.OnPlayerSpawn(player.Id, player.Settings.ShowTime);
             NeedsService.OnPlayerSpawn(player);
 
             ConditionService.RegisterPlayer(player);
             ConditionService.RestoreDeathState(player);
+
+            if (player.Condition.Injured == 0) {
+                player.SetHealthSafe(player.Vitals.Health, player.Vitals.Armour);
+            }
         }
 
         public static async Task SaveAsync(Player player)

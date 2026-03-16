@@ -504,8 +504,8 @@ namespace ProjectSMP.Plugins.WeaponConfig
         public static string ReturnWeaponName(int weaponId)
             => GetWeaponName(weaponId);
 
-        public static void ResumeDeath(Player p, int remainingTimeSeconds, string animLib = "PED", string animName = "FLOOR_HIT")
-            => WeaponConfigService.ResumeDeath(p, remainingTimeSeconds, animLib, animName);
+        public static void ResumeDeath(Player p, string animLib = "PED", string animName = "FLOOR_HIT")
+            => WeaponConfigService.ResumeDeath(p, animLib, animName);
 
         public static void ForceRespawnFromDeath(Player p)
             => WeaponConfigService.ForceRespawnFromDeath(p);

@@ -2,6 +2,7 @@
 using SampSharp.GameMode.World;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Timers;
 
 namespace ProjectSMP.Plugins.RealtimeClock
@@ -133,9 +134,9 @@ namespace ProjectSMP.Plugins.RealtimeClock
             UnfreezeForPlayer(playerId);
         }
 
-        public static void OnPlayerSpawn(int playerId)
+        public static void OnPlayerSpawn(int playerId, bool show)
         {
-            ClockTextDrawManager.Create(playerId);
+            ClockTextDrawManager.SetVisible(playerId, show);
             WeatherManager.SyncPlayerWeather(playerId);
         }
 

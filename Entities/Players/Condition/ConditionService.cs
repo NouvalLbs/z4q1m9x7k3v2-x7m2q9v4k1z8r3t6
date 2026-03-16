@@ -81,27 +81,22 @@ namespace ProjectSMP.Entities.Players.Condition
             }
 
             var uptime = player.Condition.DyingTime;
-            var dyingCount = GetDyingTime(uptime);
-
             if (player.Condition.Injured == 1)
             {
-                var minutes = dyingCount / 60;
-                var seconds = dyingCount % 60;
+                var minutes = uptime / 60;
+                var seconds = uptime % 60;
                 DeathScreenManager.UpdateTimer(player, minutes, seconds);
 
                 if (player.Condition.DyingStage == 1 && uptime == 0)
                 {
                     player.Condition.DyingStage = 2;
-                    player.Condition.DyingTime = 600;
+                    player.Condition.DyingTime = 900;
                     player.Condition.DeathAnimLib = "PED";
                     player.Condition.DeathAnimName = "FLOOR_HIT";
                     player.ApplyAnimationSafe("PED", "FLOOR_HIT", 4.0f, false, false, false, true, 0, true);
                     DeathScreenManager.UpdateStatus(player, 2);
                     player.SendClientMessage(Color.White, "{C6E2FF}<Death>{ffffff} Kamu bisa respawn, ketik {FFFF00}/death{ffffff}");
-                }
-
-                if (player.Condition.DyingStage == 2 && uptime == 0)
-                {
+                } else if (player.Condition.DyingStage == 2 && uptime == 0) {
                     _hospitalRespawn[player.Id] = true;
                     WeaponConfigService.ForceRespawnFromDeath(player);
                 }
@@ -124,7 +119,7 @@ namespace ProjectSMP.Entities.Players.Condition
             DeathScreenManager.Destroy(e.Player);
             DeathScreenManager.Create(e.Player);
 
-            e.RespawnTime = e.Player.Condition.DyingTime * 1000;
+            e.RespawnTime = int.MaxValue;
         }
 
         private static void OnPlayerDeathFinished(object sender, DeathFinishedArgs e)
@@ -210,14 +205,9 @@ namespace ProjectSMP.Entities.Players.Condition
                     ? player.Condition.DeathAnimName
                     : "FLOOR_HIT";
 
-                WeaponConfigService.ResumeDeath(player, player.Condition.DyingTime, animLib, animName);
+                WeaponConfigService.ResumeDeath(player, animLib, animName);
                 DeathScreenManager.UpdateStatus(player, player.Condition.DyingStage);
             }
-        }
-
-        private static int GetDyingTime(int uptime)
-        {
-            return uptime / 60;
         }
     }
 }

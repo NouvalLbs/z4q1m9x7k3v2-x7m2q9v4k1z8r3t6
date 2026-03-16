@@ -48,7 +48,6 @@ namespace ProjectSMP.Entities.Players.Needs
         private static void UpdateNeeds(Player player)
         {
             if (player.Condition.Injured != 0) return;
-
             var animIdx = player.AnimationIndex;
             player.GetKeys(out var keys, out _, out _);
 
@@ -92,6 +91,8 @@ namespace ProjectSMP.Entities.Players.Needs
                 }
             }
 
+            player.Vitals.Health = player.GetHealthSafe();
+            player.Vitals.Armour = player.GetArmourSafe();
             SetPlayerHunger(player, player.Vitals.Hunger - hungerAdjust);
             SetPlayerEnergy(player, player.Vitals.Energy - energyAdjust);
         }
