@@ -684,10 +684,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
             }
 
             Inflict(damaged, s, args.Amount, weaponId, bodypart, issuer);
-            if (issuer != null)
-            {
+            if (issuer != null) {
                 WeaponConfigDamageFeed.AddGiven(issuer, damaged.Name, args.Amount, weaponId);
                 WeaponConfigDamageFeed.AddTaken(damaged, issuer.Name, args.Amount, weaponId);
+            } else {
+                WeaponConfigDamageFeed.AddTaken(damaged, GetWeaponName(weaponId), args.Amount, weaponId);
             }
             PlayerDamageDone?.Invoke(null, args);
         }
@@ -727,8 +728,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             var torsoOnly = !_cfg.GlobalTorsoRules && w.TorsoOnly;
 
             float aDmg = 0, hDmg;
-            if (affectsArmour && (!torsoOnly || bodypart == BodypartTorso))
-            {
+            if (affectsArmour && (!torsoOnly || bodypart == BodypartTorso)) {
                 aDmg = MathF.Min(amount, s.Armour);
                 s.Armour -= aDmg;
                 hDmg = amount - aDmg;
@@ -742,8 +742,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
             p.Health = 99999f;
             p.Armour = 0f;
 
-            if (hDmg > 0 || aDmg > 0)
-            {
+            if (hDmg > 0 || aDmg > 0) {
                 p.PlaySound(_cfg.DamageTakenSound);
                 issuer?.PlaySound(_cfg.DamageGivenSound);
             }

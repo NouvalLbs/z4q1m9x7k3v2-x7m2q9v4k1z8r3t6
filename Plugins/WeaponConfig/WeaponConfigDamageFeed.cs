@@ -37,10 +37,11 @@ namespace ProjectSMP.Plugins.WeaponConfig
     {
         private const int FeedHeight = 5;
         private const int MaxUpdateRateMs = 250;
-        private const float TakenX = 551f;
-        private const float GivenX = 551f;
-        private const float StartY = 340f;
-        private const float LineH = 10f;
+
+        private const float DamageFeedX = 634.0f;
+        private const float TakenStartY = 363.5f;
+        private const float GivenStartY = 363.5f;
+        private const float LineHeight = 9.0f;
 
         private static int _hideDelayMs = 3000;
         private static bool _isInitialized = false;
@@ -69,9 +70,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
         {
             var state = new PlayerFeedState { EnabledOverride = -1 };
 
-            state.TakenTD = TextDrawManager.CreatePlayerInternal(player, new Vector2(TakenX, StartY), "_");
+            state.TakenTD = TextDrawManager.CreatePlayerInternal(player, new Vector2(DamageFeedX, TakenStartY), "_");
             state.TakenTD.Font = TextDrawFont.Slim;
-            state.TakenTD.LetterSize = new Vector2(0.14f, 0.9f);
+            state.TakenTD.LetterSize = new Vector2(0.141666f, 1.2f);
             state.TakenTD.Alignment = TextDrawAlignment.Right;
             state.TakenTD.ForeColor = TakenColor;
             state.TakenTD.Shadow = 0;
@@ -81,9 +82,9 @@ namespace ProjectSMP.Plugins.WeaponConfig
             state.TakenTD.Width = 640f;
             state.TakenTD.Height = 480f;
 
-            state.GivenTD = TextDrawManager.CreatePlayerInternal(player, new Vector2(GivenX, StartY + LineH * FeedHeight + 2f), "_");
+            state.GivenTD = TextDrawManager.CreatePlayerInternal(player, new Vector2(DamageFeedX, GivenStartY), "_");
             state.GivenTD.Font = TextDrawFont.Slim;
-            state.GivenTD.LetterSize = new Vector2(0.14f, 0.9f);
+            state.GivenTD.LetterSize = new Vector2(0.141666f, 1.2f);
             state.GivenTD.Alignment = TextDrawAlignment.Right;
             state.GivenTD.ForeColor = GivenColor;
             state.GivenTD.Shadow = 0;

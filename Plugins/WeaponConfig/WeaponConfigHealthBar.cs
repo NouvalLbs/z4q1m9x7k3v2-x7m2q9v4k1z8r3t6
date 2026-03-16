@@ -121,13 +121,10 @@ namespace ProjectSMP.Plugins.WeaponConfig
             var pct = maxHealth > 0 ? MathF.Max(0, MathF.Min(health / maxHealth, 1f)) : 0f;
             var w = pct * MaxWidth;
 
-            if (w <= 0)
-            {
+            if (w <= 0) {
                 ptd.BoxColor = Transparent;
                 ptd.ForeColor = Transparent;
-            }
-            else
-            {
+            } else {
                 ptd.BoxColor = FgColor;
                 ptd.ForeColor = FgColor;
                 ptd.Width = BarX + w;
