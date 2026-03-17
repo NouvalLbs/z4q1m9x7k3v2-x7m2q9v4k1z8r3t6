@@ -46,6 +46,7 @@ namespace ProjectSMP
             RealtimeClockService.OnPlayerDisconnect(Id);
             NeedsService.OnPlayerDisconnect(this);
             ConditionService.UnregisterPlayer(this);
+            this.ClearPlayerData();
             base.OnDisconnected(e);
         }
 

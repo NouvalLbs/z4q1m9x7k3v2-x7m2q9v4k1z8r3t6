@@ -1,4 +1,4 @@
-﻿namespace ProjectSMP.Entities.Players.Administrator
+﻿namespace ProjectSMP.Entities.Players.Administrator.Data
 {
     public class Report
     {

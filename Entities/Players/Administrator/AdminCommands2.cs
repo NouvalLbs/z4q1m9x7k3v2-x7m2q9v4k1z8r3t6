@@ -1,12 +1,9 @@
-﻿using ProjectSMP.Core;
-using ProjectSMP.Extensions;
-using ProjectSMP.Plugins.WeaponConfig;
+﻿using ProjectSMP.Extensions;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 using SampSharp.GameMode.World;
-using System.Linq;
 
 namespace ProjectSMP.Entities.Players.Administrator
 {
@@ -16,7 +13,7 @@ namespace ProjectSMP.Entities.Players.Administrator
         {
             if (player.Admin < level)
             {
-                player.SendClientMessage(Color.White, "{b9b9b9} Command tidak ada, gunakan '/help'.");
+                player.SendClientMessage(Color.White, "{b9b9b9}Command tidak ada, gunakan '/help'.");
                 return false;
             }
             if (!player.AdminOnDuty)
@@ -110,7 +107,7 @@ namespace ProjectSMP.Entities.Players.Administrator
                 return;
             }
 
-            if (target.IsInAnyVehicle)
+            if (target.InAnyVehicle)
                 target.RemoveFromVehicle();
 
             var pos = target.Position;
@@ -148,7 +145,7 @@ namespace ProjectSMP.Entities.Players.Administrator
             }
 
             target.Cuffed = true;
-            target.SetSpecialAction(SpecialAction.Cuffed);
+            target.SetSpecialActionSafe(SpecialAction.Cuffed);
             target.ToggleControllableSafe(false);
 
             player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah memborgol {{00FFFF}}{target.Ucp}{{FFFFFF}}!");
@@ -176,7 +173,7 @@ namespace ProjectSMP.Entities.Players.Administrator
             }
 
             target.Cuffed = false;
-            target.SetSpecialAction(SpecialAction.None);
+            target.SetSpecialActionSafe(SpecialAction.None);
             target.ToggleControllableSafe(true);
 
             player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah melepas borgol {{00FFFF}}{target.Ucp}{{FFFFFF}}!");
@@ -190,7 +187,7 @@ namespace ProjectSMP.Entities.Players.Administrator
 
             Server.SetWeather(weatherId);
             foreach (var p in BasePlayer.All)
-                p.Weather = weatherId;
+                p.SetWeather(weatherId);
 
             BasePlayer.SendClientMessageToAll(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Weather telah dirubah oleh {{ff0000}}{player.Ucp}{{FFFFFF}}");
         }
@@ -215,7 +212,7 @@ namespace ProjectSMP.Entities.Players.Administrator
                 return;
             }
 
-            if (!target.IsInAnyVehicle)
+            if (!target.InAnyVehicle)
             {
                 player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut tidak berada di dalam kendaraan!");
                 return;
@@ -240,14 +237,14 @@ namespace ProjectSMP.Entities.Players.Administrator
                 return;
             }
 
-            if (player.SpecialAction == SpecialAction.Jetpack)
+            if (player.SpecialAction == SpecialAction.Usejetpack)
             {
-                player.SetSpecialAction(SpecialAction.None);
+                player.SetSpecialActionSafe(SpecialAction.None);
                 player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Kamu telah melepas jetpack.");
             }
             else
             {
-                player.SetSpecialAction(SpecialAction.Jetpack);
+                player.SetSpecialActionSafe(SpecialAction.Usejetpack);
                 player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Kamu telah memakai jetpack.");
             }
         }

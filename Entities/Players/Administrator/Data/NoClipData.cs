@@ -1,4 +1,6 @@
-﻿namespace ProjectSMP.Entities.Players.Administrator
+﻿using SampSharp.GameMode.World;
+
+namespace ProjectSMP.Entities.Players.Administrator.Data
 {
     public enum NoClipMode
     {
@@ -21,7 +23,7 @@
     public class NoClipData
     {
         public NoClipMode Mode { get; set; }
-        public int FlyObject { get; set; }
+        public PlayerObject FlyObject { get; set; }
         public MoveDirection Direction { get; set; }
         public int LastLR { get; set; }
         public int LastUD { get; set; }

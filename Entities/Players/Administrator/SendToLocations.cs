@@ -1,6 +1,4 @@
-﻿using SampSharp.GameMode;
-
-namespace ProjectSMP.Entities.Players.Administrator
+﻿namespace ProjectSMP.Entities.Players.Administrator
 {
     public class Location
     {

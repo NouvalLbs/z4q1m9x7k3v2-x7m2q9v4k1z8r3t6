@@ -14,16 +14,7 @@ namespace ProjectSMP
     public static class Utilities
     {
         private static readonly Random Random = new();
-
-        public static string ReturnIP(BasePlayer player)
-        {
-            var ip = new StringBuilder(16);
-            player.GetIp(ip, 16);
-            return ip.ToString();
-        }
-
-        public static int RandomEx(int min, int max)
-        {
+        public static int RandomEx(int min, int max) {
             return Random.Next(min, max + 1);
         }
 

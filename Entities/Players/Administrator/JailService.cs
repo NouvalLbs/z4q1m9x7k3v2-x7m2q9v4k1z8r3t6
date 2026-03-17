@@ -15,6 +15,7 @@ namespace ProjectSMP.Entities.Players.Administrator
         private const int MaxJailTime = 3600;
         private static readonly Vector3 JailPosition = new(265.0534f, 77.6823f, 1001.0391f);
         private static readonly HashSet<int> JailedPlayers = new();
+        private static readonly Dictionary<int, PlayerTextDraw> JailTextDraws = new();
         private static Timer UpdateTimer;
 
         public static void Initialize()
@@ -39,24 +40,21 @@ namespace ProjectSMP.Entities.Players.Administrator
             target.SavedInterior = target.Interior;
             target.SavedWorld = target.VirtualWorld;
 
-            target.JailTime = seconds;
-            target.JailTimestamp = Environment.TickCount / 1000;
-            target.JailReason = reason;
+            target.JailInfo.Jailed = 1;
+            target.JailInfo.Time = seconds;
+            target.JailInfo.Reason = reason;
 
-            if (target.IsInAnyVehicle)
+            if (target.InAnyVehicle)
                 target.RemoveFromVehicle();
 
-            if (target.Cuffed)
-            {
-                target.Cuffed = false;
-                target.SetSpecialAction(SpecialAction.None);
-            }
+            target.Cuffed = false;
+            target.SetSpecialActionSafe(SpecialAction.None);
 
             target.SetInteriorSafe(6);
             target.SetVirtualWorldSafe(target.Id);
             target.SetPositionSafe(JailPosition);
             target.Angle = 270.0f;
-            target.SetCameraBehindPlayer();
+            target.PutCameraBehindPlayer();
 
             target.ToggleControllableSafe(false);
             var timer = new Timer(2000, false);
@@ -71,42 +69,40 @@ namespace ProjectSMP.Entities.Players.Administrator
 
         public static void UnjailPlayer(Player target)
         {
-            target.JailTime = 0;
-            target.JailTimestamp = 0;
-            target.JailReason = "";
+            target.JailInfo.Jailed = 0;
+            target.JailInfo.Time = 0;
+            target.JailInfo.Reason = "";
 
-            if (target.JailTextDraw != null)
+            if (JailTextDraws.TryGetValue(target.Id, out var td))
             {
-                target.JailTextDraw.Hide();
-                target.JailTextDraw.Dispose();
-                target.JailTextDraw = null;
+                td.Hide();
+                td.Dispose();
+                JailTextDraws.Remove(target.Id);
             }
 
             target.SetInteriorSafe(target.SavedInterior);
             target.SetVirtualWorldSafe(target.SavedWorld);
             target.SetPositionSafe(target.SavedPosX, target.SavedPosY, target.SavedPosZ);
-            target.SetCameraBehindPlayer();
+            target.PutCameraBehindPlayer();
 
             JailedPlayers.Remove(target.Id);
         }
 
         public static void OnPlayerSpawn(Player player)
         {
-            if (player.JailTime > 0)
+            if (player.JailInfo.Jailed > 0 && player.JailInfo.Time > 0)
             {
-                player.JailTimestamp = Environment.TickCount / 1000;
                 player.SetInteriorSafe(6);
                 player.SetVirtualWorldSafe(player.Id);
                 player.SetPositionSafe(JailPosition);
                 player.Angle = 270.0f;
-                player.SetCameraBehindPlayer();
+                player.PutCameraBehindPlayer();
 
                 CreateJailTextDraw(player);
-                UpdateJailTextDraw(player, player.JailTime);
+                UpdateJailTextDraw(player, player.JailInfo.Time);
 
-                player.SendClientMessage(Color.White,
-                    $"{{992712}}Kamu masih memiliki waktu jail tersisa sebanyak {player.JailTime} detik.");
-                player.SendClientMessage(Color.White, $"{{992712}}Alasan: {player.JailReason}");
+                player.SendClientMessage(Color.White, $"{{992712}}Kamu masih memiliki waktu jail tersisa sebanyak {player.JailInfo.Time} detik.");
+                player.SendClientMessage(Color.White, $"{{992712}}Alasan: {player.JailInfo.Reason}");
             }
         }
 
@@ -114,23 +110,21 @@ namespace ProjectSMP.Entities.Players.Administrator
         {
             foreach (var player in BasePlayer.All.OfType<Player>())
             {
-                if (!player.IsCharLoaded || player.JailTime <= 0) continue;
+                if (!player.IsCharLoaded || player.JailInfo.Time <= 0) continue;
 
-                var currentTime = Environment.TickCount / 1000;
-                var remaining = player.JailTime - (currentTime - player.JailTimestamp);
+                player.JailInfo.Time--;
 
-                if (remaining <= 0)
+                if (player.JailInfo.Time <= 0)
                 {
                     UnjailPlayer(player);
                     player.SendClientMessage(Color.White, "{992712}Waktu jail kamu telah berakhir, kamu telah dibebaskan.");
                 }
                 else
                 {
-                    UpdateJailTextDraw(player, remaining);
+                    UpdateJailTextDraw(player, player.JailInfo.Time);
 
                     var pos = player.Position;
-                    if (player.Interior != 6 || player.VirtualWorld != player.Id ||
-                        pos.DistanceTo(JailPosition) > 15.0f)
+                    if (player.Interior != 6 || player.VirtualWorld != player.Id || pos.DistanceTo(JailPosition) > 15.0f)
                     {
                         player.SetInteriorSafe(6);
                         player.SetVirtualWorldSafe(player.Id);
@@ -144,10 +138,10 @@ namespace ProjectSMP.Entities.Players.Administrator
 
         private static void CreateJailTextDraw(Player player)
         {
-            if (player.JailTextDraw != null)
-                player.JailTextDraw.Dispose();
+            if (JailTextDraws.TryGetValue(player.Id, out var existing))
+                existing.Dispose();
 
-            player.JailTextDraw = new PlayerTextDraw(player, new Vector2(320.0f, 380.0f), "Waktu Jail: ~r~0 ~w~detik")
+            var td = new PlayerTextDraw(player, new Vector2(320.0f, 380.0f), "Waktu Jail: ~r~0 ~w~detik")
             {
                 Alignment = TextDrawAlignment.Center,
                 BackColor = new Color(0, 0, 0, 170),
@@ -161,22 +155,24 @@ namespace ProjectSMP.Entities.Players.Administrator
                 BoxColor = new Color(0, 0, 0, 136),
                 Width = 160.0f
             };
+
+            JailTextDraws[player.Id] = td;
         }
 
         private static void UpdateJailTextDraw(Player player, int seconds)
         {
-            if (player.JailTextDraw == null) return;
-            player.JailTextDraw.Text = $"Waktu Jail: ~r~{seconds} ~w~detik";
-            player.JailTextDraw.Show();
+            if (!JailTextDraws.TryGetValue(player.Id, out var td)) return;
+            td.Text = $"Waktu Jail: ~r~{seconds} ~w~detik";
+            td.Show();
         }
 
         public static void Cleanup(Player player)
         {
             JailedPlayers.Remove(player.Id);
-            if (player.JailTextDraw != null)
+            if (JailTextDraws.TryGetValue(player.Id, out var td))
             {
-                player.JailTextDraw.Dispose();
-                player.JailTextDraw = null;
+                td.Dispose();
+                JailTextDraws.Remove(player.Id);
             }
         }
     }

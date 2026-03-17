@@ -1,8 +1,7 @@
 ﻿using ProjectSMP.Core;
-using SampSharp.GameMode;
+using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 using SampSharp.GameMode.World;
-using System;
 
 namespace ProjectSMP.Entities.Players.Administrator
 {
@@ -56,7 +55,7 @@ namespace ProjectSMP.Entities.Players.Administrator
         {
             if (player.Admin < 1 || !player.AdminOnDuty)
             {
-                player.SendClientMessage(Color.White, "{b9b9b9} Command '/areport' tidak ada, gunakan '/help'.");
+                player.SendClientMessage(Color.White, "{b9b9b9}Command '/areport' tidak ada, gunakan '/help'.");
                 return;
             }
 
@@ -90,7 +89,7 @@ namespace ProjectSMP.Entities.Players.Administrator
         {
             if (player.Admin < 1 || !player.AdminOnDuty)
             {
-                player.SendClientMessage(Color.White, "{b9b9b9} Command '/delreport' tidak ada, gunakan '/help'.");
+                player.SendClientMessage(Color.White, "{b9b9b9}Command '/delreport' tidak ada, gunakan '/help'.");
                 return;
             }
 

@@ -209,5 +209,13 @@ namespace ProjectSMP.Entities.Players.Condition
                 DeathScreenManager.UpdateStatus(player, player.Condition.DyingStage);
             }
         }
+
+        public static void RevivePlayerInPlace(Player player)
+        {
+            if (player.Condition.Injured < 1) return;
+            
+            _hospitalRespawn[player.Id] = false;
+            WeaponConfigService.ForceRespawnFromDeath(player);
+        }
     }
 }

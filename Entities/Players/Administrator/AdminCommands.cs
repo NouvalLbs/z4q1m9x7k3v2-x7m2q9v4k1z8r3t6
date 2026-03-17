@@ -1,8 +1,4 @@
-﻿using ProjectSMP.Core;
-using ProjectSMP.Entities.Players.Character;
-using ProjectSMP.Extensions;
-using SampSharp.GameMode;
-using SampSharp.GameMode.Definitions;
+﻿using ProjectSMP.Extensions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 using SampSharp.GameMode.World;
@@ -16,7 +12,7 @@ namespace ProjectSMP.Entities.Players.Administrator
         {
             if (player.Admin < level)
             {
-                player.SendClientMessage(Color.White, "{b9b9b9} Command tidak ada, gunakan '/help'.");
+                player.SendClientMessage(Color.White, "{b9b9b9}Command tidak ada, gunakan '/help'.");
                 return false;
             }
             if (!player.AdminOnDuty)
@@ -32,7 +28,7 @@ namespace ProjectSMP.Entities.Players.Administrator
         {
             if (player.Admin < 1)
             {
-                player.SendClientMessage(Color.White, "{b9b9b9} Command '/aduty' tidak ada, gunakan '/help'.");
+                player.SendClientMessage(Color.White, "{b9b9b9}Command '/aduty' tidak ada, gunakan '/help'.");
                 return;
             }
 
@@ -41,15 +37,14 @@ namespace ProjectSMP.Entities.Players.Administrator
                 player.Color = new Color(255, 0, 0, 0);
                 player.AdminOnDuty = true;
                 player.Name = player.Ucp;
-                Utilities.SendStaffMessage(-1, "{FF6347}{0}{FFFFFF} telah on duty admin dengan nama {1}", 
-                    player.Username, player.Ucp);
+                Utilities.SendStaffMessage(-1, "{{FF6347}}{0}{{FFFFFF}} telah on duty admin dengan nama {1}", player.Username, player.Ucp);
             }
             else
             {
                 player.Color = Color.White;
                 player.AdminOnDuty = false;
                 player.Name = player.Username;
-                Utilities.SendStaffMessage(-1, "{FF6347}{0}{FFFFFF} telah off duty admin.", player.Ucp);
+                Utilities.SendStaffMessage(-1, "{{FF6347}}{0}{{FFFFFF}} telah off duty admin.", player.Ucp);
             }
         }
 
@@ -58,7 +53,7 @@ namespace ProjectSMP.Entities.Players.Administrator
         {
             if (player.Admin < 1)
             {
-                player.SendClientMessage(Color.White, "{b9b9b9} Command '/staff' tidak ada, gunakan '/help'.");
+                player.SendClientMessage(Color.White, "{b9b9b9}Command '/staff' tidak ada, gunakan '/help'.");
                 return;
             }
 

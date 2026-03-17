@@ -1,13 +1,10 @@
 ﻿using ProjectSMP.Core;
-using ProjectSMP.Entities.Players.Character;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Extensions;
-using SampSharp.GameMode;
+using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 using SampSharp.GameMode.World;
-using System;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace ProjectSMP.Entities.Players.Administrator
 {
@@ -17,7 +14,7 @@ namespace ProjectSMP.Entities.Players.Administrator
         {
             if (player.Admin < level)
             {
-                player.SendClientMessage(Color.White, "{b9b9b9} Command tidak ada, gunakan '/help'.");
+                player.SendClientMessage(Color.White, "{b9b9b9}Command tidak ada, gunakan '/help'.");
                 return false;
             }
             if (!player.AdminOnDuty)
@@ -48,7 +45,7 @@ namespace ProjectSMP.Entities.Players.Administrator
                 return;
             }
 
-            if (target.JailTime > 0)
+            if (target.JailInfo.Time > 0)
             {
                 player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut sudah berada di jail!");
                 return;
@@ -79,7 +76,7 @@ namespace ProjectSMP.Entities.Players.Administrator
                 return;
             }
 
-            if (target.JailTime <= 0)
+            if (target.JailInfo.Time <= 0)
             {
                 player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut tidak berada di jail!");
                 return;
@@ -98,28 +95,17 @@ namespace ProjectSMP.Entities.Players.Administrator
             var target = Utilities.GetPlayerFromPartOfName(player, targetName);
             if (target == null) return;
 
-            if (!target.IsCharLoaded)
-            {
+            if (!target.IsCharLoaded) {
                 player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player target belum spawn!");
                 return;
             }
 
-            if (target.Condition.Injured < 1)
-            {
+            if (target.Condition.Injured < 1) {
                 player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut tidak dalam keadaan mati!");
                 return;
             }
 
-            var pos = target.Position;
-            target.SetData("HospitalRespawn", false);
-            ConditionService.HandleDeath(target);
-
-            target.SetPositionSafe(pos);
-            target.SetHealthSafe(target.Vitals.MaxHealth, 0);
-            target.Vitals.Health = target.Vitals.MaxHealth;
-            target.ClearAnimationsSafe();
-            target.ToggleControllableSafe(true);
-
+            ConditionService.RevivePlayerInPlace(target);
             player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah melakukan revive terhadap {{00FFFF}}{target.Ucp}{{FFFFFF}}!");
             target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah melakukan revive terhadap kamu");
         }
@@ -180,7 +166,7 @@ namespace ProjectSMP.Entities.Players.Administrator
                 return;
             }
 
-            var ip = Utilities.ReturnIP(target);
+            var ip = player.IP;
             player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Informasi IP {{00FFFF}}{target.Username} (UCP: {target.Ucp}){{FFFFFF}}");
             player.SendClientMessage(Color.White, $"{{FF6347}}>{{FFFFFF}} IP Address: {{00FFFF}}{ip}");
         }

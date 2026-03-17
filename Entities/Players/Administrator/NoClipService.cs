@@ -1,6 +1,6 @@
-﻿using ProjectSMP.Extensions;
+﻿using ProjectSMP.Entities.Players.Administrator.Data;
+using ProjectSMP.Extensions;
 using SampSharp.GameMode;
-using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.World;
 using System;
 using System.Collections.Generic;
@@ -18,9 +18,9 @@ namespace ProjectSMP.Entities.Players.Administrator
             var pos = player.Position;
             var data = new NoClipData();
 
-            data.FlyObject = player.CreateObject(19300, pos.X, pos.Y, pos.Z, 0, 0, 0);
+            data.FlyObject = new PlayerObject(player, 19300, pos, Vector3.Zero);
             player.ToggleSpectatingSafe(true);
-            player.AttachCameraToObject(data.FlyObject);
+            data.FlyObject.AttachCameraToObject();
 
             data.Mode = NoClipMode.Fly;
             Sessions[player.Id] = data;
@@ -33,7 +33,7 @@ namespace ProjectSMP.Entities.Players.Administrator
             player.ToggleSpectatingSafe(false);
             var pos = player.CameraPosition;
             player.SetPositionSafe(pos.X, pos.Y, pos.Z + 0.3f);
-            player.DestroyObject(data.FlyObject);
+            data.FlyObject?.Dispose();
 
             Sessions.Remove(player.Id);
         }
@@ -90,7 +90,7 @@ namespace ProjectSMP.Entities.Players.Administrator
             var fv = player.CameraFrontVector;
 
             var next = GetNextPosition(data.Direction, cp, fv);
-            player.MoveObject(data.FlyObject, next.X, next.Y, next.Z, speed);
+            data.FlyObject.Move(next, speed);
             data.LastMove = Environment.TickCount;
         }
 

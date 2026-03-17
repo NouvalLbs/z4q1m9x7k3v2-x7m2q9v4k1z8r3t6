@@ -31,6 +31,7 @@ namespace ProjectSMP
         public int MaskId { get; set; }
         public int Warn { get; set; }
         public int Paycheck { get; set; }
+        public bool Cuffed { get; set; }
 
         public CharPosition CharSpawnPos { get; set; } = new();
         public CharVitals Vitals { get; set; } = new();

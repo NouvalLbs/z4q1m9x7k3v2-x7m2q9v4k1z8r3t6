@@ -1,10 +1,9 @@
 ﻿using ProjectSMP.Core;
-using SampSharp.GameMode;
+using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 using SampSharp.GameMode.World;
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace ProjectSMP.Entities.Players.Administrator
 {
@@ -14,7 +13,7 @@ namespace ProjectSMP.Entities.Players.Administrator
         {
             if (player.Admin < level)
             {
-                player.SendClientMessage(Color.White, "{b9b9b9} Command tidak ada, gunakan '/help'.");
+                player.SendClientMessage(Color.White, "{b9b9b9}Command tidak ada, gunakan '/help'.");
                 return false;
             }
             if (!player.AdminOnDuty)
@@ -48,10 +47,10 @@ namespace ProjectSMP.Entities.Players.Administrator
             var banTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var banExpire = days > 0 ? banTime + (days * 86400) : 0;
 
-            target.BanTime = (int)banTime;
-            target.BanExpire = (int)banExpire;
-            target.BanReason = reason;
-            target.BanAdmin = player.Ucp;
+            target.BanInfo.Time = (int)banTime;
+            target.BanInfo.Expire = (int)banExpire;
+            target.BanInfo.Reason = reason;
+            target.BanInfo.Admin = player.Ucp;
 
             var query = @"UPDATE `players` SET `ban` = 1, `bantime` = @BanTime, `banexpire` = @BanExpire, 
                          `banreason` = @Reason, `banadmin` = @Admin WHERE `citizenId` = @CitizenId";
@@ -178,8 +177,8 @@ namespace ProjectSMP.Entities.Players.Administrator
         private static string BuildStatsString(Player p)
         {
             var gender = p.Gender == 0 ? "Male" : "Female";
-            var phoneStatus = p.PhoneOff ? "{91ff00}Online{FFFFFF}" : "{FF0000}Offline{FFFFFF}";
-            var charStatus = p.VerifiedChar ? "{91ff00}Verified{FFFFFF}" : "{FF0000}Unverified{FFFFFF}";
+            var phoneStatus = p.Phone.Off == 0 ? "{91ff00}Online{FFFFFF}" : "{FF0000}Offline{FFFFFF}";
+            var charStatus = p.VerifiedChar == 1 ? "{91ff00}Verified{FFFFFF}" : "{FF0000}Unverified{FFFFFF}";
             var admin = Utilities.GetAdminString(p);
             var warn = Utilities.GetWarningString(p);
 
