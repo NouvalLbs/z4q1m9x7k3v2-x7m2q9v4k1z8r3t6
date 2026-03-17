@@ -2,6 +2,7 @@
 using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Plugins.RealtimeClock;
+using ProjectSMP.Plugins.Streamer;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using System.Collections.Generic;
@@ -317,15 +318,14 @@ namespace ProjectSMP.Entities.Players.Settings
                 });
         }
 
-        public static void ApplyDynamicObjectPriority(Player player)
-        {
-            // TODO: Implement streamer settings when plugin is ready
-            // var settings = new (int visible, float radius)[] {
-            //     (150, 0.25f), (500, 0.5f), (750, 1.0f), (1000, 2.0f)
-            // };
-            // var (visible, radius) = settings[player.Settings.DynamicObjectsPriority];
-            // StreamerNatives.Instance.Streamer_SetVisibleItems(StreamerType.Object, visible, player.Id);
-            // StreamerNatives.Instance.Streamer_SetRadiusMultiplier(StreamerType.Object, radius, player.Id);
+        public static void ApplyDynamicObjectPriority(Player player) {
+            var settings = new (int visible, float radius)[] {
+                (150, 0.25f), (500, 0.5f), (750, 1.0f), (1000, 2.0f)
+            };
+            var (visible, radius) = settings[player.Settings.DynamicObjectsPriority];
+
+            StreamerNatives.Instance.Streamer_SetVisibleItems(0, visible, player.Id);
+            StreamerNatives.Instance.Streamer_SetRadiusMultiplier(0, radius, player.Id);
         }
 
         private static string GetToggleLabel(bool value) => value ? "{b2ff47}Enabled" : "{FF6347}Disabled";

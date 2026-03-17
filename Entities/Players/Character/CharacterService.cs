@@ -2,8 +2,10 @@
 using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.Needs;
+using ProjectSMP.Entities.Players.Settings;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.CinematicCamera;
+using ProjectSMP.Features.EnterExit;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.Streamer;
@@ -197,6 +199,12 @@ namespace ProjectSMP.Entities.Players.Character
             if (player.Condition.Injured == 0) {
                 player.SetHealthSafe(player.Vitals.Health, player.Vitals.Armour);
             }
+
+            EnterExitService.ProcessEnterExit(player, () => {
+                if (!player.IsDisposed)
+                    SettingsService.ApplyDynamicObjectPriority(player);
+                    player.ToggleControllableSafe(true);
+            });
         }
 
         public static async Task SaveAsync(Player player)

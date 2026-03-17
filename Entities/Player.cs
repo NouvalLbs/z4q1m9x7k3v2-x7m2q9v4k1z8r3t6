@@ -6,6 +6,7 @@ using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank;
 using ProjectSMP.Features.CinematicCamera;
+using ProjectSMP.Features.EnterExit;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
@@ -37,6 +38,7 @@ namespace ProjectSMP
             WeaponConfigService.PlayerDeathFinished -= OnDeathFinished;
             WeaponConfigService.PlayerDamage -= OnPlayerDamage;
             CinematicCameraService.Stop(this);
+            EnterExitService.Cleanup(this);
             _ = SaveOnDisconnectAsync();
             UserControlService.Cleanup(this);
             CharacterService.Cleanup(this);

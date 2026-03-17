@@ -15,5 +15,15 @@ namespace ProjectSMP.Plugins.Streamer {
         {
             throw new NativeNotImplementedException();
         }
+
+        [NativeMethod]
+        public virtual int Streamer_SetVisibleItems(int type, int items, int playerid = -1) {
+            throw new NativeNotImplementedException();
+        }
+
+        [NativeMethod]
+        public virtual int Streamer_SetRadiusMultiplier(int type, float multiplier, int playerid = -1) {
+            throw new NativeNotImplementedException();
+        }
     }
 }
