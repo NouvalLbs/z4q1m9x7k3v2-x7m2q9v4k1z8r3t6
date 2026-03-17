@@ -19,16 +19,14 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             if (!ReportService.CanReport(player))
             {
                 var remaining = ReportService.GetCooldown(player);
-                player.SendClientMessage(Color.White,
-                    $"{{FF6347}}<Report>{{FFFFFF}} Kamu harus menunggu {remaining} detik sebelum membuat report baru.");
+                player.SendClientMessage(Color.White, $"{{FF6347}}<Report>{{FFFFFF}} Kamu harus menunggu {remaining} detik sebelum membuat report baru.");
                 return;
             }
 
             var reportId = ReportService.AddReport(player, text);
             ReportService.SetReportTime(player);
 
-            player.SendClientMessage(Color.White,
-                "{FF6347}<Report>{FFFFFF} Report kamu telah dikirim ke admin. Gunakan /reports untuk melihat status report kamu.");
+            player.SendClientMessage(Color.White, "{FF6347}<Report>{FFFFFF} Report kamu telah dikirim ke admin. Gunakan /reports untuk melihat status report kamu.");
         }
 
         [Command("reports")]
@@ -69,19 +67,16 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             var target = BasePlayer.Find(report.PlayerId) as Player;
             if (target != null && target.IsConnected)
             {
-                target.SendClientMessage(Color.White,
-                    $"{{FF6347}}<Report Answer>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah menjawab report kamu:");
+                target.SendClientMessage(Color.White, $"{{FF6347}}<Report Answer>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah menjawab report kamu:");
                 target.SendClientMessage(Color.White, $"{{FF6347}}>{{FFFFFF}} {response}");
             }
             else
             {
-                player.SendClientMessage(Color.White,
-                    "{FF6347}<Report>{FFFFFF} Player sudah tidak online, tetapi report telah ditandai sebagai sudah dijawab.");
+                player.SendClientMessage(Color.White, "{FF6347}<Report>{FFFFFF} Player sudah tidak online, tetapi report telah ditandai sebagai sudah dijawab.");
             }
 
             ReportService.MarkHandled(reportId, player.Id);
-            player.SendClientMessage(Color.White,
-                $"{{FF6347}}<Report>{{FFFFFF}} Kamu telah menjawab report #{reportId} dari {report.PlayerName}.");
+            player.SendClientMessage(Color.White, $"{{FF6347}}<Report>{{FFFFFF}} Kamu telah menjawab report #{reportId} dari {report.PlayerName}.");
         }
 
         [Command("delreport")]
@@ -107,8 +102,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (target != null && target.IsConnected)
             {
-                target.SendClientMessage(Color.White,
-                    $"{{FF6347}}<Report>{{FFFFFF}} Report kamu telah ditutup oleh admin {{00FFFF}}{player.Ucp}{{FFFFFF}}.");
+                target.SendClientMessage(Color.White, $"{{FF6347}}<Report>{{FFFFFF}} Report kamu telah ditutup oleh admin {{00FFFF}}{player.Ucp}{{FFFFFF}}.");
             }
         }
 
@@ -128,8 +122,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                 items.Add($"{r.Id}\t{status}\t{ReportService.GetTimeElapsed(r.Timestamp)}\t{r.Text}");
             }
 
-            player.ShowTabList("Your Reports",
-                new[] { "ReportId", "Status", "Time", "Report Text" })
+            player.ShowTabList("Your Reports", new[] { "ReportId", "Status", "Time", "Report Text" })
                 .WithRows(items.ToArray())
                 .Show();
         }
@@ -150,8 +143,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                 items.Add($"{r.Id} ({status})\t{r.PlayerName} (Id: {r.PlayerId})\t{ReportService.GetTimeElapsed(r.Timestamp)}\t{r.Text}");
             }
 
-            player.ShowTabList("All Reports",
-                new[] { "ReportId", "Player", "Time", "Report Text" })
+            player.ShowTabList("All Reports", new[] { "ReportId", "Player", "Time", "Report Text" })
                 .WithRows(items.ToArray())
                 .Show();
         }

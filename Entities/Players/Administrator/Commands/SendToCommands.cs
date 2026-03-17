@@ -9,42 +9,15 @@ using System.Linq;
 
 namespace ProjectSMP.Entities.Players.Administrator.Commands
 {
-    public class SendToCommands
+    public class SendToCommands : AdminCommandBase
     {
-        private static bool CheckAdmin(Player player, int level)
-        {
-            if (player.Admin < level)
-            {
-                player.SendClientMessage(Color.White, "{b9b9b9}Command tidak ada, gunakan '/help'.");
-                return false;
-            }
-            if (!player.AdminOnDuty)
-            {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Command tidak dapat digunakan ketika kamu tidak duty.");
-                return false;
-            }
-            return true;
-        }
-
         [Command("sendto")]
-        public static void SendTo(Player player, string targetName, string cityName = "")
+        public static void SendTo(Player player, string targetInput, string cityName = "")
         {
-            if (!CheckAdmin(player, 1)) return;
+            if (!CheckAdmin(player, 1) || !ValidateCharLoaded(player)) return;
 
-            if (!player.IsCharLoaded)
-            {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Kamu belum login!");
-                return;
-            }
-
-            var target = Utilities.GetPlayerFromPartOfName(player, targetName);
-            if (target == null) return;
-
-            if (!target.IsCharLoaded)
-            {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player target belum spawn!");
-                return;
-            }
+            var target = GetTargetPlayer(player, targetInput);
+            if (!ValidateTarget(player, target)) return;
 
             if (target.JailInfo.Jailed > 0)
             {
@@ -80,11 +53,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
         private static void ShowCityDialog(Player player)
         {
-            player.ShowList(
-                "Select City",
-                "Los Santos (LS)",
-                "San Fierro (SF)",
-                "Las Venturas (LV)")
+            player.ShowList("Select City", "Los Santos (LS)", "San Fierro (SF)", "Las Venturas (LV)")
                 .WithButtons("Select", "Cancel")
                 .Show(e =>
                 {
@@ -117,7 +86,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                 return;
             }
 
-            var locations = System.Linq.Enumerable.Where(SendToData.All, loc => loc.City == cityId).ToArray();
+            var locations = SendToData.All.Where(loc => loc.City == cityId).ToArray();
             var items = new string[locations.Length];
             for (var i = 0; i < locations.Length; i++)
                 items[i] = locations[i].Name;
@@ -147,10 +116,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                     tgt.SetPositionSafe(loc.X, loc.Y, loc.Z);
                     tgt.PutCameraBehindPlayer();
 
-                    player.SendClientMessage(Color.White,
-                        $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah mengirim {{00FFFF}}{tgt.Ucp}{{FFFFFF}} ke {{00FFFF}}{loc.Name}{{FFFFFF}}!");
-                    tgt.SendClientMessage(Color.White,
-                        $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengirim kamu ke {{00FFFF}}{loc.Name}{{FFFFFF}}");
+                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah mengirim {{00FFFF}}{tgt.Username} (ID:{tgt.Id}){{FFFFFF}} ke {{00FFFF}}{loc.Name}{{FFFFFF}}!");
+                    tgt.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengirim kamu ke {{00FFFF}}{loc.Name}{{FFFFFF}}");
 
                     player.SetData("SendTo_Target", -1);
                     player.SetData("SendTo_City", 0);

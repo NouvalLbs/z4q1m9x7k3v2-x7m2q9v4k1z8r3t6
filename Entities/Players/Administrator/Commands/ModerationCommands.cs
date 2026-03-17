@@ -1,4 +1,6 @@
 ﻿using ProjectSMP.Core;
+using ProjectSMP.Entities.Players.Condition;
+using ProjectSMP.Extensions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 using SampSharp.GameMode.World;
@@ -7,42 +9,71 @@ using System.Linq;
 
 namespace ProjectSMP.Entities.Players.Administrator.Commands
 {
-    public class AdminCommands4
+    public class ModerationCommands : AdminCommandBase
     {
-        private static bool CheckAdmin(Player player, int level)
+        [Command("kick")]
+        public static void Kick(Player player, string targetInput, string reason)
         {
-            if (player.Admin < level)
+            if (!CheckAdmin(player, 1)) return;
+
+            var target = GetTargetPlayer(player, targetInput);
+            if (!ValidateTarget(player, target) || !CheckAdminRank(player, target)) return;
+
+            BasePlayer.SendClientMessageToAll(Color.White, $"{{992712}}<AdmCmd> {target.Username} telah dikeluarkan dari server oleh {player.Ucp}.");
+            BasePlayer.SendClientMessageToAll(Color.White, $"{{992712}}Alasan: {reason}");
+            Utilities.KickEx(target, 500);
+        }
+
+        [Command("jail")]
+        public static void Jail(Player player, string targetInput, int seconds, string reason)
+        {
+            if (!CheckAdmin(player, 2)) return;
+
+            var target = GetTargetPlayer(player, targetInput);
+            if (!ValidateTarget(player, target) || !CheckAdminRank(player, target)) return;
+
+            if (target.JailInfo.Time > 0)
             {
-                player.SendClientMessage(Color.White, "{b9b9b9}Command tidak ada, gunakan '/help'.");
-                return false;
+                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut sudah berada di jail!");
+                return;
             }
-            if (!player.AdminOnDuty)
+
+            if (!JailService.JailPlayer(target, seconds, reason))
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Command tidak dapat digunakan ketika kamu tidak duty.");
-                return false;
+                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Waktu jail harus antara 1 - 3600 detik!");
+                return;
             }
-            return true;
+
+            BasePlayer.SendClientMessageToAll(Color.White, $"{{992712}}<AdmCmd> {target.Username} telah dijail oleh {player.Ucp} selama {seconds} detik.");
+            BasePlayer.SendClientMessageToAll(Color.White, $"{{992712}}Alasan: {reason}");
+        }
+
+        [Command("unjail")]
+        public static void Unjail(Player player, string targetInput)
+        {
+            if (!CheckAdmin(player, 2)) return;
+
+            var target = GetTargetPlayer(player, targetInput);
+            if (!ValidateTarget(player, target)) return;
+
+            if (target.JailInfo.Time <= 0)
+            {
+                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut tidak berada di jail!");
+                return;
+            }
+
+            JailService.UnjailPlayer(target);
+            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah mengeluarkan {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} dari jail!");
+            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengeluarkan kamu dari jail");
         }
 
         [Command("ban")]
-        public static async void Ban(Player player, string targetName, int days, string reason)
+        public static async void Ban(Player player, string targetInput, int days, string reason)
         {
             if (!CheckAdmin(player, 3)) return;
 
-            var target = Utilities.GetPlayerFromPartOfName(player, targetName);
-            if (target == null) return;
-
-            if (!target.IsCharLoaded)
-            {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player target belum spawn!");
-                return;
-            }
-
-            if (target.Admin > player.Admin)
-            {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Kamu tidak dapat ban admin dengan level lebih tinggi!");
-                return;
-            }
+            var target = GetTargetPlayer(player, targetInput);
+            if (!ValidateTarget(player, target) || !CheckAdminRank(player, target)) return;
 
             var banTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var banExpire = days > 0 ? banTime + (days * 86400) : 0;
@@ -153,43 +184,23 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             BasePlayer.SendClientMessageToAll(Color.White, $"{{992712}}<AdmCmd> {username} telah di-unban dari server oleh {player.Ucp}.");
         }
 
-        [Command("astats")]
-        public static void AStats(Player player, string targetName)
+        [Command("revive")]
+        public static void Revive(Player player, string targetInput)
         {
-            if (!CheckAdmin(player, 2)) return;
+            if (!CheckAdmin(player, 3)) return;
 
-            var target = Utilities.GetPlayerFromPartOfName(player, targetName);
-            if (target == null) return;
+            var target = GetTargetPlayer(player, targetInput);
+            if (!ValidateTarget(player, target)) return;
 
-            if (!target.IsCharLoaded)
+            if (target.Condition.Injured < 1)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player target belum spawn!");
+                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut tidak dalam keadaan mati!");
                 return;
             }
 
-            var stats = BuildStatsString(target);
-            var title = $"{{FF6347}}Admin Stats: {{6fe0ba}}{target.Username} {{c8c8c8}}(UCP: {target.Ucp})";
-
-            player.ShowMessage(title, stats).Show();
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah melihat statistik dari {{00FFFF}}{target.Ucp}{{FFFFFF}}!");
-        }
-
-        private static string BuildStatsString(Player p)
-        {
-            var gender = p.Gender == 0 ? "Male" : "Female";
-            var phoneStatus = p.Phone.Off == 0 ? "{91ff00}Online{FFFFFF}" : "{FF0000}Offline{FFFFFF}";
-            var charStatus = p.VerifiedChar == 1 ? "{91ff00}Verified{FFFFFF}" : "{FF0000}Unverified{FFFFFF}";
-            var admin = Utilities.GetAdminString(p);
-            var warn = Utilities.GetWarningString(p);
-
-            return $@"{{FFFF00}}IC Information:
-            {{FFFFFF}}Gender: [{{b8d2ec}}{gender}{{FFFFFF}}] | Birthdate: [{{b8d2ec}}{p.BirthDate}{{FFFFFF}}] | Money: [{{00f000}}{Utilities.GroupDigits(p.CharMoney)}{{FFFFFF}}]
-            {{FFFFFF}}Phone Status: [{phoneStatus}] | Phone Number: [{{ebeb00}}{p.Phone}{{FFFFFF}}] | Mask ID: [{{b8d2ec}}{p.MaskId}{{FFFFFF}}]
-
-            {{FFFF00}}OOC Information:
-            {{FFFFFF}}CitizenId: [{{77efc7}}{p.CitizenId}{{FFFFFF}}] | Level: [{{77efc7}}{p.Level}{{FFFFFF}}] | Paychecks: [{{b8d2ec}}{p.Paycheck}{{FFFFFF}}]
-            {{FFFFFF}}Character Story: [{charStatus}] | Staff: [{admin}] | Warns: [{warn}]
-            {{FFFFFF}}World: [{{ebeb00}}{p.VirtualWorld}{{FFFFFF}}] | Interior: [{{ebeb00}}{p.Interior}{{FFFFFF}}] | Health: [{{ab0000}}{p.Vitals.Health:F1}{{FFFFFF}}] | Armour: [{{9f9f9f}}{p.Vitals.Armour:F1}{{FFFFFF}}]";
+            ConditionService.RevivePlayerInPlace(target);
+            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah melakukan revive terhadap {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
+            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah melakukan revive terhadap kamu");
         }
     }
 }

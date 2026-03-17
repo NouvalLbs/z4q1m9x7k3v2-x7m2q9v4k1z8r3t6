@@ -1,5 +1,4 @@
 ﻿using ProjectSMP.Core;
-using ProjectSMP.Entities.Players.Administrator.Data;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;

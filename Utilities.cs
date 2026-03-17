@@ -1,12 +1,7 @@
-﻿using SampSharp.GameMode;
-using SampSharp.GameMode.Definitions;
-using SampSharp.GameMode.Display;
-using SampSharp.GameMode.SAMP;
+﻿using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using System;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace ProjectSMP
@@ -127,26 +122,63 @@ namespace ProjectSMP
 
         public static Player GetPlayerFromPartOfName(Player sender, string input)
         {
-            if (int.TryParse(input, out var id) && BasePlayer.All.Any(p => p.Id == id))
-                return BasePlayer.Find(id) as Player;
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                sender.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Input tidak valid!");
+                return null;
+            }
+
+            if (int.TryParse(input, out var playerId))
+            {
+                if (playerId < 0 || playerId >= 1000)
+                {
+                    sender.SendClientMessage(Color.White, $"{{C6E2FF}}<Error>{{FFFFFF}} Player ID {playerId} tidak valid (0-999)!");
+                    return null;
+                }
+
+                var targetById = BasePlayer.Find(playerId) as Player;
+                if (targetById == null || !targetById.IsConnected)
+                {
+                    sender.SendClientMessage(Color.White, $"{{C6E2FF}}<Error>{{FFFFFF}} Player dengan ID {playerId} tidak ditemukan atau tidak online.");
+                    return null;
+                }
+
+                return targetById;
+            }
+
+            var inputLower = input.ToLower();
+            var exactMatch = BasePlayer.All.OfType<Player>()
+                .FirstOrDefault(p => p.IsConnected && p.Username.ToLower() == inputLower);
+
+            if (exactMatch != null)
+                return exactMatch;
 
             var matches = BasePlayer.All.OfType<Player>()
-                .Where(p => p.Username.Contains(input, StringComparison.OrdinalIgnoreCase))
+                .Where(p => p.IsConnected && p.Username.Contains(input, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             if (matches.Count == 0)
             {
-                sender.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Tidak ada player yang ditemukan.");
+                sender.SendClientMessage(Color.White, $"{{C6E2FF}}<Error>{{FFFFFF}} Tidak ada player dengan nama '{input}' yang ditemukan.");
                 return null;
             }
 
             if (matches.Count == 1)
                 return matches[0];
 
-            sender.SendClientMessage(Color.White, "{FF6347}[+]{FFFFFF} Terdapat lebih dari satu player dengan nama itu:");
-            foreach (var match in matches)
-                sender.SendClientMessage(Color.White, $"{{FF6347}}>{{fff0b5}} {match.Username} (( PlayerId: {match.Id} ))");
+            sender.SendClientMessage(Color.White, $"{{FF6347}}[!]{{FFFFFF}} Ditemukan {matches.Count} player dengan nama mirip '{input}':");
+            
+            var displayCount = Math.Min(matches.Count, 10);
+            for (var i = 0; i < displayCount; i++)
+            {
+                var match = matches[i];
+                sender.SendClientMessage(Color.White, $"{{FF6347}}>{{FFFFFF}} {match.Username} {{c8c8c8}}(ID: {match.Id})");
+            }
 
+            if (matches.Count > 10)
+                sender.SendClientMessage(Color.White, $"{{c8c8c8}}... dan {matches.Count - 10} player lainnya.");
+
+            sender.SendClientMessage(Color.White, "{c8c8c8}Tip: Gunakan Player ID atau nama lengkap untuk target yang spesifik.");
             return null;
         }
 
