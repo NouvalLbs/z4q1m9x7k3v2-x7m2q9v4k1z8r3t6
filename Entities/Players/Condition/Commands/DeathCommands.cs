@@ -1,5 +1,5 @@
 ﻿using SampSharp.GameMode.SAMP.Commands;
-namespace ProjectSMP.Entities.Players.Condition
+namespace ProjectSMP.Entities.Players.Condition.Commands
 {
     public class DeathCommands
     {

@@ -56,7 +56,6 @@ namespace ProjectSMP.Entities.Players.Administrator
 
             return Vehicles.Values.Where(v => v.Category == category).ToList();
         }
-
         public static List<VehicleModelInfo> Search(string query)
         {
             return Vehicles.Values

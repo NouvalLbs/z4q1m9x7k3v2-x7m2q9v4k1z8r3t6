@@ -1,10 +1,11 @@
 ﻿using ProjectSMP.Extensions;
+using ProjectSMP.Features.NameTag;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 using SampSharp.GameMode.World;
 using System.Linq;
 
-namespace ProjectSMP.Entities.Players.Administrator
+namespace ProjectSMP.Entities.Players.Administrator.Commands
 {
     public class AdminCommands
     {
@@ -37,6 +38,7 @@ namespace ProjectSMP.Entities.Players.Administrator
                 player.Color = new Color(255, 0, 0, 0);
                 player.AdminOnDuty = true;
                 player.Name = player.Ucp;
+                NameTagService.Refresh(player);
                 Utilities.SendStaffMessage(-1, "{{FF6347}}{0}{{FFFFFF}} telah on duty admin dengan nama {1}", player.Username, player.Ucp);
             }
             else
@@ -44,6 +46,7 @@ namespace ProjectSMP.Entities.Players.Administrator
                 player.Color = Color.White;
                 player.AdminOnDuty = false;
                 player.Name = player.Username;
+                NameTagService.Refresh(player);
                 Utilities.SendStaffMessage(-1, "{{FF6347}}{0}{{FFFFFF}} telah off duty admin.", player.Ucp);
             }
         }

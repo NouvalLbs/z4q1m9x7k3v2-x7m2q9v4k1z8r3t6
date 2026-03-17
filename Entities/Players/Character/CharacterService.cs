@@ -6,6 +6,7 @@ using ProjectSMP.Entities.Players.Settings;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.EnterExit;
+using ProjectSMP.Features.NameTag;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.Streamer;
@@ -202,6 +203,7 @@ namespace ProjectSMP.Entities.Players.Character
 
             EnterExitService.ProcessEnterExit(player, () => {
                 if (!player.IsDisposed)
+                    NameTagService.Refresh(player);
                     SettingsService.ApplyDynamicObjectPriority(player);
                     player.ToggleControllableSafe(true);
             });

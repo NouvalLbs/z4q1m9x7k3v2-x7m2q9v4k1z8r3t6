@@ -7,6 +7,7 @@ using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.EnterExit;
+using ProjectSMP.Features.NameTag;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
@@ -46,6 +47,7 @@ namespace ProjectSMP
             RealtimeClockService.OnPlayerDisconnect(Id);
             NeedsService.OnPlayerDisconnect(this);
             ConditionService.UnregisterPlayer(this);
+            NameTagService.Cleanup(this);
             this.ClearPlayerData();
             base.OnDisconnected(e);
         }

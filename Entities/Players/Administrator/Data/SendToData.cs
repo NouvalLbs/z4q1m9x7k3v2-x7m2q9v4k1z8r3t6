@@ -1,4 +1,4 @@
-﻿namespace ProjectSMP.Entities.Players.Administrator
+﻿namespace ProjectSMP.Entities.Players.Administrator.Data
 {
     public class Location
     {
@@ -11,7 +11,7 @@
         public int City { get; set; }
     }
 
-    public static class SendToLocations
+    public static class SendToData
     {
         public static readonly Location[] All = new[]
         {

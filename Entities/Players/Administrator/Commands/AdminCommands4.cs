@@ -5,7 +5,7 @@ using SampSharp.GameMode.World;
 using System;
 using System.Linq;
 
-namespace ProjectSMP.Entities.Players.Administrator
+namespace ProjectSMP.Entities.Players.Administrator.Commands
 {
     public class AdminCommands4
     {

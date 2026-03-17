@@ -3,7 +3,7 @@ using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 using SampSharp.GameMode.World;
 
-namespace ProjectSMP.Entities.Players.Administrator
+namespace ProjectSMP.Entities.Players.Administrator.Commands
 {
     public class ReportCommands
     {
