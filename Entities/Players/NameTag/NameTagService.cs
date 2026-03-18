@@ -4,7 +4,7 @@ using SampSharp.GameMode.SAMP;
 using SampSharp.Streamer.World;
 using System.Collections.Generic;
 
-namespace ProjectSMP.Features.NameTag
+namespace ProjectSMP.Entities.Players.NameTag
 {
     public static class NameTagService
     {

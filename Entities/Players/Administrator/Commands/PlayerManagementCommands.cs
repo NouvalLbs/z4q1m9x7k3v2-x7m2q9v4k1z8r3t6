@@ -46,10 +46,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             var target = GetTargetPlayer(player, targetInput);
             if (!ValidateTarget(player, target)) return;
 
-            var pos = target.Position;
-            player.SetInteriorSafe(target.Interior);
-            player.SetVirtualWorldSafe(target.VirtualWorld);
-            player.SetPositionSafe(pos.X + 1, pos.Y + 1, pos.Z);
+            TeleportHelper.TeleportToPlayer(player, target);
 
             player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah teleport ke {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
             target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah teleport ke lokasi kamu");
@@ -63,10 +60,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             var target = GetTargetPlayer(player, targetInput);
             if (!ValidateTarget(player, target)) return;
 
-            var pos = player.Position;
-            target.SetInteriorSafe(player.Interior);
-            target.SetVirtualWorldSafe(player.VirtualWorld);
-            target.SetPositionSafe(pos.X + 1, pos.Y + 1, pos.Z);
+            TeleportHelper.TeleportToPlayer(target, player, reverse: true);
 
             player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah menarik {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} ke lokasi kamu!");
             target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah menarik kamu ke lokasi mereka");

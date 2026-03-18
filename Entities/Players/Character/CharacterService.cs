@@ -2,13 +2,13 @@
 using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
+using ProjectSMP.Entities.Players.NameTag;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Entities.Players.Settings;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Ban;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.EnterExit;
-using ProjectSMP.Features.NameTag;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.Streamer;

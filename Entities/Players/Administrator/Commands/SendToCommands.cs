@@ -111,9 +111,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                         return;
                     }
 
-                    tgt.SetInteriorSafe(loc.Interior);
-                    tgt.SetVirtualWorldSafe(loc.VirtualWorld);
-                    tgt.SetPositionSafe(loc.X, loc.Y, loc.Z);
+                    TeleportHelper.TeleportToLocation(tgt, loc.X, loc.Y, loc.Z, loc.Interior, loc.VirtualWorld);
                     tgt.PutCameraBehindPlayer();
 
                     player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah mengirim {{00FFFF}}{tgt.Username} (ID:{tgt.Id}){{FFFFFF}} ke {{00FFFF}}{loc.Name}{{FFFFFF}}!");

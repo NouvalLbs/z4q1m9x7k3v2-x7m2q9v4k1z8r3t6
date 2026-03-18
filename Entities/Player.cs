@@ -2,12 +2,13 @@
 using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Character;
 using ProjectSMP.Entities.Players.Condition;
+using ProjectSMP.Entities.Players.NameTag;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank;
+using ProjectSMP.Features.Chat;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.EnterExit;
-using ProjectSMP.Features.NameTag;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
@@ -32,6 +33,7 @@ namespace ProjectSMP
             CinematicCameraService.Start(this);
             UserControlService.InitAsync(this);
             RealtimeClockService.OnPlayerConnect(Id);
+            ChatService.Initialize(this);
         }
 
         public override void OnDisconnected(DisconnectEventArgs e)
@@ -48,6 +50,7 @@ namespace ProjectSMP
             NeedsService.OnPlayerDisconnect(this);
             ConditionService.UnregisterPlayer(this);
             NameTagService.Cleanup(this);
+            ChatService.Cleanup(this);
             this.ClearPlayerData();
             base.OnDisconnected(e);
         }
@@ -161,6 +164,12 @@ namespace ProjectSMP
         {
             PreviewModelDialog.HandleCancel(this);
             base.OnCancelClickTextDraw(e);
+        }
+
+        public override void OnText(TextEventArgs e)
+        {
+            ChatService.ProcessChatText(this, e.Text);
+            base.OnText(e);
         }
 
         public override void OnEnterVehicle(EnterVehicleEventArgs e)
