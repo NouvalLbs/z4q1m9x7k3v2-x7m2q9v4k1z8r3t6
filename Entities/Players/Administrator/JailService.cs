@@ -1,4 +1,5 @@
 ﻿using ProjectSMP.Extensions;
+using ProjectSMP.Features.EnterExit;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Display;
@@ -103,6 +104,11 @@ namespace ProjectSMP.Entities.Players.Administrator
 
                 player.SendClientMessage(Color.White, $"{{992712}}Kamu masih memiliki waktu jail tersisa sebanyak {player.JailInfo.Time} detik.");
                 player.SendClientMessage(Color.White, $"{{992712}}Alasan: {player.JailInfo.Reason}");
+
+                EnterExitService.ProcessEnterExit(player, () => {
+                    if (!player.IsDisposed)
+                        player.ToggleControllableSafe(true);
+                });
             }
         }
 

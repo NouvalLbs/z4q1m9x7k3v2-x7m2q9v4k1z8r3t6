@@ -1,4 +1,5 @@
 ﻿using ProjectSMP.Core;
+using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
@@ -67,6 +68,9 @@ namespace ProjectSMP
 
             // Initialize Condition Service
             ConditionService.Initialize();
+
+            // Initialize Jail Service
+            JailService.Initialize();
         }
 
         private void OnAnticheatPunishment(int playerId, string checkName, PunishAction action)
@@ -120,6 +124,7 @@ namespace ProjectSMP
             RealtimeClockService.Dispose();
             NeedsService.Dispose();
             ConditionService.Dispose();
+            JailService.Dispose();
             base.OnExited(e);
         }
     }

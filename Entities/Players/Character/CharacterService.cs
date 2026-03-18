@@ -1,9 +1,11 @@
 ﻿#nullable enable
 using ProjectSMP.Core;
+using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Entities.Players.Settings;
 using ProjectSMP.Extensions;
+using ProjectSMP.Features.Ban;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.EnterExit;
 using ProjectSMP.Features.NameTag;
@@ -12,6 +14,7 @@ using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.Streamer;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
+using SampSharp.GameMode.Display;
 using SampSharp.GameMode.SAMP;
 using System;
 using System.Collections.Generic;
@@ -179,6 +182,8 @@ namespace ProjectSMP.Entities.Players.Character
         public static void HandleSpawn(Player player)
         {
             if (!player.IsCharLoaded) return;
+            if (BanService.IsPlayerBanned(player))
+                return;
 
             player.ToggleControllableSafe(true);
             player.Score = player.Level;
@@ -205,6 +210,7 @@ namespace ProjectSMP.Entities.Players.Character
                 if (!player.IsDisposed)
                     NameTagService.Refresh(player);
                     SettingsService.ApplyDynamicObjectPriority(player);
+                    JailService.OnPlayerSpawn(player);
                     player.ToggleControllableSafe(true);
             });
         }
@@ -273,8 +279,8 @@ namespace ProjectSMP.Entities.Players.Character
             foreach (var c in list)
                 rows.Add(new[] { $"{{ffffff}}{c.Username}", c.Level.ToString(), c.Last_login });
             if (list.Count < MaxChars)
-                rows.Add(new[] { L(player, "CHAR", "LIST_CREATE_BTN"), "", "" });
-
+                rows.Add(new[] { L(player, "CHAR", "LIST_CREATE_BTN"), "\0", "\0" });
+            
             player.ShowTabList(
                 L(player, "CHAR", "LIST_TITLE"),
                 new[] { L(player, "CHAR", "LIST_COL_NAME"), L(player, "CHAR", "LIST_COL_LEVEL"), L(player, "CHAR", "LIST_COL_LOGIN") })
