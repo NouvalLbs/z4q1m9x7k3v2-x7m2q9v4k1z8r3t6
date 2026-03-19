@@ -1,4 +1,5 @@
 ﻿using ProjectSMP.Core;
+using ProjectSMP.Features.DynamicPickups;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 
@@ -11,6 +12,12 @@ namespace ProjectSMP.Features.Bank
             if (!player.IsCharLoaded)
             {
                 player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu belum login.");
+                return;
+            }
+
+            var pickupId = PickupService.GetPickupByCallback(player, "OnBankInteract");
+            if (pickupId == -1) {
+                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu tidak berada di area Bank!");
                 return;
             }
 

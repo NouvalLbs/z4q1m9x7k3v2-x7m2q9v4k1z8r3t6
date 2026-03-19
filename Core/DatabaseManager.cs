@@ -17,9 +17,9 @@ namespace ProjectSMP.Core {
             try {
                 await using var conn = new MySqlConnection(_connectionString);
                 await conn.OpenAsync();
-                Console.WriteLine("[Database] Koneksi ke MariaDB berhasil.");
+                Console.WriteLine("[+] MariaDB - Koneksi ke MariaDB berhasil.");
             } catch (Exception ex) {
-                Console.WriteLine($"[Database] Koneksi gagal: {ex.Message}");
+                Console.WriteLine($"[+] MariaDB - Koneksi gagal: {ex.Message}");
                 throw;
             }
         }
