@@ -1,5 +1,7 @@
 ﻿using ProjectSMP.Core;
 using ProjectSMP.Features.Chat;
+using ProjectSMP.Features.Jobs;
+using ProjectSMP.Features.LevelSystem;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
@@ -347,15 +349,18 @@ namespace ProjectSMP.Commands
             var charStatus = player.VerifiedChar == 1 ? "{91ff00}Verified{FFFFFF}" : "{FF0000}Unverified{FFFFFF}";
             var admin = Utilities.GetAdminString(player);
             var warn = Utilities.GetWarningString(player);
+            var jobs = JobService.GetAllJobsString(player);
+
+            var pointsRequired = LevelService.GetPointsRequired(player.Level);
 
             var stats = $@"{{FFFF00}}IC Information:
 {{FFFFFF}}Gender: [{{b8d2ec}}{gender}{{FFFFFF}}] | Birthdate: [{{b8d2ec}}{player.BirthDate}{{FFFFFF}}] | Money: [{{00f000}}{Utilities.GroupDigits(player.CharMoney)}{{FFFFFF}}] | Bank: [{{00f000}}0{{FFFFFF}}]
 {{FFFFFF}}Phone Status: [{phoneStatus}] | Phone Number: [{{ebeb00}}{player.Phone.Number}{{FFFFFF}}] | Phone Credit: [{{ebeb00}}{player.Phone.Credit}{{FFFFFF}}] | Mask ID: [{{b8d2ec}}{player.MaskId}{{FFFFFF}}]
-{{FFFFFF}}Jobs: [None{{FFFFFF}}] | Faction: [Civilian{{FFFFFF}}] | Family: [None]
+{{FFFFFF}}Jobs: [{jobs}{{FFFFFF}}] | Faction: [Civilian{{FFFFFF}}] | Family: [None]
 {{FFFFFF}}Working at: [None] [None (0){{FFFFFF}}] | Wealth: [None]
 
 {{FFFF00}}OOC Information:
-{{FFFFFF}}CitizenId: [{{77efc7}}{player.CitizenId}{{FFFFFF}}] | Level: [{{77efc7}}{player.Level}{{FFFFFF}}] | Paychecks: [{{b8d2ec}}{player.Paycheck}{{FFFFFF}}] | Time Played: [{{b8d2ec}}{player.Playtime.Hours} hour(s) {player.Playtime.Minutes} minute(s) {player.Playtime.Seconds} second(s){{FFFFFF}}]
+{{FFFFFF}}CitizenId: [{{77efc7}}{player.CitizenId}{{FFFFFF}}] | Level: [{{77efc7}}{player.Level} - ({player.LevelPoints}/{pointsRequired}){{FFFFFF}}] | Paychecks: [{{b8d2ec}}{player.Paycheck}{{FFFFFF}}] | Time Played: [{{b8d2ec}}{player.Playtime.Hours} hour(s) {player.Playtime.Minutes} minute(s) {player.Playtime.Seconds} second(s){{FFFFFF}}]
 {{FFFFFF}}Character Story: [{charStatus}] | Staff: [{admin}] | Warns: [{warn}] | Prestige Coin: [0]
 {{FFFFFF}}World: [{{ebeb00}}{player.VirtualWorld}{{FFFFFF}}] | Interior: [{{ebeb00}}{player.Interior}{{FFFFFF}}] | MaxHP: [{{ab0000}}{player.Vitals.MaxHealth:F1}{{FFFFFF}}] | Health: [{{ab0000}}{player.Vitals.Health:F1}{{FFFFFF}}] | Armour: [{{9f9f9f}}{player.Vitals.Armour:F1}{{FFFFFF}}]";
 
@@ -365,7 +370,7 @@ namespace ProjectSMP.Commands
 
         private static void ShowGeneralHelp(Player player)
         {
-            player.ShowTabList("General Player Commands", new[] { "Perintah", "Informasi" })
+            player.ShowPagedTabList("General Player Commands", new[] { "Perintah", "Informasi" })
                 .WithRows(
                     new[] { "/help", "Menampilkan daftar perintah bantuan" },
                     new[] { "/i(tems)", "Menampilkan daftar barang yang dimiliki character kamu" },
@@ -380,7 +385,7 @@ namespace ProjectSMP.Commands
 
         private static void ShowChatHelp(Player player)
         {
-            player.ShowTabList("Chatting Commands", new[] { "Perintah", "Informasi" })
+            player.ShowPagedTabList("Chatting Commands", new[] { "Perintah", "Informasi" })
                 .WithRows(
                     new[] { "/b [text]", "Chat lokal yang digunakan sebagai komunikasi antar player" },
                     new[] { "/o [text]", "Chat global antar semua player yang online di server" },

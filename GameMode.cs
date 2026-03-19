@@ -3,6 +3,7 @@ using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
+using ProjectSMP.Features.LevelSystem;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.Anticheat;
 using ProjectSMP.Plugins.Anticheat.Configuration;
@@ -71,6 +72,8 @@ namespace ProjectSMP
 
             // Initialize Jail Service
             JailService.Initialize();
+
+            PlaytimeService.Initialize();
         }
 
         private void OnAnticheatPunishment(int playerId, string checkName, PunishAction action)
@@ -135,6 +138,7 @@ namespace ProjectSMP
             NeedsService.Dispose();
             ConditionService.Dispose();
             JailService.Dispose();
+            PlaytimeService.Dispose();
             base.OnExited(e);
         }
     }

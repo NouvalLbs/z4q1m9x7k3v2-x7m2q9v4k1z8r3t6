@@ -9,12 +9,12 @@ using ProjectSMP.Entities.Players.Settings;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.EnterExit;
+using ProjectSMP.Features.LevelSystem;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.Streamer;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
-using SampSharp.GameMode.Display;
 using SampSharp.GameMode.SAMP;
 using System;
 using System.Collections.Generic;
@@ -211,6 +211,7 @@ namespace ProjectSMP.Entities.Players.Character
                     NameTagService.Refresh(player);
                     SettingsService.ApplyDynamicObjectPriority(player);
                     JailService.OnPlayerSpawn(player);
+                    PlaytimeService.RegisterPlayer(player);
                     player.ToggleControllableSafe(true);
             });
         }
@@ -271,6 +272,7 @@ namespace ProjectSMP.Entities.Players.Character
             _lists.Remove(player.Id);
             _creations.Remove(player.Id);
             player.IsCharLoaded = false;
+            PlaytimeService.UnregisterPlayer(player);
         }
 
         private static void ShowCharListDialog(Player player, List<CharListItem> list)

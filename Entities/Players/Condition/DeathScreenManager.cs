@@ -2,7 +2,6 @@
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Display;
 using SampSharp.GameMode.SAMP;
-using System;
 using System.Collections.Generic;
 
 namespace ProjectSMP.Entities.Players.Condition

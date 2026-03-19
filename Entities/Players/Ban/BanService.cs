@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace ProjectSMP.Features.Ban
+namespace ProjectSMP.Entities.Players.Ban
 {
     internal static class BanService
     {
