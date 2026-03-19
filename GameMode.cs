@@ -106,6 +106,16 @@ namespace ProjectSMP
             }
         }
 
+        protected override void OnPlayerCommandText(BasePlayer player, CommandTextEventArgs e)
+        {
+            base.OnPlayerCommandText(player, e);
+
+            if (!e.Success && player is Player p) {
+                p.SendClientMessage(Color.White, $"{{b9b9b9}}Command '{e.Text}' tidak ada, gunakan '/help'.");
+                e.Success = true;
+            }
+        }
+
         protected override void OnVehicleSpawned(BaseVehicle vehicle, EventArgs e)
         {
             base.OnVehicleSpawned(vehicle, e);

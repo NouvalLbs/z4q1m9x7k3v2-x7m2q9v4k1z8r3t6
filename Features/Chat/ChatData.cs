@@ -12,12 +12,12 @@ namespace ProjectSMP.Features.Chat
 
     internal static class ChatColors
     {
-        public const int LocalOOC = 0xD0D0D0FF;
-        public const int SpeechBubble = 0xEEEEEEFF;
-        public const int GlobalOOC = 0xE0FFFFAA;
-        public const int Purple = 0xD0AEEBFF;
-        public const int LightBrown = 0xA38587FF;
-        public const int Whisper = 0xFFFF00AA;
+        public const int LocalOOC = unchecked((int)0xD0D0D0FF);
+        public const int SpeechBubble = unchecked((int)0xEEEEEEFF);
+        public const int GlobalOOC = unchecked((int)0xE0FFFFAA);
+        public const int Purple = unchecked((int)0xD0AEEBFF);
+        public const int LightBrown = unchecked((int)0xA38587FF);
+        public const int Whisper = unchecked((int)0xFFFF00AA);
     }
 
     internal static class ChatDistance

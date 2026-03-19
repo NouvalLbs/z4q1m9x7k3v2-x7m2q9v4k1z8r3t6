@@ -86,7 +86,7 @@ namespace ProjectSMP.Features.Chat
                         {
                             var normDist = 1.0f - (dist / distance);
                             int colorScale = normDist > 0.75f ? 220 : (int)(96.0f + (128.0f * normDist));
-                            var colorValue = new Color(0xFF, 0xFF, 0xFF, (byte)colorScale);
+                            var colorValue = new Color((byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)colorScale);
                             p.SendClientMessage(colorValue, fullMsg);
                         }
                     }
@@ -101,7 +101,7 @@ namespace ProjectSMP.Features.Chat
                 msg = char.ToUpper(msg[0]) + msg.Substring(1);
 
             sender.SendClientMessage(new Color(ChatColors.Whisper), $"Whisper to {target.Username}({target.Id}): {msg}");
-            target.SendClientMessage(new Color(ChatColors.Whisper), $"Whisper from {sender.Username}({sender.Id}): {msg}");
+            target.SendClientMessage(new Color(ChatColors.Whisper), $"Whisper from {sender.Username}({target.Id}): {msg}");
             target.PlaySound(1085, Vector3.Zero);
         }
 
@@ -201,13 +201,13 @@ namespace ProjectSMP.Features.Chat
             if (isAdo)
             {
                 prefix.AdoTag?.Dispose();
-                prefix.AdoTag = new DynamicTextLabel(text, color, pos, 15f, player, streamdistance: 15f);
+                prefix.AdoTag = new DynamicTextLabel(text, color, pos, 15f, null, streamdistance: 15f);
                 prefix.AdoActive = true;
             }
             else
             {
                 prefix.AbTag?.Dispose();
-                prefix.AbTag = new DynamicTextLabel(text, color, pos, 15f, player, streamdistance: 15f);
+                prefix.AbTag = new DynamicTextLabel(text, color, pos, 15f, null, streamdistance: 15f);
                 prefix.AbActive = true;
             }
         }

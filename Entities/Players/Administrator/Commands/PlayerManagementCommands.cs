@@ -1,6 +1,6 @@
 ﻿using ProjectSMP.Core;
+using ProjectSMP.Entities.Players.NameTag;
 using ProjectSMP.Extensions;
-using ProjectSMP.Features.NameTag;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;

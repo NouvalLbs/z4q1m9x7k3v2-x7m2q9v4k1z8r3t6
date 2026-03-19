@@ -169,6 +169,7 @@ namespace ProjectSMP
         public override void OnText(TextEventArgs e)
         {
             ChatService.ProcessChatText(this, e.Text);
+            e.SendToPlayers = false;
             base.OnText(e);
         }
 

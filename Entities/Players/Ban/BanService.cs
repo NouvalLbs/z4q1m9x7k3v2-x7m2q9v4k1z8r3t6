@@ -1,6 +1,4 @@
 ﻿using ProjectSMP.Core;
-using SampSharp.GameMode.Definitions;
-using SampSharp.GameMode.SAMP;
 using System;
 using System.Threading.Tasks;
 

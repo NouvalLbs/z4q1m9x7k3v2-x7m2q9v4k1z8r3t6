@@ -91,7 +91,7 @@ namespace ProjectSMP.Commands
                 return;
             }
 
-            if (text.Equals("off", StringComparison.OrdinalIgnoreCase))
+            if (text.Trim().Equals("off", StringComparison.OrdinalIgnoreCase))
             {
                 if (!ChatService.Is3DLabelActive(player, false))
                 {
@@ -219,7 +219,7 @@ namespace ProjectSMP.Commands
         }
 
         [Command("ado")]
-        public static void Ado(Player player, string header, string description)
+        public static void Ado(Player player, string header, string description = "")
         {
             if (string.IsNullOrWhiteSpace(header))
             {
@@ -228,7 +228,7 @@ namespace ProjectSMP.Commands
                 return;
             }
 
-            if (header.Equals("off", StringComparison.OrdinalIgnoreCase))
+            if (header.Trim().Equals("off", StringComparison.OrdinalIgnoreCase))
             {
                 if (!ChatService.Is3DLabelActive(player, true))
                 {
@@ -241,7 +241,14 @@ namespace ProjectSMP.Commands
                 return;
             }
 
-            var desc = ChatService.MessageFix(description ?? "");
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu harus memasukkan deskripsi setelah header!");
+                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Contoh: /ado [Toko Buka] Silakan masuk dan belanja");
+                return;
+            }
+
+            var desc = ChatService.MessageFix(description);
             if (player.Settings.ToggleUppercase && desc.Length > 0)
                 desc = char.ToUpper(desc[0]) + desc.Substring(1);
 
@@ -342,15 +349,15 @@ namespace ProjectSMP.Commands
             var warn = Utilities.GetWarningString(player);
 
             var stats = $@"{{FFFF00}}IC Information:
-            {{FFFFFF}}Gender: [{{b8d2ec}}{gender}{{FFFFFF}}] | Birthdate: [{{b8d2ec}}{player.BirthDate}{{FFFFFF}}] | Money: [{{00f000}}{Utilities.GroupDigits(player.CharMoney)}{{FFFFFF}}] | Bank: [{{00f000}}0{{FFFFFF}}]
-            {{FFFFFF}}Phone Status: [{phoneStatus}] | Phone Number: [{{ebeb00}}{player.Phone.Number}{{FFFFFF}}] | Phone Credit: [{{ebeb00}}{player.Phone.Credit}{{FFFFFF}}] | Mask ID: [{{b8d2ec}}{player.MaskId}{{FFFFFF}}]
-            {{FFFFFF}}Jobs: [None{{FFFFFF}}] | Faction: [Civilian{{FFFFFF}}] | Family: [None]
-            {{FFFFFF}}Working at: [None] [None (0){{FFFFFF}}] | Wealth: [None]
+{{FFFFFF}}Gender: [{{b8d2ec}}{gender}{{FFFFFF}}] | Birthdate: [{{b8d2ec}}{player.BirthDate}{{FFFFFF}}] | Money: [{{00f000}}{Utilities.GroupDigits(player.CharMoney)}{{FFFFFF}}] | Bank: [{{00f000}}0{{FFFFFF}}]
+{{FFFFFF}}Phone Status: [{phoneStatus}] | Phone Number: [{{ebeb00}}{player.Phone.Number}{{FFFFFF}}] | Phone Credit: [{{ebeb00}}{player.Phone.Credit}{{FFFFFF}}] | Mask ID: [{{b8d2ec}}{player.MaskId}{{FFFFFF}}]
+{{FFFFFF}}Jobs: [None{{FFFFFF}}] | Faction: [Civilian{{FFFFFF}}] | Family: [None]
+{{FFFFFF}}Working at: [None] [None (0){{FFFFFF}}] | Wealth: [None]
 
-            {{FFFF00}}OOC Information:
-            {{FFFFFF}}CitizenId: [{{77efc7}}{player.CitizenId}{{FFFFFF}}] | Level: [{{77efc7}}{player.Level}{{FFFFFF}}] | Paychecks: [{{b8d2ec}}{player.Paycheck}{{FFFFFF}}] | Time Played: [{{b8d2ec}}{player.Playtime.Hours} hour(s) {player.Playtime.Minutes} minute(s) {player.Playtime.Seconds} second(s){{FFFFFF}}]
-            {{FFFFFF}}Character Story: [{charStatus}] | Staff: [{admin}] | Warns: [{warn}] | Prestige Coin: [0]
-            {{FFFFFF}}World: [{{ebeb00}}{player.VirtualWorld}{{FFFFFF}}] | Interior: [{{ebeb00}}{player.Interior}{{FFFFFF}}] | MaxHP: [{{ab0000}}{player.Vitals.MaxHealth:F1}{{FFFFFF}}] | Health: [{{ab0000}}{player.Vitals.Health:F1}{{FFFFFF}}] | Armour: [{{9f9f9f}}{player.Vitals.Armour:F1}{{FFFFFF}}]";
+{{FFFF00}}OOC Information:
+{{FFFFFF}}CitizenId: [{{77efc7}}{player.CitizenId}{{FFFFFF}}] | Level: [{{77efc7}}{player.Level}{{FFFFFF}}] | Paychecks: [{{b8d2ec}}{player.Paycheck}{{FFFFFF}}] | Time Played: [{{b8d2ec}}{player.Playtime.Hours} hour(s) {player.Playtime.Minutes} minute(s) {player.Playtime.Seconds} second(s){{FFFFFF}}]
+{{FFFFFF}}Character Story: [{charStatus}] | Staff: [{admin}] | Warns: [{warn}] | Prestige Coin: [0]
+{{FFFFFF}}World: [{{ebeb00}}{player.VirtualWorld}{{FFFFFF}}] | Interior: [{{ebeb00}}{player.Interior}{{FFFFFF}}] | MaxHP: [{{ab0000}}{player.Vitals.MaxHealth:F1}{{FFFFFF}}] | Health: [{{ab0000}}{player.Vitals.Health:F1}{{FFFFFF}}] | Armour: [{{9f9f9f}}{player.Vitals.Armour:F1}{{FFFFFF}}]";
 
             var title = $"{{6fe0ba}}{player.Username} Statistic {{c8c8c8}}(UCP: {player.Ucp})";
             player.ShowMessage(title, stats).WithButtons("Settings", "Close").Show();
