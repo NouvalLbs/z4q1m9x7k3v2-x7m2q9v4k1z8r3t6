@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace ProjectSMP.Features.DynamicPickups
+namespace ProjectSMP.Features.Dynamic.DynamicPickups
 {
     public static class PickupService
     {
@@ -15,16 +15,19 @@ namespace ProjectSMP.Features.DynamicPickups
 
         private static readonly Dictionary<int, DynamicPickupData> Pickups = new();
 
-        public static void Initialize() {
+        public static void Initialize()
+        {
             PickupGridManager.Initialize();
         }
 
-        public static async Task LoadAsync()
+        public static async Task<List<DynamicPickupData>> LoadDataAsync()
         {
             var rows = await DatabaseManager.QueryAsync<PickupDatabaseRow>(
                 $"SELECT ID, title AS Title, name AS Name, model AS Model, type AS Type, " +
                 $"vw AS Vw, interior AS Interior, posx AS Posx, posy AS Posy, posz AS Posz, " +
                 $"callback AS Callback FROM `{Table}`");
+
+            var dataList = new List<DynamicPickupData>();
 
             foreach (var row in rows)
             {
@@ -43,6 +46,16 @@ namespace ProjectSMP.Features.DynamicPickups
                     Callback = row.Callback
                 };
 
+                dataList.Add(data);
+            }
+
+            return dataList;
+        }
+
+        public static void CreatePickupObjects(List<DynamicPickupData> dataList)
+        {
+            foreach (var data in dataList)
+            {
                 Pickups[data.Id] = data;
                 UpdatePickup(data.Id);
             }

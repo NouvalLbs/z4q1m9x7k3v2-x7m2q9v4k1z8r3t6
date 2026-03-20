@@ -1,5 +1,5 @@
 ﻿using ProjectSMP.Core;
-using ProjectSMP.Features.DynamicPickups;
+using ProjectSMP.Features.Dynamic.DynamicPickups;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 

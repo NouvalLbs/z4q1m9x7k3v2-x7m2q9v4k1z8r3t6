@@ -8,11 +8,13 @@ using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank;
 using ProjectSMP.Features.Chat;
 using ProjectSMP.Features.CinematicCamera;
+using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.EnterExit;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
+using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Events;
 using SampSharp.GameMode.Pools;
 using SampSharp.GameMode.World;
@@ -181,6 +183,37 @@ namespace ProjectSMP
         public override void OnExitVehicle(PlayerVehicleEventArgs e)
         {
             base.OnExitVehicle(e);
+        }
+
+        public override void OnKeyStateChanged(KeyStateChangedEventArgs e)
+        {
+            base.OnKeyStateChanged(e);
+
+            if (e.NewKeys.HasFlag(Keys.SecondaryAttack))
+            {
+                var doorId = DoorService.CheckPlayerInDoor(this, out bool isOutside);
+                if (doorId != -1)
+                {
+                    if (!DoorService.GetDoor(doorId).IsGarage)
+                    {
+                        DoorService.HandleDoorKeyPress(this);
+                        return;
+                    }
+                }
+            }
+
+            if (e.NewKeys.HasFlag(Keys.Walk))
+            {
+                var doorId = DoorService.CheckPlayerInDoor(this, out bool isOutside);
+                if (doorId != -1)
+                {
+                    if (DoorService.GetDoor(doorId).IsGarage)
+                    {
+                        DoorService.HandleDoorKeyPress(this);
+                        return;
+                    }
+                }
+            }
         }
     }
 }

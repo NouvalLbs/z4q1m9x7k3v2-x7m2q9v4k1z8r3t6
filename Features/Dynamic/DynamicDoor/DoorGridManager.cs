@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ProjectSMP.Features.DynamicDoor
+namespace ProjectSMP.Features.Dynamic.DynamicDoor
 {
     internal static class DoorGridManager
     {

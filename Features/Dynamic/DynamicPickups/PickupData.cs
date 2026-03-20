@@ -1,7 +1,7 @@
 ﻿using SampSharp.GameMode;
 using SampSharp.Streamer.World;
 
-namespace ProjectSMP.Features.DynamicPickups
+namespace ProjectSMP.Features.Dynamic.DynamicPickups
 {
     public class DynamicPickupData
     {

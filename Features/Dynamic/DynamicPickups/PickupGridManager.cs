@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ProjectSMP.Features.DynamicPickups
+namespace ProjectSMP.Features.Dynamic.DynamicPickups
 {
     internal static class PickupGridManager
     {

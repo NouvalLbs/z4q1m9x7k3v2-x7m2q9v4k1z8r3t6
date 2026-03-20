@@ -3,8 +3,8 @@ using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
-using ProjectSMP.Features.DynamicDoor;
-using ProjectSMP.Features.DynamicPickups;
+using ProjectSMP.Features.Dynamic.DynamicDoor;
+using ProjectSMP.Features.Dynamic.DynamicPickups;
 using ProjectSMP.Features.LevelSystem;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.Anticheat;
@@ -75,13 +75,18 @@ namespace ProjectSMP
             // Initialize Jail Service
             JailService.Initialize();
 
+            // Initialize Playing Time Service
             PlaytimeService.Initialize();
 
+            // Initialize Dynamic Pickups
             PickupService.Initialize();
-            Task.Run(PickupService.LoadAsync).Wait();
+            var pickupDataList = Task.Run(PickupService.LoadDataAsync).GetAwaiter().GetResult();
+            PickupService.CreatePickupObjects(pickupDataList);
 
+            // Initialize Dynamic Doors
             DoorService.Initialize();
-            Task.Run(DoorService.LoadAsync).Wait();
+            var doorDataList = Task.Run(DoorService.LoadDataAsync).GetAwaiter().GetResult();
+            DoorService.CreateDoorObjects(doorDataList);
         }
 
         private void OnAnticheatPunishment(int playerId, string checkName, PunishAction action)

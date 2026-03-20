@@ -1,13 +1,15 @@
 ﻿using ProjectSMP.Core;
 using ProjectSMP.Extensions;
+using ProjectSMP.Features.EnterExit;
 using SampSharp.GameMode;
+using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.Streamer.World;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace ProjectSMP.Features.DynamicDoor
+namespace ProjectSMP.Features.Dynamic.DynamicDoor
 {
     public static class DoorService
     {
@@ -22,7 +24,7 @@ namespace ProjectSMP.Features.DynamicDoor
             DoorGridManager.Initialize();
         }
 
-        public static async Task LoadAsync()
+        public static async Task<List<DynamicDoorData>> LoadDataAsync()
         {
             var rows = await DatabaseManager.QueryAsync<DoorDatabaseRow>(
                 $"SELECT ID, name AS Name, password AS Password, icon AS Icon, locked AS Locked, " +
@@ -31,6 +33,8 @@ namespace ProjectSMP.Features.DynamicDoor
                 $"extposx AS Extposx, extposy AS Extposy, extposz AS Extposz, extposa AS Extposa, " +
                 $"intvw AS Intvw, intint AS Intint, intposx AS Intposx, intposy AS Intposy, " +
                 $"intposz AS Intposz, intposa AS Intposa FROM `{Table}`");
+
+            var dataList = new List<DynamicDoorData>();
 
             foreach (var row in rows)
             {
@@ -61,6 +65,16 @@ namespace ProjectSMP.Features.DynamicDoor
                     IntAngle = row.Intposa
                 };
 
+                dataList.Add(data);
+            }
+
+            return dataList;
+        }
+
+        public static void CreateDoorObjects(List<DynamicDoorData> dataList)
+        {
+            foreach (var data in dataList)
+            {
                 Doors[data.Id] = data;
                 UpdateDoor(data.Id);
             }
@@ -267,21 +281,25 @@ namespace ProjectSMP.Features.DynamicDoor
                     }
                 }
 
-                player.Position = new Vector3(data.IntPosX, data.IntPosY, data.IntPosZ);
+                player.SetPositionSafe(new Vector3(data.IntPosX, data.IntPosY, data.IntPosZ));
                 player.Angle = data.IntAngle;
-                player.Interior = data.IntInterior;
-                player.VirtualWorld = data.IntVirtualWorld;
+                player.SetInteriorSafe(data.IntInterior);
+                player.SetVirtualWorldSafe(data.IntVirtualWorld);
                 player.SetWeather(0);
             }
             else
             {
-                player.Position = new Vector3(data.ExtPosX, data.ExtPosY, data.ExtPosZ);
+                player.SetPositionSafe(new Vector3(data.ExtPosX, data.ExtPosY, data.ExtPosZ));
                 player.Angle = data.ExtAngle;
-                player.Interior = data.ExtInterior;
-                player.VirtualWorld = data.ExtVirtualWorld;
+                player.SetInteriorSafe(data.ExtInterior);
+                player.SetVirtualWorldSafe(data.ExtVirtualWorld);
             }
 
             player.PutCameraBehindPlayer();
+            EnterExitService.ProcessEnterExit(player, () => {
+                if (!player.IsDisposed)
+                    player.ToggleControllableSafe(true);
+            });
         }
 
         public static DynamicDoorData GetDoor(int doorId)
@@ -318,6 +336,75 @@ namespace ProjectSMP.Features.DynamicDoor
                     return i;
             }
             return -1;
+        }
+
+        public static void HandleDoorKeyPress(Player player)
+        {
+            if (!player.IsCharLoaded)
+                return;
+
+            var doorId = CheckPlayerInDoor(player, out bool isOutside);
+            if (doorId == -1)
+                return;
+
+            if (!Doors.TryGetValue(doorId, out var data))
+                return;
+
+            if (!isOutside)
+            {
+                ToggleDoor(player, doorId, isOutside);
+                return;
+            }
+
+            if (!CanEnterDoor(player, doorId))
+                return;
+
+            if (!string.IsNullOrEmpty(data.Password))
+            {
+                ShowPasswordDialog(player, doorId);
+                return;
+            }
+
+            ToggleDoor(player, doorId, isOutside);
+        }
+
+        private static void ShowPasswordDialog(Player player, int doorId)
+        {
+            player.ShowInput(
+                "Door Password",
+                "{FFFFFF}Pintu ini memerlukan password untuk masuk.\n{FFFF00}Masukkan password pintu:")
+                .WithButtons("Enter", "Cancel")
+                .Show(e =>
+                {
+                    if (e.DialogButton != DialogButton.Left)
+                        return;
+
+                    var password = e.InputText;
+                    if (string.IsNullOrWhiteSpace(password))
+                    {
+                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Password tidak boleh kosong!");
+                        ShowPasswordDialog(player, doorId);
+                        return;
+                    }
+
+                    var currentDoorId = CheckPlayerInDoor(player, out bool isOutside);
+                    if (currentDoorId != doorId || !isOutside)
+                    {
+                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu sudah tidak berada di area pintu!");
+                        return;
+                    }
+
+                    if (!Doors.TryGetValue(doorId, out var data))
+                        return;
+
+                    if (!data.Password.Equals(password, StringComparison.Ordinal))
+                    {
+                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Password pintu tidak valid.");
+                        return;
+                    }
+
+                    ToggleDoor(player, doorId, isOutside);
+                });
         }
     }
 }

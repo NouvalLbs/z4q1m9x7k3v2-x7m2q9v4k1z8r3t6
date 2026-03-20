@@ -1,10 +1,12 @@
 ﻿using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Administrator.Commands;
+using ProjectSMP.Extensions;
+using ProjectSMP.Features.Dynamic.DynamicDoor;
 using SampSharp.GameMode;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 
-namespace ProjectSMP.Features.DynamicDoor.Commands
+namespace ProjectSMP.Features.Dynamic.DynamicDoor.Commands
 {
     public class DoorCommands : AdminCommandBase
     {
@@ -37,10 +39,10 @@ namespace ProjectSMP.Features.DynamicDoor.Commands
                 return;
             }
 
-            player.Position = new Vector3(door.ExtPosX, door.ExtPosY, door.ExtPosZ);
+            player.SetPositionSafe(new Vector3(door.ExtPosX, door.ExtPosY, door.ExtPosZ));
             player.Angle = door.ExtAngle;
-            player.Interior = door.ExtInterior;
-            player.VirtualWorld = door.ExtVirtualWorld;
+            player.SetInteriorSafe(door.ExtInterior);
+            player.SetVirtualWorldSafe(door.ExtVirtualWorld);
 
             player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu berhasil di teleport ke DoorId: {doorId}.");
         }
@@ -195,25 +197,6 @@ namespace ProjectSMP.Features.DynamicDoor.Commands
                     player.SendClientMessage(Color.White, "{FF6347}>> Prefix{888888}: location, interior, password, name, locked, admin, vip, faction, family, custom, virtual, garage, delete");
                     break;
             }
-        }
-
-        [Command("enter")]
-        public static void EnterDoor(Player player, string password = "")
-        {
-            if (!player.IsCharLoaded)
-            {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu belum login.");
-                return;
-            }
-
-            var doorId = DoorService.CheckPlayerInDoor(player, out bool isOutside);
-            if (doorId == -1)
-            {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu tidak berada di area pintu manapun!");
-                return;
-            }
-
-            DoorService.ToggleDoor(player, doorId, isOutside, password);
         }
     }
 }

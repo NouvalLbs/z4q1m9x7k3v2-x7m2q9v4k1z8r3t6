@@ -1,9 +1,11 @@
 ﻿using ProjectSMP.Entities.Players.Administrator.Commands;
+using ProjectSMP.Extensions;
+using ProjectSMP.Features.Dynamic.DynamicPickups;
 using SampSharp.GameMode;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 
-namespace ProjectSMP.Features.DynamicPickups.Commands
+namespace ProjectSMP.Features.Dynamic.DynamicPickups.Commands
 {
     public class PickupCommands : AdminCommandBase
     {
@@ -42,9 +44,9 @@ namespace ProjectSMP.Features.DynamicPickups.Commands
                 return;
             }
 
-            player.Position = new Vector3(pickup.PosX, pickup.PosY, pickup.PosZ);
-            player.Interior = pickup.Interior;
-            player.VirtualWorld = pickup.VirtualWorld;
+            player.SetPositionSafe(new Vector3(pickup.PosX, pickup.PosY, pickup.PosZ));
+            player.SetInteriorSafe(pickup.Interior);
+            player.SetVirtualWorldSafe(pickup.VirtualWorld);
 
             player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu berhasil di teleport ke PickupId: {pickupId}.");
         }

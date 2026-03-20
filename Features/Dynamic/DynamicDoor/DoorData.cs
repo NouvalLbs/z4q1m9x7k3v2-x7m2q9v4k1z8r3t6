@@ -1,7 +1,7 @@
 ﻿using SampSharp.GameMode;
 using SampSharp.Streamer.World;
 
-namespace ProjectSMP.Features.DynamicDoor
+namespace ProjectSMP.Features.Dynamic.DynamicDoor
 {
     public class DynamicDoorData
     {
