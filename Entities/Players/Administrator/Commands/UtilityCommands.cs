@@ -1,5 +1,5 @@
 ﻿using ProjectSMP.Extensions;
-using SampSharp.GameMode;
+using ProjectSMP.Core;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
@@ -45,13 +45,13 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (devMode == 1)
             {
-                player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} {pos.X}, {pos.Y}, {pos.Z}, {player.Angle} disalin ke console dengan nama {name}");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} {pos.X}, {pos.Y}, {pos.Z}, {player.Angle} disalin ke console dengan nama {name}");
                 System.Console.WriteLine(coords);
                 return;
             }
 
             System.IO.File.AppendAllText("coords.txt", coords + "\n");
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} {pos.X}, {pos.Y}, {pos.Z}, {player.Angle} disimpan dengan nama {name}");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} {pos.X}, {pos.Y}, {pos.Z}, {player.Angle} disimpan dengan nama {name}");
         }
 
         [Command("tp")]
@@ -73,7 +73,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             foreach (var p in BasePlayer.All)
                 p.SetWeather(weatherId);
 
-            BasePlayer.SendClientMessageToAll(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Weather telah dirubah oleh {{ff0000}}{player.Ucp}{{FFFFFF}}");
+            BasePlayer.SendClientMessageToAll(Color.White, $"{Msg.AdmCmd} Weather telah dirubah oleh {{ff0000}}{player.Ucp}{{FFFFFF}}");
         }
 
         [Command("jetpack")]
@@ -84,12 +84,12 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             if (player.SpecialAction == SpecialAction.Usejetpack)
             {
                 player.SetSpecialActionSafe(SpecialAction.None);
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Kamu telah melepas jetpack.");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah melepas jetpack.");
             }
             else
             {
                 player.SetSpecialActionSafe(SpecialAction.Usejetpack);
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Kamu telah memakai jetpack.");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah memakai jetpack.");
             }
         }
 
@@ -119,8 +119,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             if (!ValidateTarget(player, target)) return;
 
             target.SetInteriorSafe(interiorId);
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah mengubah interior {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} menjadi {{00FFFF}}{interiorId}{{FFFFFF}}!");
-            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengubah interior kamu menjadi {{00FFFF}}{interiorId}{{FFFFFF}}");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah mengubah interior {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} menjadi {{00FFFF}}{interiorId}{{FFFFFF}}!");
+            target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengubah interior kamu menjadi {{00FFFF}}{interiorId}{{FFFFFF}}");
         }
 
         [Command("setvw")]
@@ -132,8 +132,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             if (!ValidateTarget(player, target)) return;
 
             target.SetVirtualWorldSafe(vwId);
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah mengubah virtual world {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} menjadi {{00FFFF}}{vwId}{{FFFFFF}}!");
-            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengubah virtual world kamu menjadi {{00FFFF}}{vwId}{{FFFFFF}}");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah mengubah virtual world {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} menjadi {{00FFFF}}{vwId}{{FFFFFF}}!");
+            target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengubah virtual world kamu menjadi {{00FFFF}}{vwId}{{FFFFFF}}");
         }
 
         [Command("getip")]
@@ -145,7 +145,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             if (!ValidateTarget(player, target)) return;
 
             var ip = target.IP;
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Informasi IP {{00FFFF}}{target.Username} (ID:{target.Id} | UCP: {target.Ucp}){{FFFFFF}}");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Informasi IP {{00FFFF}}{target.Username} (ID:{target.Id} | UCP: {target.Ucp}){{FFFFFF}}");
             player.SendClientMessage(Color.White, $"{{FF6347}}>{{FFFFFF}} IP Address: {{00FFFF}}{ip}");
         }
     }

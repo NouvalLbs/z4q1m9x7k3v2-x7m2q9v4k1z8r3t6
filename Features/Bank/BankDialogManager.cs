@@ -11,13 +11,13 @@ namespace ProjectSMP.Features.Bank
         {
             if (!player.IsCharLoaded)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu belum login.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Kamu belum login.");
                 return;
             }
 
             var pickupId = PickupService.GetPickupByCallback(player, "OnBankInteract");
             if (pickupId == -1) {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu tidak berada di area Bank!");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Kamu tidak berada di area Bank!");
                 return;
             }
 
@@ -47,11 +47,11 @@ namespace ProjectSMP.Features.Bank
             {
                 var account = player.BankAccounts[0];
                 player.SendClientMessage(Color.White,
-                    $"{{C6E2FF}}<BANK>{{FFFFFF}} Akun bank berhasil dibuat! ({account.AccountName} - No.Rek: {account.AccountNumber})");
+                    $"{Msg.Bank} Akun bank berhasil dibuat! ({account.AccountName} - No.Rek: {account.AccountNumber})");
             }
             else
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Gagal membuat akun bank!");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Gagal membuat akun bank!");
             }
         }
 
@@ -81,7 +81,7 @@ namespace ProjectSMP.Features.Bank
                         case 5: ShowWithdrawDialog(player, accountIndex); break;
                         case 6: ShowTransferAccountDialog(player, accountIndex); break;
                         case 7:
-                            player.SendClientMessage(Color.White, "{C6E2FF}<BANK>{FFFFFF} Fitur Paycheck akan segera tersedia.");
+                            player.SendClientMessage(Color.White, $"{Msg.Bank} Fitur Paycheck akan segera tersedia.");
                             break;
                     }
                 });
@@ -105,7 +105,7 @@ namespace ProjectSMP.Features.Bank
 
                     if (!int.TryParse(e.InputText, out var amount) || amount <= 0)
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Jumlah deposit harus lebih dari $0!");
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Jumlah deposit harus lebih dari $0!");
                         ShowDepositDialog(player, accountIndex);
                         return;
                     }
@@ -113,11 +113,11 @@ namespace ProjectSMP.Features.Bank
                     if (BankService.Deposit(player, account, amount))
                     {
                         player.SendClientMessage(Color.White,
-                            $"{{C6E2FF}}<BANK>{{FFFFFF}} Berhasil deposit {Utilities.GroupDigits(amount)} ke akun {account.AccountName}. Saldo: {Utilities.GroupDigits(account.Balance)}");
+                            $"{Msg.Bank} Berhasil deposit {Utilities.GroupDigits(amount)} ke akun {account.AccountName}. Saldo: {Utilities.GroupDigits(account.Balance)}");
                     }
                     else
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Deposit gagal! Uang kamu tidak cukup.");
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Deposit gagal! Uang kamu tidak cukup.");
                     }
                 });
         }
@@ -140,7 +140,7 @@ namespace ProjectSMP.Features.Bank
 
                     if (!int.TryParse(e.InputText, out var amount) || amount <= 0)
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Jumlah penarikan harus lebih dari $0!");
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Jumlah penarikan harus lebih dari $0!");
                         ShowWithdrawDialog(player, accountIndex);
                         return;
                     }
@@ -148,11 +148,11 @@ namespace ProjectSMP.Features.Bank
                     if (BankService.Withdraw(player, account, amount))
                     {
                         player.SendClientMessage(Color.White,
-                            $"{{C6E2FF}}<BANK>{{FFFFFF}} Berhasil menarik {Utilities.GroupDigits(amount)} dari akun {account.AccountName}. Saldo: {Utilities.GroupDigits(account.Balance)}");
+                            $"{Msg.Bank} Berhasil menarik {Utilities.GroupDigits(amount)} dari akun {account.AccountName}. Saldo: {Utilities.GroupDigits(account.Balance)}");
                     }
                     else
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Penarikan gagal! Saldo tidak cukup.");
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Penarikan gagal! Saldo tidak cukup.");
                     }
                 });
         }
@@ -175,7 +175,7 @@ namespace ProjectSMP.Features.Bank
 
                     if (string.IsNullOrWhiteSpace(e.InputText) || e.InputText.Length < 5)
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Nomor rekening tidak valid!");
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Nomor rekening tidak valid!");
                         ShowTransferAccountDialog(player, accountIndex);
                         return;
                     }
@@ -202,14 +202,14 @@ namespace ProjectSMP.Features.Bank
 
                     if (!int.TryParse(e.InputText, out var amount) || amount <= 0)
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Jumlah transfer harus lebih dari $0!");
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Jumlah transfer harus lebih dari $0!");
                         ShowTransferAmountDialog(player, accountIndex, targetAccount);
                         return;
                     }
 
                     if (account.Balance < amount)
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Saldo Anda tidak cukup untuk transfer ini!");
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Saldo Anda tidak cukup untuk transfer ini!");
                         ShowBankMenu(player, accountIndex);
                         return;
                     }

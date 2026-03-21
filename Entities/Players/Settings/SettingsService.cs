@@ -45,7 +45,7 @@ namespace ProjectSMP.Entities.Players.Settings
                     switch (e.ListItem)
                     {
                         case 0:
-                            player.SendClientMessage(Color.White, "{C6E2FF}<Settings> {FFFFFF}Discord tidak dapat dirubah.");
+                            player.SendClientMessage(Color.White, $"{Msg.Settings} Discord tidak dapat dirubah.");
                             ShowMainSettings(player);
                             break;
                         case 1:
@@ -77,7 +77,7 @@ namespace ProjectSMP.Entities.Players.Settings
                 .Show(e =>
                 {
                     if (e.DialogButton != DialogButton.Left) return;
-                    player.SendClientMessage(Color.White, "{C6E2FF}<Settings> {FFFFFF}Password change not implemented yet.");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Password change not implemented yet.");
                 });
         }
 
@@ -104,7 +104,7 @@ namespace ProjectSMP.Entities.Players.Settings
                             player.Settings.ShowTime = !player.Settings.ShowTime;
                             ClockTextDrawManager.SetVisible(player.Id, player.Settings.ShowTime);
                             var status = player.Settings.ShowTime ? "{b2ff47}Enabled" : "{FF6347}Disabled";
-                            player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Time & Date menjadi {status}");
+                            player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Time & Date menjadi {status}");
                             break;
                     }
                 });
@@ -133,32 +133,32 @@ namespace ProjectSMP.Entities.Players.Settings
                     switch (e.ListItem)
                     {
                         case 0:
-                            player.SendClientMessage(Color.White, "{C6E2FF}<Settings> {FFFFFF}Pilihan Mode HBE akan ada kedepannya, untuk sementara waktu opsi HBE hanya {bdff66}Modern{ffffff}.");
+                            player.SendClientMessage(Color.White, $"{Msg.Settings} Pilihan Mode HBE akan ada kedepannya, untuk sementara waktu opsi HBE hanya {{bdff66}}Modern{{ffffff}}.");
                             break;
                         case 1:
                             player.Settings.ShowHealth = !player.Settings.ShowHealth;
                             NeedsService.RefreshHud(player);
-                            player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Health menjadi {GetToggleLabel(player.Settings.ShowHealth)}");
+                            player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Health menjadi {GetToggleLabel(player.Settings.ShowHealth)}");
                             break;
                         case 2:
                             player.Settings.ShowArmour = !player.Settings.ShowArmour;
                             NeedsService.RefreshHud(player);
-                            player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Armour menjadi {GetToggleLabel(player.Settings.ShowArmour)}");
+                            player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Armour menjadi {GetToggleLabel(player.Settings.ShowArmour)}");
                             break;
                         case 3:
                             player.Settings.ShowHunger = !player.Settings.ShowHunger;
                             NeedsService.RefreshHud(player);
-                            player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Hunger menjadi {GetToggleLabel(player.Settings.ShowHunger)}");
+                            player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Hunger menjadi {GetToggleLabel(player.Settings.ShowHunger)}");
                             break;
                         case 4:
                             player.Settings.ShowThirst = !player.Settings.ShowThirst;
                             NeedsService.RefreshHud(player);
-                            player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Thirst menjadi {GetToggleLabel(player.Settings.ShowThirst)}");
+                            player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Thirst menjadi {GetToggleLabel(player.Settings.ShowThirst)}");
                             break;
                         case 5:
                             player.Settings.ShowStress = !player.Settings.ShowStress;
                             NeedsService.RefreshHud(player);
-                            player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Stress menjadi {GetToggleLabel(player.Settings.ShowStress)}");
+                            player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Stress menjadi {GetToggleLabel(player.Settings.ShowStress)}");
                             break;
                     }
                 });
@@ -207,71 +207,71 @@ namespace ProjectSMP.Entities.Players.Settings
             {
                 case 0:
                     s.ToggleJoinLog = !s.ToggleJoinLog;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Join Log menjadi {GetToggleLabel(s.ToggleJoinLog)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Join Log menjadi {GetToggleLabel(s.ToggleJoinLog)}");
                     break;
                 case 1:
                     s.ToggleNews = !s.ToggleNews;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle News menjadi {GetToggleLabel(s.ToggleNews)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle News menjadi {GetToggleLabel(s.ToggleNews)}");
                     break;
                 case 2:
                     s.ToggleQuiz = !s.ToggleQuiz;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Quiz menjadi {GetToggleLabel(s.ToggleQuiz)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Quiz menjadi {GetToggleLabel(s.ToggleQuiz)}");
                     break;
                 case 3:
                     s.ToggleAdvertise = !s.ToggleAdvertise;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Advertise menjadi {GetToggleLabel(s.ToggleAdvertise)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Advertise menjadi {GetToggleLabel(s.ToggleAdvertise)}");
                     break;
                 case 4:
                     s.ToggleUppercase = !s.ToggleUppercase;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Uppercase menjadi {GetToggleLabel(s.ToggleUppercase)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Uppercase menjadi {GetToggleLabel(s.ToggleUppercase)}");
                     break;
                 case 5:
                     s.ToggleStreamerMode = !s.ToggleStreamerMode;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Streamermode menjadi {GetToggleLabel(s.ToggleStreamerMode)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Streamermode menjadi {GetToggleLabel(s.ToggleStreamerMode)}");
                     break;
                 case 6:
                     s.ToggleChatOOC = !s.ToggleChatOOC;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Chat OOC menjadi {GetToggleLabel(s.ToggleChatOOC)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Chat OOC menjadi {GetToggleLabel(s.ToggleChatOOC)}");
                     break;
                 case 7:
                     s.ToggleFamilyChat = !s.ToggleFamilyChat;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Family Chat menjadi {GetToggleLabel(s.ToggleFamilyChat)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Family Chat menjadi {GetToggleLabel(s.ToggleFamilyChat)}");
                     break;
                 case 8:
                     s.ToggleWTChat = !s.ToggleWTChat;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Walkie Talkie menjadi {GetToggleLabel(s.ToggleWTChat)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Walkie Talkie menjadi {GetToggleLabel(s.ToggleWTChat)}");
                     break;
                 case 9:
                     s.ToggleFacRadioChat = !s.ToggleFacRadioChat;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Faction Radio menjadi {GetToggleLabel(s.ToggleFacRadioChat)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Faction Radio menjadi {GetToggleLabel(s.ToggleFacRadioChat)}");
                     break;
                 case 10:
                     s.TogglePrivateMessage = !s.TogglePrivateMessage;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Private Message menjadi {GetToggleLabel(s.TogglePrivateMessage)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Private Message menjadi {GetToggleLabel(s.TogglePrivateMessage)}");
                     break;
                 case 11:
                     s.ToggleAdminCmdLog = !s.ToggleAdminCmdLog;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Admin Command Log menjadi {GetToggleLabel(s.ToggleAdminCmdLog)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Admin Command Log menjadi {GetToggleLabel(s.ToggleAdminCmdLog)}");
                     break;
                 case 12:
                     s.ToggleAutoLowChat = !s.ToggleAutoLowChat;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Auto Low Chat menjadi {GetToggleLabel(s.ToggleAutoLowChat)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Auto Low Chat menjadi {GetToggleLabel(s.ToggleAutoLowChat)}");
                     break;
                 case 13:
                     s.ToggleAutoHandbrake = !s.ToggleAutoHandbrake;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Auto Handbrake menjadi {GetToggleLabel(s.ToggleAutoHandbrake)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Auto Handbrake menjadi {GetToggleLabel(s.ToggleAutoHandbrake)}");
                     break;
                 case 14:
                     s.ToggleAutoChatAnimation = !s.ToggleAutoChatAnimation;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Auto Chat Animation menjadi {GetToggleLabel(s.ToggleAutoChatAnimation)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Auto Chat Animation menjadi {GetToggleLabel(s.ToggleAutoChatAnimation)}");
                     break;
                 case 15:
                     s.ToggleSeatbeltHelmet = !s.ToggleSeatbeltHelmet;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Auto Seatbelt/Helmet menjadi {GetToggleLabel(s.ToggleSeatbeltHelmet)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Auto Seatbelt/Helmet menjadi {GetToggleLabel(s.ToggleSeatbeltHelmet)}");
                     break;
                 case 16:
                     s.ToggleAutoMaskLoggedIn = !s.ToggleAutoMaskLoggedIn;
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Auto Mask every Logged In menjadi {GetToggleLabel(s.ToggleAutoMaskLoggedIn)}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Toggle Auto Mask every Logged In menjadi {GetToggleLabel(s.ToggleAutoMaskLoggedIn)}");
                     break;
             }
         }
@@ -293,7 +293,7 @@ namespace ProjectSMP.Entities.Players.Settings
                     if (e.DialogButton != DialogButton.Left) return;
                     var delays = new[] { 0, 2, 4, 6, 9, 12, 15 };
                     player.Settings.EnterExit = delays[e.ListItem];
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu {{bdff66}}berhasil{{FFFFFF}} merubah Delay Enter/Exit ke {EnterExitLabels[player.Settings.EnterExit]}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah Delay Enter/Exit ke {EnterExitLabels[player.Settings.EnterExit]}");
                 });
         }
 
@@ -314,7 +314,7 @@ namespace ProjectSMP.Entities.Players.Settings
                     if (e.DialogButton != DialogButton.Left) return;
                     player.Settings.DynamicObjectsPriority = e.ListItem;
                     ApplyDynamicObjectPriority(player);
-                    player.SendClientMessage(Color.White, $"{{C6E2FF}}<Settings> {{FFFFFF}}Kamu merubah Dynamic Object Priority ke {DynamicObjLabels[player.Settings.DynamicObjectsPriority]}");
+                    player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu merubah Dynamic Object Priority ke {DynamicObjLabels[player.Settings.DynamicObjectsPriority]}");
                 });
         }
 

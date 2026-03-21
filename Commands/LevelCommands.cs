@@ -16,7 +16,7 @@ namespace ProjectSMP.Commands
         {
             if (!player.IsCharLoaded)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu belum login.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Kamu belum login.");
                 return;
             }
 

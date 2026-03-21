@@ -1,4 +1,5 @@
-﻿using SampSharp.GameMode.SAMP;
+﻿using ProjectSMP.Core;
+using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using System;
 using System.Linq;
@@ -124,7 +125,7 @@ namespace ProjectSMP
         {
             if (string.IsNullOrWhiteSpace(input))
             {
-                sender.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Input tidak valid!");
+                sender.SendClientMessage(Color.White, $"{Msg.Error} Input tidak valid!");
                 return null;
             }
 
@@ -132,14 +133,14 @@ namespace ProjectSMP
             {
                 if (playerId < 0 || playerId >= 1000)
                 {
-                    sender.SendClientMessage(Color.White, $"{{C6E2FF}}<Error>{{FFFFFF}} Player ID {playerId} tidak valid (0-999)!");
+                    sender.SendClientMessage(Color.White, $"{Msg.Error} Player ID {playerId} tidak valid (0-999)!");
                     return null;
                 }
 
                 var targetById = BasePlayer.Find(playerId) as Player;
                 if (targetById == null || !targetById.IsConnected)
                 {
-                    sender.SendClientMessage(Color.White, $"{{C6E2FF}}<Error>{{FFFFFF}} Player dengan ID {playerId} tidak ditemukan atau tidak online.");
+                    sender.SendClientMessage(Color.White, $"{Msg.Error} Player dengan ID {playerId} tidak ditemukan atau tidak online.");
                     return null;
                 }
 
@@ -159,7 +160,7 @@ namespace ProjectSMP
 
             if (matches.Count == 0)
             {
-                sender.SendClientMessage(Color.White, $"{{C6E2FF}}<Error>{{FFFFFF}} Tidak ada player dengan nama '{input}' yang ditemukan.");
+                sender.SendClientMessage(Color.White, $"{Msg.Error} Tidak ada player dengan nama '{input}' yang ditemukan.");
                 return null;
             }
 

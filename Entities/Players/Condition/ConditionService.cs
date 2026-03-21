@@ -1,4 +1,5 @@
-﻿using ProjectSMP.Entities.Players.Needs;
+﻿using ProjectSMP.Core;
+using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode.SAMP;
@@ -47,13 +48,13 @@ namespace ProjectSMP.Entities.Players.Condition
         {
             if (player.Condition.Injured < 1)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu tidak terluka.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Kamu tidak terluka.");
                 return;
             }
 
             if (player.Condition.DyingStage == 1)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Death>{FFFFFF} Tunggu hingga stage 2.");
+                player.SendClientMessage(Color.White, $"{Msg.Death} Tunggu hingga stage 2.");
                 return;
             }
 
@@ -95,7 +96,7 @@ namespace ProjectSMP.Entities.Players.Condition
                     player.Condition.DeathAnimName = "FLOOR_HIT";
                     player.ApplyAnimationSafe("PED", "FLOOR_HIT", 4.0f, false, false, false, true, 0, true);
                     DeathScreenManager.UpdateStatus(player, 2);
-                    player.SendClientMessage(Color.White, "{C6E2FF}<Death>{ffffff} Kamu bisa respawn, ketik {FFFF00}/death{ffffff}");
+                    player.SendClientMessage(Color.White, $"{Msg.Death} Kamu bisa respawn, ketik {{FFFF00}}/death{{ffffff}}");
                 } else if (player.Condition.DyingStage == 2 && uptime == 0) {
                     _hospitalRespawn[player.Id] = true;
                     WeaponConfigService.ForceRespawnFromDeath(player);
@@ -158,8 +159,8 @@ namespace ProjectSMP.Entities.Players.Condition
             for (var i = 0; i < 15; i++)
                 player.SendClientMessage(Color.White, "");
 
-            player.SendClientMessage(Color.White, "{C6E2FF}<Death>{FFFFFF} Kamu telah menyerah dan menerima kematianmu.");
-            player.SendClientMessage(Color.White, "{F4C2C2}<Hospital>{FFFFFF} Kamu telah keluar dari rumah sakit, kamu membayar $10.50 kerumah sakit.");
+            player.SendClientMessage(Color.White, $"{Msg.Death} Kamu telah menyerah dan menerima kematianmu.");
+            player.SendClientMessage(Color.White, $"{Msg.Hospital} Kamu telah keluar dari rumah sakit, kamu membayar $10.50 kerumah sakit.");
 
             player.ToggleControllableSafe(true);
             player.SetVirtualWorldSafe(0);

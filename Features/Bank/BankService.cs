@@ -142,7 +142,7 @@ namespace ProjectSMP.Features.Bank
                 await SaveAccountAsync(selfAccount);
 
                 sender.SendClientMessage(Color.White,
-                    $"{{C6E2FF}}<BANK>{{FFFFFF}} Transfer {Utilities.GroupDigits(amount)} dari {senderAccount.AccountName} ke {selfAccount.AccountName} berhasil!");
+                    $"{Msg.Bank} Transfer {Utilities.GroupDigits(amount)} dari {senderAccount.AccountName} ke {selfAccount.AccountName} berhasil!");
                 return true;
             }
 
@@ -154,7 +154,7 @@ namespace ProjectSMP.Features.Bank
 
             if (targetData == null)
             {
-                sender.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Akun tujuan tidak ditemukan!");
+                sender.SendClientMessage(Color.White, $"{Msg.Error} Akun tujuan tidak ditemukan!");
                 return false;
             }
 
@@ -172,14 +172,14 @@ namespace ProjectSMP.Features.Bank
                 new { Amount = amount, AccountNumber = targetAccountNumber });
 
             sender.SendClientMessage(Color.White,
-                $"{{C6E2FF}}<BANK>{{FFFFFF}} Transfer {Utilities.GroupDigits(amount)} ke {targetAccountNumber} berhasil! Saldo: {Utilities.GroupDigits(senderAccount.Balance)}");
+                $"{Msg.Bank} Transfer {Utilities.GroupDigits(amount)} ke {targetAccountNumber} berhasil! Saldo: {Utilities.GroupDigits(senderAccount.Balance)}");
 
             int targetPlayerId = targetData.ID;
             var target = BasePlayer.Find(targetPlayerId) as Player;
             if (target != null && target.IsConnected)
             {
                 target.SendClientMessage(Color.White,
-                    $"{{C6E2FF}}<BANK>{{FFFFFF}} Kamu menerima transfer {Utilities.GroupDigits(amount)} dari {senderAccount.AccountNumber}.");
+                    $"{Msg.Bank} Kamu menerima transfer {Utilities.GroupDigits(amount)} dari {senderAccount.AccountNumber}.");
             }
 
             return true;
@@ -193,7 +193,7 @@ namespace ProjectSMP.Features.Bank
             if (account.Balance > 0)
             {
                 player.SendClientMessage(Color.White,
-                    $"{{C6E2FF}}<Error>{{FFFFFF}} Kamu masih memiliki saldo {Utilities.GroupDigits(account.Balance)}. Tarik semua uang sebelum menutup akun!");
+                    $"{Msg.Error} Kamu masih memiliki saldo {Utilities.GroupDigits(account.Balance)}. Tarik semua uang sebelum menutup akun!");
                 return false;
             }
 
@@ -203,7 +203,7 @@ namespace ProjectSMP.Features.Bank
                 $"UPDATE `{Table}` SET is_active = 0 WHERE id = @Id",
                 new { account.Id });
 
-            player.SendClientMessage(Color.White, "{C6E2FF}<BANK>{FFFFFF} Akun bank berhasil ditutup!");
+            player.SendClientMessage(Color.White, $"{Msg.Bank} Akun bank berhasil ditutup!");
             return true;
         }
 

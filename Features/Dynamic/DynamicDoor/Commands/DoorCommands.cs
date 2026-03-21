@@ -20,11 +20,11 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor.Commands
 
             if (doorId == -1)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Dynamic Doors sudah tidak bisa dibuat lagi!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Dynamic Doors sudah tidak bisa dibuat lagi!");
                 return;
             }
 
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah berhasil membuat Dynamic Door dengan DoorId: {doorId}.");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah berhasil membuat Dynamic Door dengan DoorId: {doorId}.");
         }
 
         [Command("gotodoor")]
@@ -35,7 +35,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor.Commands
             var door = DoorService.GetDoor(doorId);
             if (door == null)
             {
-                player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Dynamic Doors dengan DoorId: {doorId} tidak tersedia!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Dynamic Doors dengan DoorId: {doorId} tidak tersedia!");
                 return;
             }
 
@@ -44,7 +44,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor.Commands
             player.SetInteriorSafe(door.ExtInterior);
             player.SetVirtualWorldSafe(door.ExtVirtualWorld);
 
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu berhasil di teleport ke DoorId: {doorId}.");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu berhasil di teleport ke DoorId: {doorId}.");
         }
 
         [Command("editdoor")]
@@ -55,7 +55,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor.Commands
             var door = DoorService.GetDoor(doorId);
             if (door == null)
             {
-                player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Dynamic Doors dengan DoorId: {doorId} tidak tersedia!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Dynamic Doors dengan DoorId: {doorId} tidak tersedia!");
                 return;
             }
 
@@ -71,7 +71,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor.Commands
                     door.ExtInterior = player.Interior;
                     await DoorService.SaveAsync(doorId);
                     DoorService.UpdateDoor(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Location DoorId {doorId} berhasil disesuaikan.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Location DoorId {doorId} berhasil disesuaikan.");
                     break;
 
                 case "interior":
@@ -84,116 +84,116 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor.Commands
                     door.IntInterior = player.Interior;
                     await DoorService.SaveAsync(doorId);
                     DoorService.UpdateDoor(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Interior spawn DoorId {doorId} berhasil disesuaikan.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Interior spawn DoorId {doorId} berhasil disesuaikan.");
                     break;
 
                 case "password":
                     door.Password = value.Equals("none", System.StringComparison.OrdinalIgnoreCase) ? "" : value;
                     await DoorService.SaveAsync(doorId);
                     DoorService.UpdateDoor(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Password DoorId {doorId} diubah.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Password DoorId {doorId} diubah.");
                     break;
 
                 case "name":
                     door.Name = Utilities.ColouredText(value);
                     await DoorService.SaveAsync(doorId);
                     DoorService.UpdateDoor(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Name DoorId {doorId} diubah menjadi \"{door.Name}\".");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Name DoorId {doorId} diubah menjadi \"{door.Name}\".");
                     break;
 
                 case "locked":
                     if (!int.TryParse(value, out int locked) || locked < 0 || locked > 1)
                     {
-                        player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Input 0 untuk Unlock dan 1 untuk Lock!");
+                        player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Input 0 untuk Unlock dan 1 untuk Lock!");
                         return;
                     }
                     door.Locked = locked == 1;
                     await DoorService.SaveAsync(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} DoorId {doorId} {(door.Locked ? "Locked" : "Unlocked")}.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} DoorId {doorId} {(door.Locked ? "Locked" : "Unlocked")}.");
                     break;
 
                 case "admin":
                     if (!int.TryParse(value, out int adminLevel) || adminLevel < 0 || adminLevel > 5)
                     {
-                        player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Input Level Admin [0 - 5]!");
+                        player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Input Level Admin [0 - 5]!");
                         return;
                     }
                     door.AdminLevel = adminLevel;
                     await DoorService.SaveAsync(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} DoorId {doorId} untuk admin Level {adminLevel}.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} DoorId {doorId} untuk admin Level {adminLevel}.");
                     break;
 
                 case "vip":
                     if (!int.TryParse(value, out int vipLevel) || vipLevel < 0 || vipLevel > 3)
                     {
-                        player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Input Level VIP [0 - 3]!");
+                        player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Input Level VIP [0 - 3]!");
                         return;
                     }
                     door.VipLevel = vipLevel;
                     await DoorService.SaveAsync(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} DoorId {doorId} untuk VIP Level {vipLevel}.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} DoorId {doorId} untuk VIP Level {vipLevel}.");
                     break;
 
                 case "faction":
                     if (!int.TryParse(value, out int factionId) || factionId < 0 || factionId > 4)
                     {
-                        player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Input FactionId [0 - 4]!");
+                        player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Input FactionId [0 - 4]!");
                         return;
                     }
                     door.FactionId = factionId;
                     await DoorService.SaveAsync(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} DoorId {doorId} untuk Faction Id {factionId}.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} DoorId {doorId} untuk Faction Id {factionId}.");
                     break;
 
                 case "family":
                     if (!int.TryParse(value, out int familyId) || familyId < -1 || familyId > 9)
                     {
-                        player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Input FamilyId [-1 - 9]!");
+                        player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Input FamilyId [-1 - 9]!");
                         return;
                     }
                     door.FamilyId = familyId;
                     await DoorService.SaveAsync(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} DoorId {doorId} untuk Family Id {familyId}.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} DoorId {doorId} untuk Family Id {familyId}.");
                     break;
 
                 case "garage":
                     if (!int.TryParse(value, out int garage) || garage < 0 || garage > 1)
                     {
-                        player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Input 0 untuk Disable dan 1 untuk Enable!");
+                        player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Input 0 untuk Disable dan 1 untuk Enable!");
                         return;
                     }
                     door.IsGarage = garage == 1;
                     await DoorService.SaveAsync(doorId);
                     DoorService.UpdateDoor(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Garasi DoorId {doorId} {(door.IsGarage ? "Enabled" : "Disabled")}.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Garasi DoorId {doorId} {(door.IsGarage ? "Enabled" : "Disabled")}.");
                     break;
 
                 case "custom":
                     if (!int.TryParse(value, out int custom) || custom < 0 || custom > 1)
                     {
-                        player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Input 0 atau 1!");
+                        player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Input 0 atau 1!");
                         return;
                     }
                     door.CustomInterior = custom == 1;
                     await DoorService.SaveAsync(doorId);
                     DoorService.UpdateDoor(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Interior mode DoorId {doorId} {(door.CustomInterior ? "Enabled" : "Disabled")}.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Interior mode DoorId {doorId} {(door.CustomInterior ? "Enabled" : "Disabled")}.");
                     break;
 
                 case "virtual":
                     door.ExtVirtualWorld = player.VirtualWorld;
                     await DoorService.SaveAsync(doorId);
                     DoorService.UpdateDoor(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Virtual world DoorId {doorId} disesuaikan.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Virtual world DoorId {doorId} disesuaikan.");
                     break;
 
                 case "delete":
                     await DoorService.DeleteAsync(doorId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} DoorId {doorId} berhasil dihapus.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} DoorId {doorId} berhasil dihapus.");
                     break;
 
                 default:
-                    player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{888888} Gunakan /editdoor [DoorId] [Prefix]");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd_G} Gunakan /editdoor [DoorId] [Prefix]");
                     player.SendClientMessage(Color.White, "{FF6347}>> Prefix{888888}: location, interior, password, name, locked, admin, vip, faction, family, custom, virtual, garage, delete");
                     break;
             }

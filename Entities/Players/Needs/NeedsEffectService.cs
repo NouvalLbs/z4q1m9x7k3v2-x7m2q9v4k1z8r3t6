@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Extensions;
+﻿using ProjectSMP.Core;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using System.Collections.Generic;
@@ -74,7 +74,7 @@ namespace ProjectSMP.Entities.Players.Needs
                 {
                     if (player.Condition.Fever > 0 && player.Condition.Fever <= 2)
                     {
-                        player.SendClientMessage(Color.White, "{ffa500}<Sick>{FFFFFF} Kamu terkena demam tinggi, ini penyakit berbahaya, kamu harus segera pergi ke dokter!");
+                        player.SendClientMessage(Color.White, $"{Msg.Sick} Kamu terkena demam tinggi, ini penyakit berbahaya, kamu harus segera pergi ke dokter!");
                         player.Condition.Fever++;
                     }
                     else if (player.Condition.Fever == 0 && player.Condition.Migrain < 4)
@@ -82,11 +82,11 @@ namespace ProjectSMP.Entities.Players.Needs
                         player.Condition.Migrain++;
                         if (player.Condition.Migrain < 3)
                         {
-                            player.SendClientMessage(Color.White, "{ffa500}<Sick>{FFFFFF} Kamu terkena sakit kepala, periksalah ke dokter untuk mengobati penyakitmu!");
+                            player.SendClientMessage(Color.White, $"{Msg.Sick} Kamu terkena sakit kepala, periksalah ke dokter untuk mengobati penyakitmu!");
                         }
                         else if (player.Condition.Migrain == 4)
                         {
-                            player.SendClientMessage(Color.White, "{ffa500}<Sick>{FFFFFF} Kamu terkena demam tinggi, ini penyakit berbahaya, kamu harus segera pergi ke dokter!");
+                            player.SendClientMessage(Color.White, $"{Msg.Sick} Kamu terkena demam tinggi, ini penyakit berbahaya, kamu harus segera pergi ke dokter!");
                             player.Condition.Fever++;
                             player.Condition.Migrain = 0;
                         }

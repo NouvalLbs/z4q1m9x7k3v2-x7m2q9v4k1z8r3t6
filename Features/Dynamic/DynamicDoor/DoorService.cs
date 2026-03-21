@@ -239,19 +239,19 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
 
             if (data.IntPosX == 0.0f && data.IntPosY == 0.0f && data.IntPosZ == 0.0f)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Pintu masuk ini tidak bisa dimasuki masih dalam pembangunan.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Pintu masuk ini tidak bisa dimasuki masih dalam pembangunan.");
                 return false;
             }
 
             if (data.Locked)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Pintu masuk ini sedang terkunci saat ini.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Pintu masuk ini sedang terkunci saat ini.");
                 return false;
             }
 
             if (data.AdminLevel > player.Admin)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Level admin Anda tidak cukup untuk memasuki pintu ini.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Level admin Anda tidak cukup untuk memasuki pintu ini.");
                 return false;
             }
 
@@ -270,13 +270,13 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
                 {
                     if (string.IsNullOrEmpty(password))
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /enter [Password]");
+                        player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /enter [Password]");
                         return;
                     }
 
                     if (!data.Password.Equals(password, StringComparison.Ordinal))
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Password pintu tidak valid.");
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Password pintu tidak valid.");
                         return;
                     }
                 }
@@ -382,7 +382,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
                     var password = e.InputText;
                     if (string.IsNullOrWhiteSpace(password))
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Password tidak boleh kosong!");
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Password tidak boleh kosong!");
                         ShowPasswordDialog(player, doorId);
                         return;
                     }
@@ -390,7 +390,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
                     var currentDoorId = CheckPlayerInDoor(player, out bool isOutside);
                     if (currentDoorId != doorId || !isOutside)
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu sudah tidak berada di area pintu!");
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Kamu sudah tidak berada di area pintu!");
                         return;
                     }
 
@@ -399,7 +399,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
 
                     if (!data.Password.Equals(password, StringComparison.Ordinal))
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Password pintu tidak valid.");
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Password pintu tidak valid.");
                         return;
                     }
 

@@ -1,6 +1,6 @@
-﻿using SampSharp.GameMode;
-using SampSharp.GameMode.SAMP;
+﻿using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
+using ProjectSMP.Core;
 using ProjectSMP.Extensions;
 using System;
 using System.Collections.Generic;
@@ -13,6 +13,7 @@ namespace ProjectSMP.Entities.Players.Administrator
     {
         private const int MaxReports = 50;
         private const int ReportCooldown = 60;
+        private const int ReportsPerPage = 10;
         private static readonly List<Report> Reports = new();
         private static int NextId = 0;
 
@@ -66,13 +67,14 @@ namespace ProjectSMP.Entities.Players.Administrator
             Reports.RemoveAll(r => r.Id == id);
         }
 
-        public static void MarkHandled(int id, int adminId)
+        public static void MarkHandled(int id, int adminId, string adminName)
         {
             var report = GetReport(id);
             if (report != null)
             {
                 report.Handled = true;
                 report.AdminId = adminId;
+                report.AdminName = adminName;
             }
         }
 
@@ -86,17 +88,14 @@ namespace ProjectSMP.Entities.Players.Administrator
             return Reports.ToList();
         }
 
-        public static void RemovePlayerReports(int playerId)
+        public static int GetTotalPlayerReports(int playerId)
         {
-            var removed = Reports.RemoveAll(r => r.PlayerId == playerId);
-            if (removed > 0)
-            {
-                foreach (var admin in BasePlayer.All.OfType<Player>().Where(p => p.Admin >= 1 && p.AdminOnDuty))
-                {
-                    admin.SendClientMessage(Color.White,
-                        $"{{FF6347}}<Report System>{{FFFFFF}} Player disconnected. {removed} report(s) removed.");
-                }
-            }
+            return Reports.Count(r => r.PlayerId == playerId);
+        }
+
+        public static int GetTotalReports()
+        {
+            return Reports.Count;
         }
 
         public static string GetTimeElapsed(int timestamp)
@@ -115,8 +114,24 @@ namespace ProjectSMP.Entities.Players.Administrator
             foreach (var admin in BasePlayer.All.OfType<Player>().Where(p => p.Admin >= 1 && p.AdminOnDuty))
             {
                 admin.SendClientMessage(Color.White,
-                    $"{{FF6347}}<Report>{{FFFFFF}} New report from {report.PlayerName} (Id: {report.PlayerId}): {report.Text}");
-                admin.PlaySound(1058, Vector3.Zero);
+                    $"{Msg.Report}{{fffccc}}[{report.PlayerId}] {report.PlayerName}: {report.Text}");
+                admin.PlaySound(1058, SampSharp.GameMode.Vector3.Zero);
+            }
+        }
+
+        public static void RemovePlayerReports(int playerId)
+        {
+            var removed = Reports.RemoveAll(r => r.PlayerId == playerId);
+            if (removed > 0)
+            {
+                var player = BasePlayer.Find(playerId);
+                var playerName = player?.Name ?? "Unknown";
+
+                foreach (var admin in BasePlayer.All.OfType<Player>().Where(p => p.Admin >= 1 && p.AdminOnDuty))
+                {
+                    admin.SendClientMessage(Color.White,
+                        $"{Msg.Report} {playerName} has disconnected. {removed} pending report(s) were automatically removed.");
+                }
             }
         }
 
@@ -124,5 +139,7 @@ namespace ProjectSMP.Entities.Players.Administrator
         {
             RemovePlayerReports(player.Id);
         }
+
+        public static int ReportsPerPageValue => ReportsPerPage;
     }
 }

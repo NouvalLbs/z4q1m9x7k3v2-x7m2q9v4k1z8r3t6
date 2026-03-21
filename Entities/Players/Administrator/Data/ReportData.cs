@@ -9,5 +9,6 @@
         public int Timestamp { get; set; }
         public bool Handled { get; set; }
         public int AdminId { get; set; } = -1;
+        public string AdminName { get; set; } = "";
     }
 }

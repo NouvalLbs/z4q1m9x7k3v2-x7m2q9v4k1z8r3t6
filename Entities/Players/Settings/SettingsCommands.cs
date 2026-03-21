@@ -1,4 +1,5 @@
-﻿using ProjectSMP.Entities.Players.Settings;
+﻿using ProjectSMP.Core;
+using ProjectSMP.Entities.Players.Settings;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 
@@ -11,7 +12,7 @@ namespace ProjectSMP.Commands
         {
             if (!player.IsCharLoaded)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu belum login.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Kamu belum login.");
                 return;
             }
             SettingsService.ShowMainSettings(player);
@@ -22,7 +23,7 @@ namespace ProjectSMP.Commands
         {
             if (!player.IsCharLoaded)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu belum login.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Kamu belum login.");
                 return;
             }
             SettingsService.ShowHudSettings(player);
@@ -33,7 +34,7 @@ namespace ProjectSMP.Commands
         {
             if (!player.IsCharLoaded)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu belum login.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Kamu belum login.");
                 return;
             }
             SettingsService.ShowToggleSettings(player);

@@ -48,8 +48,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             TeleportHelper.TeleportToPlayer(player, target);
 
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah teleport ke {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
-            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah teleport ke lokasi kamu");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah teleport ke {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
+            target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah teleport ke lokasi kamu");
         }
 
         [Command("gethere")]
@@ -62,8 +62,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             TeleportHelper.TeleportToPlayer(target, player, reverse: true);
 
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah menarik {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} ke lokasi kamu!");
-            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah menarik kamu ke lokasi mereka");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah menarik {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} ke lokasi kamu!");
+            target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah menarik kamu ke lokasi mereka");
         }
 
         [Command("freeze")]
@@ -75,8 +75,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             if (!ValidateTarget(player, target)) return;
 
             target.ToggleControllableSafe(false);
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah Freeze {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
-            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah Freeze pergerakan kamu");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah Freeze {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
+            target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah Freeze pergerakan kamu");
         }
 
         [Command("unfreeze")]
@@ -88,8 +88,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             if (!ValidateTarget(player, target)) return;
 
             target.ToggleControllableSafe(true);
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah Unfreeze {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
-            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah Unfreeze pergerakan kamu");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah Unfreeze {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
+            target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah Unfreeze pergerakan kamu");
         }
 
         [Command("slap")]
@@ -106,8 +106,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             target.SetPositionSafe(pos.X, pos.Y, pos.Z + 10.0f);
             target.PlaySound(1130, Vector3.Zero);
 
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah menampar {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
-            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah menampar kamu");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah menampar {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
+            target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah menampar kamu");
         }
 
         [Command("acuff")]
@@ -120,7 +120,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (target.Cuffed)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut sudah dalam keadaan terborgol!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player tersebut sudah dalam keadaan terborgol!");
                 return;
             }
 
@@ -128,8 +128,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             target.SetSpecialActionSafe(SpecialAction.Cuffed);
             target.ToggleControllableSafe(false);
 
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah memborgol {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
-            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah memborgol kamu");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah memborgol {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
+            target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah memborgol kamu");
         }
 
         [Command("auncuff")]
@@ -142,7 +142,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (!target.Cuffed)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut tidak dalam keadaan terborgol!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player tersebut tidak dalam keadaan terborgol!");
                 return;
             }
 
@@ -150,8 +150,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             target.SetSpecialActionSafe(SpecialAction.None);
             target.ToggleControllableSafe(true);
 
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah melepas borgol {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
-            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah melepas borgol kamu");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah melepas borgol {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
+            target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah melepas borgol kamu");
         }
 
         [Command("peject")]
@@ -164,7 +164,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (!target.InAnyVehicle)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut tidak berada di dalam kendaraan!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player tersebut tidak berada di dalam kendaraan!");
                 return;
             }
 
@@ -172,8 +172,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             var pos = target.Position;
             target.SetPositionSafe(pos.X, pos.Y, pos.Z + 1.0f);
 
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah mengeluarkan {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} dari kendaraan!");
-            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengeluarkan kamu dari kendaraan");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah mengeluarkan {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} dari kendaraan!");
+            target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengeluarkan kamu dari kendaraan");
         }
 
         [Command("astats")]
@@ -201,7 +201,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             var title = $"{{FF6347}}Admin Stats: {{6fe0ba}}{target.Username} {{c8c8c8}}(ID:{target.Id} | UCP: {target.Ucp})";
             player.ShowMessage(title, stats).Show();
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah melihat statistik dari {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah melihat statistik dari {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Extensions;
+﻿using ProjectSMP.Core;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using System;
@@ -17,7 +17,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             }
             if (!player.AdminOnDuty)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Command tidak dapat digunakan ketika kamu tidak duty.");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Command tidak dapat digunakan ketika kamu tidak duty.");
                 return false;
             }
             return true;
@@ -27,7 +27,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
         {
             if (!player.IsCharLoaded)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Kamu belum login!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu belum login!");
                 return false;
             }
             return true;
@@ -39,7 +39,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (!target.IsCharLoaded)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player target belum spawn!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player target belum spawn!");
                 return false;
             }
             return true;
@@ -49,7 +49,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
         {
             if (target.Admin > player.Admin)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Kamu tidak dapat melakukan aksi pada admin dengan level lebih tinggi!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu tidak dapat melakukan aksi pada admin dengan level lebih tinggi!");
                 return false;
             }
             return true;
@@ -59,7 +59,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
         {
             if (string.IsNullOrWhiteSpace(input))
             {
-                sender.SendClientMessage(Color.White, "{FF6347}<Error>{FFFFFF} Input tidak valid!");
+                sender.SendClientMessage(Color.White, $"{Msg.Error} Input tidak valid!");
                 return null;
             }
 
@@ -67,14 +67,14 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             {
                 if (playerId < 0 || playerId >= 1000)
                 {
-                    sender.SendClientMessage(Color.White, $"{{FF6347}}<Error>{{FFFFFF}} Player ID {playerId} tidak valid (0-999)!");
+                    sender.SendClientMessage(Color.White, $"{Msg.Error} Player ID {playerId} tidak valid (0-999)!");
                     return null;
                 }
 
                 var targetById = BasePlayer.Find(playerId) as Player;
                 if (targetById == null || !targetById.IsConnected)
                 {
-                    sender.SendClientMessage(Color.White, $"{{FF6347}}<Error>{{FFFFFF}} Player dengan ID {playerId} tidak ditemukan atau tidak online.");
+                    sender.SendClientMessage(Color.White, $"{Msg.Error} Player dengan ID {playerId} tidak ditemukan atau tidak online.");
                     return null;
                 }
 
@@ -94,7 +94,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (matches.Count == 0)
             {
-                sender.SendClientMessage(Color.White, $"{{FF6347}}<Error>{{FFFFFF}} Tidak ada player dengan nama '{input}' yang ditemukan.");
+                sender.SendClientMessage(Color.White, $"{Msg.Error} Tidak ada player dengan nama '{input}' yang ditemukan.");
                 return null;
             }
 

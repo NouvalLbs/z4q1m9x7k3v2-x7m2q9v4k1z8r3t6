@@ -21,7 +21,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (target.JailInfo.Jailed > 0)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player target sedang berada di jail!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player target sedang berada di jail!");
                 return;
             }
 
@@ -80,7 +80,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             var target = BasePlayer.Find(targetId) as Player;
             if (target == null || !target.IsConnected)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Player target telah disconnect.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Player target telah disconnect.");
                 player.SetData("SendTo_Target", -1);
                 player.SetData("SendTo_City", 0);
                 return;
@@ -105,7 +105,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                     var tgt = BasePlayer.Find(targetId) as Player;
                     if (tgt == null || !tgt.IsConnected)
                     {
-                        player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Player target telah disconnect.");
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Player target telah disconnect.");
                         player.SetData("SendTo_Target", -1);
                         player.SetData("SendTo_City", 0);
                         return;
@@ -114,8 +114,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                     TeleportHelper.TeleportToLocation(tgt, loc.X, loc.Y, loc.Z, loc.Interior, loc.VirtualWorld);
                     tgt.PutCameraBehindPlayer();
 
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah mengirim {{00FFFF}}{tgt.Username} (ID:{tgt.Id}){{FFFFFF}} ke {{00FFFF}}{loc.Name}{{FFFFFF}}!");
-                    tgt.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengirim kamu ke {{00FFFF}}{loc.Name}{{FFFFFF}}");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah mengirim {{00FFFF}}{tgt.Username} (ID:{tgt.Id}){{FFFFFF}} ke {{00FFFF}}{loc.Name}{{FFFFFF}}!");
+                    tgt.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengirim kamu ke {{00FFFF}}{loc.Name}{{FFFFFF}}");
 
                     player.SetData("SendTo_Target", -1);
                     player.SetData("SendTo_City", 0);

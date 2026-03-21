@@ -1,7 +1,6 @@
 ﻿using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.Anticheat.Managers;
 using ProjectSMP.Plugins.Anticheat.Utilities;
-using ProjectSMP.Plugins.Anticheat.State;
 using SampSharp.GameMode.World;
 using System;
 

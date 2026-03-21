@@ -17,7 +17,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             }
             if (!player.AdminOnDuty)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Command tidak dapat digunakan ketika kamu tidak duty.");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Command tidak dapat digunakan ketika kamu tidak duty.");
                 return false;
             }
             return true;
@@ -39,7 +39,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             if (results.Count == 0)
             {
                 player.SendClientMessage(Color.White,
-                    $"{{FF6347}}<AdmCmd>{{FFFFFF}} Tidak ditemukan kendaraan dengan nama '{searchQuery}'.");
+                    $"{Msg.AdmCmd} Tidak ditemukan kendaraan dengan nama '{searchQuery}'.");
                 return;
             }
 
@@ -60,7 +60,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                 .Show();
 
             player.SendClientMessage(Color.White,
-                $"{{FF6347}}<AdmCmd>{{FFFFFF}} Ditemukan {results.Count} kendaraan dengan kata kunci '{searchQuery}'.");
+                $"{Msg.AdmCmd} Ditemukan {results.Count} kendaraan dengan kata kunci '{searchQuery}'.");
         }
 
         [Command("vehmodels")]
@@ -87,14 +87,14 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             if (results.Count == 0)
             {
                 player.SendClientMessage(Color.White,
-                    $"{{FF6347}}<AdmCmd>{{FFFFFF}} Tidak ditemukan kendaraan dengan nama '{input}'.");
+                    $"{Msg.AdmCmd} Tidak ditemukan kendaraan dengan nama '{input}'.");
                 return;
             }
 
             if (results.Count == 1)
             {
                 player.SendClientMessage(Color.White,
-                    $"{{FF6347}}<AdmCmd>{{FFFFFF}} VehicleId: {results[0].ModelId} | Name: {results[0].Name}");
+                    $"{Msg.AdmCmd} VehicleId: {results[0].ModelId} | Name: {results[0].Name}");
                 return;
             }
 
@@ -108,7 +108,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                 .Show();
 
             player.SendClientMessage(Color.White,
-                $"{{FF6347}}<AdmCmd>{{FFFFFF}} Ditemukan {results.Count} kendaraan dengan kata kunci '{input}'.");
+                $"{Msg.AdmCmd} Ditemukan {results.Count} kendaraan dengan kata kunci '{input}'.");
         }
 
         private static void ShowCategoryDialog(Player player)
@@ -160,7 +160,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                 .Show();
 
             player.SendClientMessage(Color.White,
-                $"{{FF6347}}<AdmCmd>{{FFFFFF}} Menampilkan daftar {vehicles.Count} kendaraan.");
+                $"{Msg.AdmCmd} Menampilkan daftar {vehicles.Count} kendaraan.");
         }
 
         private static void ShowAllVehicles(Player player)
@@ -176,7 +176,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                 .Show();
 
             player.SendClientMessage(Color.White,
-                $"{{FF6347}}<AdmCmd>{{FFFFFF}} Menampilkan daftar {vehicles.Count} kendaraan.");
+                $"{Msg.AdmCmd} Menampilkan daftar {vehicles.Count} kendaraan.");
         }
     }
 }

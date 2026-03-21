@@ -17,7 +17,7 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /b [Text]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /b [Text]");
                 return;
             }
 
@@ -44,13 +44,13 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /o(oc) [Text]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /o(oc) [Text]");
                 return;
             }
 
             if (text.Length > 90)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error> {FFFFFF} Teks yang kamu masukan terlalu panjang, maksimal 90 karakter!");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Teks yang kamu masukan terlalu panjang, maksimal 90 karakter!");
                 return;
             }
 
@@ -82,14 +82,14 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /ab [Text]");
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan '/ab off' untuk menonaktifkan atau menghapus tag ab.");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /ab [Text]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan '/ab off' untuk menonaktifkan atau menghapus tag ab.");
                 return;
             }
 
             if (text.Length > 128)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Teks maksimal hanya bisa sampai 128 karakter.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Teks maksimal hanya bisa sampai 128 karakter.");
                 return;
             }
 
@@ -97,12 +97,12 @@ namespace ProjectSMP.Commands
             {
                 if (!ChatService.Is3DLabelActive(player, false))
                 {
-                    player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu belum mengaktifkan teks '{ffea00}ab{FFFFFF}'.");
+                    player.SendClientMessage(Color.White, $"{Msg.Error} Kamu belum mengaktifkan teks '{{ffea00}}ab{{FFFFFF}}'.");
                     return;
                 }
 
                 ChatService.Remove3DLabel(player, false);
-                player.SendClientMessage(Color.White, "{ebe6ae}<AB>{FFFFFF} Kamu telah menghapus teks '{ffea00}ab{FFFFFF}'.");
+                player.SendClientMessage(Color.White, $"{Msg.AB}  Kamu telah menghapus teks '{{ffea00}}ab{{FFFFFF}}'.");
                 return;
             }
 
@@ -112,7 +112,7 @@ namespace ProjectSMP.Commands
 
             var labelText = $"* {Utilities.ReturnName(player)} *\n(( OOC : {msg} ))";
             ChatService.CreateOrUpdate3DLabel(player, false, labelText, new Color(ChatColors.Purple));
-            player.SendClientMessage(Color.White, "{ebe6ae}<AB>{FFFFFF} Teks telah ditempatkan di lokasimu, untuk menghapusnya gunakan '{ffea00}/ab off{FFFFFF}'.");
+            player.SendClientMessage(Color.White, $"{Msg.AB}  Teks telah ditempatkan di lokasimu, untuk menghapusnya gunakan '{{ffea00}}/ab off{{FFFFFF}}'.");
         }
 
         [Command("low", Shortcut = "l")]
@@ -120,7 +120,7 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /l(ow) [Text]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /l(ow) [Text]");
                 return;
             }
             ChatService.TalkMessage(ChatDistance.Low, player, "whispers", text);
@@ -131,7 +131,7 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /s(hout) [Text]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /s(hout) [Text]");
                 return;
             }
             ChatService.TalkMessage(ChatDistance.Shout, player, "shouts", text);
@@ -143,7 +143,7 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(targetInput) || string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /w(hisper) [PlayerId/PartOfName] [Text]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /w(hisper) [PlayerId/PartOfName] [Text]");
                 return;
             }
 
@@ -152,13 +152,13 @@ namespace ProjectSMP.Commands
 
             if (target.Id == player.Id)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu tidak dapat melakukan Whisper kepada dirimu sendiri.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Kamu tidak dapat melakukan Whisper kepada dirimu sendiri.");
                 return;
             }
 
             if (!target.IsCharLoaded)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Player tersebut tidak ada di kota saat ini.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Player tersebut tidak ada di kota saat ini.");
                 return;
             }
 
@@ -170,7 +170,7 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /me [Text Action]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /me [Text Action]");
                 return;
             }
             ChatService.ProcessActionText(player, text, ActionType.Me, ChatDistance.Normal);
@@ -181,7 +181,7 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /l(ower)me [Text Action]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /l(ower)me [Text Action]");
                 return;
             }
             ChatService.ProcessActionText(player, text, ActionType.LowerMe, ChatDistance.Low);
@@ -192,7 +192,7 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /ame [Text Action]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /ame [Text Action]");
                 return;
             }
             ChatService.ProcessActionText(player, text, ActionType.Ame, ChatDistance.Low);
@@ -203,7 +203,7 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /do [Text Action]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /do [Text Action]");
                 return;
             }
             ChatService.ProcessActionText(player, text, ActionType.Do, ChatDistance.Normal);
@@ -214,7 +214,7 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /l(ower)do [Text Action]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /l(ower)do [Text Action]");
                 return;
             }
             ChatService.ProcessActionText(player, text, ActionType.LowerDo, ChatDistance.Low);
@@ -225,8 +225,8 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(header))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /ado [Text Header] [Text]");
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan '/ado off' untuk menonaktifkan atau menghapus tag ado.");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /ado [Text Header] [Text]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan '/ado off' untuk menonaktifkan atau menghapus tag ado.");
                 return;
             }
 
@@ -234,19 +234,19 @@ namespace ProjectSMP.Commands
             {
                 if (!ChatService.Is3DLabelActive(player, true))
                 {
-                    player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu belum mengaktifkan teks '{ffea00}/ado{FFFFFF}'.");
+                    player.SendClientMessage(Color.White, $"{Msg.Error} Kamu belum mengaktifkan teks '{{ffea00}}/ado{{FFFFFF}}'.");
                     return;
                 }
 
                 ChatService.Remove3DLabel(player, true);
-                player.SendClientMessage(Color.White, "{ebe6ae}<ADO>{FFFFFF} Kamu telah menghapus teks '{ffea00}/ado{FFFFFF}'.");
+                player.SendClientMessage(Color.White, $"{Msg.ADO}  Kamu telah menghapus teks '{{ffea00}}/ado{{FFFFFF}}'.");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(description))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu harus memasukkan deskripsi setelah header!");
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Contoh: /ado [Toko Buka] Silakan masuk dan belanja");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Kamu harus memasukkan deskripsi setelah header!");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Contoh: /ado [Toko Buka] Silakan masuk dan belanja");
                 return;
             }
 
@@ -256,7 +256,7 @@ namespace ProjectSMP.Commands
 
             var labelText = $"* [{header}] {desc} *\n(( {Utilities.ReturnName(player)} ))";
             ChatService.CreateOrUpdate3DLabel(player, true, labelText, new Color(ChatColors.Purple));
-            player.SendClientMessage(Color.White, "{ebe6ae}<ADO>{FFFFFF} Teks telah ditempatkan di lokasimu, untuk menghapusnya gunakan '{ffea00}/ado off{FFFFFF}'.");
+            player.SendClientMessage(Color.White, $"{Msg.ADO}  Teks telah ditempatkan di lokasimu, untuk menghapusnya gunakan '{{ffea00}}/ado off{{FFFFFF}}'.");
         }
 
         [Command("try")]
@@ -264,7 +264,7 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /try [Text Action]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /try [Text Action]");
                 return;
             }
 
@@ -293,7 +293,7 @@ namespace ProjectSMP.Commands
         {
             if (string.IsNullOrWhiteSpace(targetInput) || string.IsNullOrWhiteSpace(text))
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Command>{888888} Gunakan /pm [PlayerId/PartOfName] [Text]");
+                player.SendClientMessage(Color.White, $"{Msg.Command} Gunakan /pm [PlayerId/PartOfName] [Text]");
                 return;
             }
 
@@ -302,19 +302,19 @@ namespace ProjectSMP.Commands
 
             if (target.Id == player.Id)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Kamu tidak dapat melakukan PM kepada dirimu sendiri.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Kamu tidak dapat melakukan PM kepada dirimu sendiri.");
                 return;
             }
 
             if (!target.IsCharLoaded)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Player tersebut tidak ada di kota saat ini.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Player tersebut tidak ada di kota saat ini.");
                 return;
             }
 
             if (!target.Settings.TogglePrivateMessage)
             {
-                player.SendClientMessage(Color.White, "{C6E2FF}<Error>{FFFFFF} Player tersebut menonaktifkan private message.");
+                player.SendClientMessage(Color.White, $"{Msg.Error} Player tersebut menonaktifkan private message.");
                 return;
             }
 
@@ -350,19 +350,20 @@ namespace ProjectSMP.Commands
             var admin = Utilities.GetAdminString(player);
             var warn = Utilities.GetWarningString(player);
             var jobs = JobService.GetAllJobsString(player);
-
             var pointsRequired = LevelService.GetPointsRequired(player.Level);
 
-            var stats = $@"{{FFFF00}}IC Information:
-{{FFFFFF}}Gender: [{{b8d2ec}}{gender}{{FFFFFF}}] | Birthdate: [{{b8d2ec}}{player.BirthDate}{{FFFFFF}}] | Money: [{{00f000}}{Utilities.GroupDigits(player.CharMoney)}{{FFFFFF}}] | Bank: [{{00f000}}0{{FFFFFF}}]
-{{FFFFFF}}Phone Status: [{phoneStatus}] | Phone Number: [{{ebeb00}}{player.Phone.Number}{{FFFFFF}}] | Phone Credit: [{{ebeb00}}{player.Phone.Credit}{{FFFFFF}}] | Mask ID: [{{b8d2ec}}{player.MaskId}{{FFFFFF}}]
-{{FFFFFF}}Jobs: [{jobs}{{FFFFFF}}] | Faction: [Civilian{{FFFFFF}}] | Family: [None]
-{{FFFFFF}}Working at: [None] [None (0){{FFFFFF}}] | Wealth: [None]
-
-{{FFFF00}}OOC Information:
-{{FFFFFF}}CitizenId: [{{77efc7}}{player.CitizenId}{{FFFFFF}}] | Level: [{{77efc7}}{player.Level} - ({player.LevelPoints}/{pointsRequired}){{FFFFFF}}] | Paychecks: [{{b8d2ec}}{player.Paycheck}{{FFFFFF}}] | Time Played: [{{b8d2ec}}{player.Playtime.Hours} hour(s) {player.Playtime.Minutes} minute(s) {player.Playtime.Seconds} second(s){{FFFFFF}}]
-{{FFFFFF}}Character Story: [{charStatus}] | Staff: [{admin}] | Warns: [{warn}] | Prestige Coin: [0]
-{{FFFFFF}}World: [{{ebeb00}}{player.VirtualWorld}{{FFFFFF}}] | Interior: [{{ebeb00}}{player.Interior}{{FFFFFF}}] | MaxHP: [{{ab0000}}{player.Vitals.MaxHealth:F1}{{FFFFFF}}] | Health: [{{ab0000}}{player.Vitals.Health:F1}{{FFFFFF}}] | Armour: [{{9f9f9f}}{player.Vitals.Armour:F1}{{FFFFFF}}]";
+            var stats = TextFormatter.Build(
+                "{FFFF00}IC Information:\n",
+                $"{{FFFFFF}}Gender: [{{b8d2ec}}{gender}{{FFFFFF}}] | Birthdate: [{{b8d2ec}}{player.BirthDate}{{FFFFFF}}] | Money: [{{00f000}}{Utilities.GroupDigits(player.CharMoney)}{{FFFFFF}}] | Bank: [{{00f000}}0{{FFFFFF}}]\n",
+                $"{{FFFFFF}}Phone Status: [{phoneStatus}] | Phone Number: [{{ebeb00}}{player.Phone.Number}{{FFFFFF}}] | Phone Credit: [{{ebeb00}}{player.Phone.Credit}{{FFFFFF}}] | Mask ID: [{{b8d2ec}}{player.MaskId}{{FFFFFF}}]\n",
+                $"{{FFFFFF}}Jobs: [{jobs}{{FFFFFF}}] | Faction: [Civilian{{FFFFFF}}] | Family: [None]\n",
+                $"{{FFFFFF}}Working at: [None] [None (0){{FFFFFF}}] | Wealth: [None]\n",
+                "\n",
+                "{FFFF00}OOC Information:\n",
+                $"{{FFFFFF}}CitizenId: [{{77efc7}}{player.CitizenId}{{FFFFFF}}] | Level: [{{77efc7}}{player.Level} - ({player.LevelPoints}/{pointsRequired}){{FFFFFF}}] | Paychecks: [{{b8d2ec}}{player.Paycheck}{{FFFFFF}}] | Time Played: [{{b8d2ec}}{player.Playtime.Hours} hour(s) {player.Playtime.Minutes} minute(s) {player.Playtime.Seconds} second(s){{FFFFFF}}]\n",
+                $"{{FFFFFF}}Character Story: [{charStatus}] | Staff: [{admin}] | Warns: [{warn}] | Prestige Coin: [0]\n",
+                $"{{FFFFFF}}World: [{{ebeb00}}{player.VirtualWorld}{{FFFFFF}}] | Interior: [{{ebeb00}}{player.Interior}{{FFFFFF}}] | MaxHP: [{{ab0000}}{player.Vitals.MaxHealth:F1}{{FFFFFF}}] | Health: [{{ab0000}}{player.Vitals.Health:F1}{{FFFFFF}}] | Armour: [{{9f9f9f}}{player.Vitals.Armour:F1}{{FFFFFF}}]"
+            );
 
             var title = $"{{6fe0ba}}{player.Username} Statistic {{c8c8c8}}(UCP: {player.Ucp})";
             player.ShowMessage(title, stats).WithButtons("Settings", "Close").Show();

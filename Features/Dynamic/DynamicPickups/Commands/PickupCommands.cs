@@ -1,6 +1,6 @@
 ﻿using ProjectSMP.Entities.Players.Administrator.Commands;
 using ProjectSMP.Extensions;
-using ProjectSMP.Features.Dynamic.DynamicPickups;
+using ProjectSMP.Core;
 using SampSharp.GameMode;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
@@ -16,7 +16,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicPickups.Commands
 
             if (type < 1 || type > 23)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Type harus antara 1-23!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Type harus antara 1-23!");
                 return;
             }
 
@@ -25,11 +25,11 @@ namespace ProjectSMP.Features.Dynamic.DynamicPickups.Commands
 
             if (pickupId == -1)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Dynamic Pickups sudah tidak bisa dibuat lagi!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Dynamic Pickups sudah tidak bisa dibuat lagi!");
                 return;
             }
 
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah berhasil membuat Dynamic Pickup dengan PickupId: {pickupId}.");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah berhasil membuat Dynamic Pickup dengan PickupId: {pickupId}.");
         }
 
         [Command("gotopickup")]
@@ -40,7 +40,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicPickups.Commands
             var pickup = PickupService.GetPickup(pickupId);
             if (pickup == null)
             {
-                player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Dynamic Pickup dengan PickupId: {pickupId} tidak tersedia!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Dynamic Pickup dengan PickupId: {pickupId} tidak tersedia!");
                 return;
             }
 
@@ -48,7 +48,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicPickups.Commands
             player.SetInteriorSafe(pickup.Interior);
             player.SetVirtualWorldSafe(pickup.VirtualWorld);
 
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu berhasil di teleport ke PickupId: {pickupId}.");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu berhasil di teleport ke PickupId: {pickupId}.");
         }
 
         [Command("editpickup")]
@@ -59,7 +59,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicPickups.Commands
             var pickup = PickupService.GetPickup(pickupId);
             if (pickup == null)
             {
-                player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Dynamic Pickup dengan PickupId: {pickupId} tidak tersedia!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Dynamic Pickup dengan PickupId: {pickupId} tidak tersedia!");
                 return;
             }
 
@@ -74,61 +74,61 @@ namespace ProjectSMP.Features.Dynamic.DynamicPickups.Commands
                     pickup.Interior = player.Interior;
                     await PickupService.SaveAsync(pickupId);
                     PickupService.UpdatePickup(pickupId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Location PickupId {pickupId} berhasil disesuaikan.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Location PickupId {pickupId} berhasil disesuaikan.");
                     break;
 
                 case "model":
                     if (!int.TryParse(value, out int modelId))
                     {
-                        player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{888888} Gunakan /editpickup [PickupId] [model] [Model ID]");
+                        player.SendClientMessage(Color.White, $"{Msg.AdmCmd_G} Gunakan /editpickup [PickupId] [model] [Model ID]");
                         return;
                     }
                     pickup.ModelId = modelId;
                     await PickupService.SaveAsync(pickupId);
                     PickupService.UpdatePickup(pickupId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Model PickupId {pickupId} diubah menjadi {modelId}.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Model PickupId {pickupId} diubah menjadi {modelId}.");
                     break;
 
                 case "type":
                     if (!int.TryParse(value, out int typeId) || typeId < 1 || typeId > 23)
                     {
-                        player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Type harus antara 1-23!");
+                        player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Type harus antara 1-23!");
                         return;
                     }
                     pickup.Type = typeId;
                     await PickupService.SaveAsync(pickupId);
                     PickupService.UpdatePickup(pickupId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Type PickupId {pickupId} diubah menjadi {typeId}.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Type PickupId {pickupId} diubah menjadi {typeId}.");
                     break;
 
                 case "title":
                     pickup.Title = Utilities.ColouredText(value);
                     await PickupService.SaveAsync(pickupId);
                     PickupService.UpdatePickup(pickupId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Title PickupId {pickupId} diubah menjadi \"{pickup.Title}\".");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Title PickupId {pickupId} diubah menjadi \"{pickup.Title}\".");
                     break;
 
                 case "name":
                     pickup.Name = Utilities.ColouredText(value);
                     await PickupService.SaveAsync(pickupId);
                     PickupService.UpdatePickup(pickupId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Name PickupId {pickupId} diubah menjadi \"{pickup.Name}\".");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Name PickupId {pickupId} diubah menjadi \"{pickup.Name}\".");
                     break;
 
                 case "callback":
                     pickup.Callback = value;
                     await PickupService.SaveAsync(pickupId);
                     PickupService.UpdatePickup(pickupId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Callback PickupId {pickupId} diubah menjadi \"{value}\".");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Callback PickupId {pickupId} diubah menjadi \"{value}\".");
                     break;
 
                 case "delete":
                     await PickupService.DeleteAsync(pickupId);
-                    player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} PickupId {pickupId} berhasil dihapus.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} PickupId {pickupId} berhasil dihapus.");
                     break;
 
                 default:
-                    player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{888888} Gunakan /editpickup [PickupId] [Prefix]");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd_G} Gunakan /editpickup [PickupId] [Prefix]");
                     player.SendClientMessage(Color.White, "{FF6347}>> Prefix{888888}: location, model, type, title, name, callback, delete");
                     break;
             }

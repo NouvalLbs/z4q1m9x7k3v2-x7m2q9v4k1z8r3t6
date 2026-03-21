@@ -17,12 +17,12 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (result == null)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player dengan username tersebut tidak ditemukan di database!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player dengan username tersebut tidak ditemukan di database!");
                 return;
             }
 
             string ip = result.ip;
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Data player {username}:");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Data player {username}:");
             player.SendClientMessage(Color.White, $"{{FF6347}}>{{FFFFFF}} IP: {ip} | Last Login: {result.last_login}");
 
             var altQuery = "SELECT `username` FROM `players` WHERE `ip` = @IP AND `username` != @Username";
@@ -30,11 +30,11 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (!alts.Any())
             {
-                player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Tidak ada akun lain yang menggunakan IP yang sama dengan {username}");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Tidak ada akun lain yang menggunakan IP yang sama dengan {username}");
                 return;
             }
 
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Akun lain yang menggunakan IP yang sama dengan {username}:");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Akun lain yang menggunakan IP yang sama dengan {username}:");
             foreach (var alt in alts)
             {
                 player.SendClientMessage(Color.White, $"{{FF6347}}>{{FFFFFF}} {alt.username}");
@@ -48,7 +48,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (ip.Length < 7)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Format IP tidak valid!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Format IP tidak valid!");
                 return;
             }
 
@@ -57,11 +57,11 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (!results.Any())
             {
-                player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Tidak ada akun yang menggunakan IP {{00FFFF}}{ip}{{FFFFFF}}");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Tidak ada akun yang menggunakan IP {{00FFFF}}{ip}{{FFFFFF}}");
                 return;
             }
 
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Daftar akun yang menggunakan IP {{00FFFF}}{ip}{{FFFFFF}}:");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Daftar akun yang menggunakan IP {{00FFFF}}{ip}{{FFFFFF}}:");
             foreach (var result in results)
             {
                 player.SendClientMessage(Color.White, $"{{FF6347}}>{{FFFFFF}} {result.username}");

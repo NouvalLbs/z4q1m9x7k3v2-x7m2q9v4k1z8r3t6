@@ -2,6 +2,7 @@
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using SampSharp.Streamer.World;
+using ProjectSMP.Core;
 using System.Collections.Generic;
 
 namespace ProjectSMP.Features.Chat
@@ -147,7 +148,7 @@ namespace ProjectSMP.Features.Chat
                     color = new Color(ChatColors.LightBrown);
                     break;
                 case ActionType.Ame:
-                    actionText = $"{{ebe6ae}}<AME> {{D0AEEB}}* {name} {msg}";
+                    actionText = $"{Msg.AME} * {name} {msg}";
                     bubbleText = $"* {msg}";
                     color = new Color(ChatColors.Purple);
                     player.SendClientMessage(color, actionText);

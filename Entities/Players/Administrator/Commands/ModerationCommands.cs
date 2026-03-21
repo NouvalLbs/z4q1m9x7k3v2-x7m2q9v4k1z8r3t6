@@ -1,6 +1,5 @@
 ﻿using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Condition;
-using ProjectSMP.Extensions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 using SampSharp.GameMode.World;
@@ -34,13 +33,13 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (target.JailInfo.Time > 0)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut sudah berada di jail!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player tersebut sudah berada di jail!");
                 return;
             }
 
             if (!JailService.JailPlayer(target, seconds, reason))
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Waktu jail harus antara 1 - 3600 detik!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Waktu jail harus antara 1 - 3600 detik!");
                 return;
             }
 
@@ -58,13 +57,13 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (target.JailInfo.Time <= 0)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut tidak berada di jail!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player tersebut tidak berada di jail!");
                 return;
             }
 
             JailService.UnjailPlayer(target);
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah mengeluarkan {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} dari jail!");
-            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengeluarkan kamu dari jail");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah mengeluarkan {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} dari jail!");
+            target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengeluarkan kamu dari jail");
         }
 
         [Command("ban")]
@@ -113,7 +112,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (result == null)
             {
-                player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Player dengan nama {username} tidak ditemukan di database!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player dengan nama {username} tidak ditemukan di database!");
                 return;
             }
 
@@ -122,7 +121,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             {
                 if (p.IsCharLoaded && p.CitizenId == citizenId)
                 {
-                    player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player sedang online, gunakan /ban.");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player sedang online, gunakan /ban.");
                     return;
                 }
             }
@@ -130,7 +129,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             int adminLevel = result.admin;
             if (adminLevel > player.Admin)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Kamu tidak dapat ban admin dengan level lebih tinggi!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu tidak dapat ban admin dengan level lebih tinggi!");
                 return;
             }
 
@@ -166,14 +165,14 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (result == null)
             {
-                player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Player dengan nama {username} tidak ditemukan di database!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player dengan nama {username} tidak ditemukan di database!");
                 return;
             }
 
             int isBanned = result.ban;
             if (isBanned == 0)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut tidak dalam status banned!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player tersebut tidak dalam status banned!");
                 return;
             }
 
@@ -194,13 +193,13 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (target.Condition.Injured < 1)
             {
-                player.SendClientMessage(Color.White, "{FF6347}<AdmCmd>{FFFFFF} Player tersebut tidak dalam keadaan mati!");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Player tersebut tidak dalam keadaan mati!");
                 return;
             }
 
             ConditionService.RevivePlayerInPlace(target);
-            player.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Kamu telah melakukan revive terhadap {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
-            target.SendClientMessage(Color.White, $"{{FF6347}}<AdmCmd>{{FFFFFF}} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah melakukan revive terhadap kamu");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah melakukan revive terhadap {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}}!");
+            target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah melakukan revive terhadap kamu");
         }
     }
 }
