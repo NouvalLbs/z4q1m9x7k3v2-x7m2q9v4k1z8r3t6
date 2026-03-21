@@ -8,7 +8,7 @@ namespace ProjectSMP.Plugins.WeaponConfig
 {
     internal static class WeaponConfigLoader
     {
-        private const string FilePath = "Weapons.json";
+        private const string FilePath = "scriptfiles/Weapons.json";
         private static readonly JsonSerializerOptions Opts = new()
         {
             WriteIndented = true,

@@ -34,7 +34,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                 return;
             }
 
-            var reportId = ReportService.AddReport(player, text);
+            _ = ReportService.AddReport(player, text);
             ReportService.SetReportTime(player);
 
             player.SendClientMessage(Color.White, $"{Msg.Report} Report kamu telah dikirim ke admin. Gunakan /reports untuk melihat status report kamu.");
@@ -93,6 +93,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             }
 
             ReportService.MarkHandled(reportId, player.Id, player.Ucp);
+            ReportService.NotifyStaffResponse(player.Id, player.Ucp, report.PlayerName);
             player.SendClientMessage(Color.White, $"{Msg.Report} Kamu telah menjawab report #{reportId} dari {report.PlayerName}.");
         }
 
@@ -445,6 +446,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                     }
 
                     ReportService.MarkHandled(report.Id, player.Id, player.Ucp);
+                    ReportService.NotifyStaffResponse(player.Id, player.Ucp, report.PlayerName);
                     player.SendClientMessage(Color.White, $"{Msg.Report} Kamu telah menjawab report #{report.Id} dari {report.PlayerName}.");
                     player.SetData("SelectedReport", -1);
                     ShowAdminReports(player, player.GetData("ReportPage", 0));

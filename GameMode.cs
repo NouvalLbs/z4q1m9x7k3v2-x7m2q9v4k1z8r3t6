@@ -33,7 +33,7 @@ namespace ProjectSMP
             WeaponConfigHealthBar.Init();
 
             // Initialize Anticheat
-            _anticheat = AnticheatPlugin.Create(configPath: "AntiCheat.json", weaponConfigMode: true);
+            _anticheat = AnticheatPlugin.Create(configPath: "scriptfiles/AntiCheat.json", weaponConfigMode: true);
             _anticheat.RegisterEvents(this);
             _anticheat.Warnings.PunishmentRequired += OnAnticheatPunishment;
 

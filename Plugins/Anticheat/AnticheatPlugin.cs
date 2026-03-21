@@ -208,7 +208,7 @@ public class AnticheatPlugin : IDisposable
         };
     }
 
-    public static AnticheatPlugin Create(string configPath = "AntiCheat.json", bool weaponConfigMode = false) {
+    public static AnticheatPlugin Create(string configPath = "scriptfiles/AntiCheat.json", bool weaponConfigMode = false) {
         var cfg = LoadConfig(configPath);
         var players = new PlayerStateManager();
         var vehicles = new VehicleStateManager();
@@ -227,7 +227,7 @@ public class AnticheatPlugin : IDisposable
         return plugin;
     }
 
-    public static AnticheatConfig LoadConfig(string path = "AntiCheat.json")
+    public static AnticheatConfig LoadConfig(string path = "scriptfiles/AntiCheat.json")
     {
         if (!File.Exists(path))
         {

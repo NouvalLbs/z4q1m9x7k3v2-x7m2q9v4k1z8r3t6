@@ -8,7 +8,7 @@ namespace ProjectSMP.Core
 
     public static class LocalizationManager
     {
-        private const string FilePath = "Localization.json";
+        private const string FilePath = "scriptfiles/Localization.json";
         private const string Fallback = "ID";
 
         private static Dictionary<string, Dictionary<string, Dictionary<string, string>>> _data = new();

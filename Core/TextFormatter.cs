@@ -30,6 +30,7 @@
         public const string Report = "{FF6347}[Report]{FFFFFF}";
         public const string Report_G = "{FF6347}[Report]{888888}";
         public const string Report_A = "{FF6347}[Report][Answer]{FFFFFF}";
+        public const string Report_R = "{fff000}[RESPOND]{fffccc}";
         public const string Death = "{C6E2FF}[Death]{FFFFFF}";
         public const string Hospital = "{F4C2C2}[Hospital]{FFFFFF}";
         public const string Settings = "{C6E2FF}[Settings]{FFFFFF}";

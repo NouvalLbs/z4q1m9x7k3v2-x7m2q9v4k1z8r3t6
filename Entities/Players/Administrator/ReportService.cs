@@ -16,6 +16,7 @@ namespace ProjectSMP.Entities.Players.Administrator
         private const int ReportsPerPage = 10;
         private static readonly List<Report> Reports = new();
         private static int NextId = 0;
+        private static readonly Dictionary<int, Timer> ReportTimers = new();
 
         public static int AddReport(Player player, string text)
         {
@@ -35,7 +36,27 @@ namespace ProjectSMP.Entities.Players.Administrator
                 Reports.RemoveAt(0);
 
             NotifyAdmins(report);
+            StartAutoDeleteTimer(report.Id, 900000);
+            
             return report.Id;
+        }
+
+        public static void StartAutoDeleteTimer(int reportId, int delayMs)
+        {
+            if (ReportTimers.ContainsKey(reportId))
+            {
+                ReportTimers[reportId].Dispose();
+                ReportTimers.Remove(reportId);
+            }
+
+            var timer = new SampSharp.GameMode.SAMP.Timer(delayMs, false);
+            timer.Tick += (s, e) =>
+            {
+                DeleteReport(reportId);
+                ReportTimers.Remove(reportId);
+                timer.Dispose();
+            };
+            ReportTimers[reportId] = timer;
         }
 
         public static bool CanReport(Player player)
@@ -65,6 +86,12 @@ namespace ProjectSMP.Entities.Players.Administrator
         public static void DeleteReport(int id)
         {
             Reports.RemoveAll(r => r.Id == id);
+            
+            if (ReportTimers.TryGetValue(id, out var timer))
+            {
+                timer.Dispose();
+                ReportTimers.Remove(id);
+            }
         }
 
         public static void MarkHandled(int id, int adminId, string adminName)
@@ -75,6 +102,8 @@ namespace ProjectSMP.Entities.Players.Administrator
                 report.Handled = true;
                 report.AdminId = adminId;
                 report.AdminName = adminName;
+                
+                StartAutoDeleteTimer(id, 180000);
             }
         }
 
@@ -138,6 +167,15 @@ namespace ProjectSMP.Entities.Players.Administrator
         public static void Cleanup(Player player)
         {
             RemovePlayerReports(player.Id);
+        }
+
+        public static void NotifyStaffResponse(int responderId, string responderName, string targetName)
+        {
+            foreach (var staff in BasePlayer.All.OfType<Player>().Where(p => p.Admin >= 1 && p.Id != responderId))
+            {
+                staff.SendClientMessage(Color.White, 
+                    $"{Msg.Report_R}[{responderId}] {{ff0000}}{responderName}{{fffccc}} has responded to {{fff000}}{targetName}{{fffccc}}'s report");
+            }
         }
 
         public static int ReportsPerPageValue => ReportsPerPage;

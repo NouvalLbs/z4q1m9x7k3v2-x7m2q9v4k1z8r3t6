@@ -1,9 +1,8 @@
 ﻿using ProjectSMP.Core;
-using ProjectSMP.Entities.Players.Settings;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 
-namespace ProjectSMP.Commands
+namespace ProjectSMP.Entities.Players.Settings.Commands
 {
     public class SettingsCommands
     {

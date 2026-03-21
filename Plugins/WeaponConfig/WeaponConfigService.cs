@@ -599,6 +599,15 @@ namespace ProjectSMP.Plugins.WeaponConfig
             WeaponConfigDamageFeed.AddGiven(issuer, damaged.Name, args.Amount, weaponId);
             WeaponConfigDamageFeed.AddTaken(damaged, issuer.Name, args.Amount, weaponId);
             PlayerDamageDone?.Invoke(null, args);
+            if (damaged.IsCharLoaded) {
+                _ = DamageLogService.LogDamageAsync(
+                    damaged.CitizenId,
+                    issuer.Username,
+                    weaponId,
+                    args.Amount,
+                    bodypart
+                );
+            }
         }
 
         public static void HandleVehicleDamage(Player issuer, int vehicleId, float amount, int weaponId)
@@ -640,6 +649,15 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 WeaponConfigDamageFeed.AddGiven(issuer, target.Name, args.Amount, weaponId);
                 WeaponConfigDamageFeed.AddTaken(target, issuer.Name, args.Amount, weaponId);
                 PlayerDamageDone?.Invoke(null, args);
+                if (target.IsCharLoaded) {
+                    _ = DamageLogService.LogDamageAsync(
+                        target.CitizenId,
+                        issuer.Username,
+                        weaponId,
+                        args.Amount,
+                        0
+                    );
+                }
             }
         }
 
@@ -691,6 +709,15 @@ namespace ProjectSMP.Plugins.WeaponConfig
                 WeaponConfigDamageFeed.AddTaken(damaged, GetWeaponName(weaponId), args.Amount, weaponId);
             }
             PlayerDamageDone?.Invoke(null, args);
+            if (damaged.IsCharLoaded && issuer != null) {
+                _ = DamageLogService.LogDamageAsync(
+                    damaged.CitizenId,
+                    issuer.Username,
+                    weaponId,
+                    args.Amount,
+                    bodypart
+                );
+            }
         }
 
         private static void TrackPreviousHit(PlayerWcState s, int issuerId, int weapon, float amount, int bodypart)

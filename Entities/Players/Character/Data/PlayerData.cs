@@ -46,5 +46,6 @@ namespace ProjectSMP
 
         public List<PlayerBankAccount> BankAccounts { get; set; } = new();
         public Vector3 DeathPosition { get; set; }
+        public long LastSpawnTick { get; set; }
     }
 }

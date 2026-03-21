@@ -33,7 +33,7 @@ namespace ProjectSMP.Core {
     }
 
     internal class ConfigManager {
-        private const string Path = "GameConfig.json";
+        private const string Path = "scriptfiles/GameConfig.json";
 
         public static GameConfig Game { get; private set; } = new();
 

@@ -182,6 +182,15 @@ namespace ProjectSMP.Entities.Players.Character
         public static void HandleSpawn(Player player)
         {
             if (!player.IsCharLoaded) return;
+            
+            const int SpawnCooldownMs = 2000;
+            var currentTick = Environment.TickCount;
+            
+            if (currentTick - player.LastSpawnTick < SpawnCooldownMs)
+                return;
+            
+            player.LastSpawnTick = currentTick;
+            
             if (BanService.IsPlayerBanned(player))
                 return;
 
@@ -202,11 +211,13 @@ namespace ProjectSMP.Entities.Players.Character
             ConditionService.RegisterPlayer(player);
             ConditionService.RestoreDeathState(player);
 
-            if (player.Condition.Injured == 0) {
+            if (player.Condition.Injured == 0)
+            {
                 player.SetHealthSafe(player.Vitals.Health, player.Vitals.Armour);
             }
 
-            EnterExitService.ProcessEnterExit(player, () => {
+            EnterExitService.ProcessEnterExit(player, () =>
+            {
                 if (!player.IsDisposed)
                     NameTagService.Refresh(player);
                     SettingsService.ApplyDynamicObjectPriority(player);
@@ -272,6 +283,7 @@ namespace ProjectSMP.Entities.Players.Character
             _lists.Remove(player.Id);
             _creations.Remove(player.Id);
             player.IsCharLoaded = false;
+            player.LastSpawnTick = 0;
             PlaytimeService.UnregisterPlayer(player);
         }
 
