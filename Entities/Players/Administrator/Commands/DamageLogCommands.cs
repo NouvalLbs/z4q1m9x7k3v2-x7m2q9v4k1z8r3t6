@@ -6,7 +6,6 @@ using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ProjectSMP.Entities.Players.Administrator.Commands
 {

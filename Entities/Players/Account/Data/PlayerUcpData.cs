@@ -5,6 +5,5 @@
         public string DiscordId { get; set; } = string.Empty;
         public int VerifyCode { get; set; }
         public int LoginAttempt { get; set; }
-        public int LoginTimeout { get; set; }
     }
 }

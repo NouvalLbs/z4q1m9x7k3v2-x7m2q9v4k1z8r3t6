@@ -6,14 +6,4 @@
         public string Name { get; set; }
         public int Category { get; set; }
     }
-
-    public enum VehicleCategory
-    {
-        Cars = 0,
-        Bikes = 1,
-        Aircraft = 2,
-        Boats = 3,
-        Heavy = 4,
-        Public = 5
-    }
 }

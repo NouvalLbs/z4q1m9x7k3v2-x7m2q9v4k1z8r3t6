@@ -12,7 +12,6 @@ namespace ProjectSMP
         public string RegDate { get; set; } = "";
         public string LastLogin { get; set; } = "";
         public bool IsCharLoaded { get; set; }
-        public long LoadTick { get; set; }
 
         public string Username { get; set; } = "";
         public int CharSkin { get; set; }
@@ -45,7 +44,6 @@ namespace ProjectSMP
         public List<CharJob> Jobs { get; set; } = new();
 
         public List<PlayerBankAccount> BankAccounts { get; set; } = new();
-        public Vector3 DeathPosition { get; set; }
         public long LastSpawnTick { get; set; }
     }
 }

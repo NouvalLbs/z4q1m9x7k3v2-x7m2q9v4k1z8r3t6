@@ -77,11 +77,14 @@ namespace ProjectSMP.Features.Bank
 
                     switch (e.ListItem)
                     {
-                        case 4: ShowDepositDialog(player, accountIndex); break;
-                        case 5: ShowWithdrawDialog(player, accountIndex); break;
-                        case 6: ShowTransferAccountDialog(player, accountIndex); break;
-                        case 7:
+                        case 3: ShowDepositDialog(player, accountIndex); break;
+                        case 4: ShowWithdrawDialog(player, accountIndex); break;
+                        case 5: ShowTransferAccountDialog(player, accountIndex); break;
+                        case 6:
                             player.SendClientMessage(Color.White, $"{Msg.Bank} Fitur Paycheck akan segera tersedia.");
+                            break;
+                        default:
+                            ShowBankMenu(player, 0);
                             break;
                     }
                 });

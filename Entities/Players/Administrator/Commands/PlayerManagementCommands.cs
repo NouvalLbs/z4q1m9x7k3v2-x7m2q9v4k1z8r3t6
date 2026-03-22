@@ -5,7 +5,6 @@ using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
-using SampSharp.GameMode.World;
 
 namespace ProjectSMP.Entities.Players.Administrator.Commands
 {
@@ -60,7 +59,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             var target = GetTargetPlayer(player, targetInput);
             if (!ValidateTarget(player, target)) return;
 
-            TeleportHelper.TeleportToPlayer(target, player, reverse: true);
+            TeleportHelper.TeleportToPlayer(target, player);
 
             player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah menarik {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} ke lokasi kamu!");
             target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah menarik kamu ke lokasi mereka");
