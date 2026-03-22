@@ -6,21 +6,6 @@ namespace ProjectSMP.Core.Discords
 {
     public class DiscordCommands : InteractionModuleBase<SocketInteractionContext>
     {
-        [SlashCommand("ucp", "Open UCP Panel")]
-        public async Task ShowUCP()
-        {
-            var embed = DiscordEmbeds.BuildUCPPanel();
-
-            var component = new ComponentBuilder()
-                .WithButton("📝 Register", "btn_register", ButtonStyle.Primary, row: 0)
-                .WithButton("🔄 Resend Code", "btn_resend", ButtonStyle.Secondary, row: 0)
-                .WithButton("🔑 Change Password", "btn_chgpass", ButtonStyle.Danger, row: 1)
-                .WithButton("🔓 Reverif", "btn_reverif", ButtonStyle.Success, row: 1)
-                .Build();
-
-            await RespondAsync(embed: embed, components: component);
-        }
-
         [ComponentInteraction("btn_register")]
         public async Task HandleRegister()
         {

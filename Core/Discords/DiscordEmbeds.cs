@@ -1,17 +1,18 @@
 ﻿using Discord;
+using ProjectSMP.Core.Discords.Models;
 
 namespace ProjectSMP.Core.Discords
 {
     public static class DiscordEmbeds
     {
-        public static Embed BuildUCPPanel()
+        public static Embed BuildUCPPanel(DiscordConfigs config)
         {
             return new EmbedBuilder()
-                .WithTitle("🎮 State Side UCP Panel")
-                .WithDescription("Halo! Selamat datang di server State Side Roleplay! Di sini, Anda akan mendaftar akun UCP (User Control Panel), melakukan verifikasi ulang akun, dan mengirim ulang kode.\n\nJangan ragu untuk bertanya jika Anda membutuhkan bantuan lebih lanjut.")
+                .WithTitle(config.UcpPanelTitle)
+                .WithDescription(config.UcpPanelDescription)
                 .WithColor(Color.Blue)
-                .WithThumbnailUrl("https://i.imgur.com/example.png")
-                .WithFooter("State Side Roleplay", "https://i.imgur.com/footer.png")
+                .WithThumbnailUrl(config.UcpPanelThumbnailUrl)
+                .WithFooter(config.UcpPanelFooterText, config.UcpPanelFooterIconUrl)
                 .WithCurrentTimestamp()
                 .Build();
         }

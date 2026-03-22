@@ -1,10 +1,12 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using System;
-using System.Threading.Tasks;
-using SampSharp.GameMode.SAMP;
 using ProjectSMP.Core.Discords.Models;
+using SampSharp.GameMode.SAMP;
+using System;
+using System.Text.Json;
+using System.Threading.Tasks;
+using System.IO;
 
 namespace ProjectSMP.Core.Discords
 {
@@ -14,12 +16,20 @@ namespace ProjectSMP.Core.Discords
         private static InteractionService _interactions;
         private static Timer _responseTimer;
         private static bool _isRunning;
-
-        private const string Token = "MTAxMzQyMzMxNzA0ODM3MzMxOA.Gl9mlc.wcQcfLiKTM0A5JEh8FzSlmKRhqBkCIsLfjuDQQ";
-        private const ulong GuildId = 1037861564851695769;
+        private static DiscordConfigs _config;
+        private const string ConfigPath = "scriptfiles/DiscordConfig.json";
 
         public static async Task InitializeAsync()
         {
+            _config = await LoadOrCreateConfig();
+            Console.WriteLine(_config.Token);
+
+            if (string.IsNullOrEmpty(_config.Token))
+            {
+                Console.WriteLine("[Discord] Token not configured in DiscordConfig.json");
+                return;
+            }
+
             var config = new DiscordSocketConfig
             {
                 GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMessages,
@@ -35,7 +45,7 @@ namespace ProjectSMP.Core.Discords
 
             await _interactions.AddModuleAsync<DiscordCommands>(null);
 
-            await _client.LoginAsync(TokenType.Bot, Token);
+            await _client.LoginAsync(TokenType.Bot, _config.Token);
             await _client.StartAsync();
 
             _responseTimer = new Timer(3000, true);
@@ -70,12 +80,15 @@ namespace ProjectSMP.Core.Discords
         {
             try
             {
-                await _interactions.RegisterCommandsToGuildAsync(GuildId);
+                await _interactions.RegisterCommandsToGuildAsync(_config.GuildId);
                 Console.WriteLine($"[Discord] Bot ready! Logged in as {_client.CurrentUser.Username}");
+
+                if (_config.AutoCreateUcpPanel)
+                    await EnsureUcpPanel();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Discord] Error registering commands: {ex.Message}");
+                Console.WriteLine($"[Discord] Error on ready: {ex.Message}");
             }
         }
 
@@ -161,6 +174,113 @@ namespace ProjectSMP.Core.Discords
             catch (Exception ex)
             {
                 Console.WriteLine($"[Discord] Error sending DM: {ex.Message}");
+            }
+        }
+
+        private static async Task EnsureUcpPanel()
+        {
+            try
+            {
+                if (_config.UcpPanelChannelId == 0)
+                {
+                    Console.WriteLine("[Discord] UCP Panel channel ID not configured");
+                    return;
+                }
+
+                var channel = await _client.GetChannelAsync(_config.UcpPanelChannelId) as ITextChannel;
+                if (channel == null)
+                {
+                    Console.WriteLine($"[Discord] UCP Panel channel {_config.UcpPanelChannelId} not found");
+                    return;
+                }
+
+                if (_config.UcpPanelMessageId > 0)
+                {
+                    try
+                    {
+                        var existingMsg = await channel.GetMessageAsync(_config.UcpPanelMessageId);
+                        if (existingMsg != null)
+                        {
+                            Console.WriteLine($"[Discord] UCP Panel already exists (Message ID: {_config.UcpPanelMessageId})");
+                            return;
+                        }
+                    }
+                    catch
+                    {
+                        Console.WriteLine("[Discord] Previous UCP Panel message not found, creating new one");
+                    }
+                }
+
+                var embed = DiscordEmbeds.BuildUCPPanel(_config);
+                var component = new ComponentBuilder()
+                    .WithButton("Register", "btn_register", ButtonStyle.Primary, row: 0)
+                    .WithButton("Resend Code", "btn_resend", ButtonStyle.Secondary, row: 0)
+                    .WithButton("Reverif", "btn_reverif", ButtonStyle.Success, row: 0)
+                    .WithButton("Change Password", "btn_chgpass", ButtonStyle.Danger, row: 0)
+                    .Build();
+
+                var message = await channel.SendMessageAsync(embed: embed, components: component);
+
+                _config.UcpPanelMessageId = message.Id;
+                await SaveConfig();
+
+                Console.WriteLine($"[Discord] UCP Panel created (Message ID: {message.Id})");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Discord] Error ensuring UCP panel: {ex.Message}");
+            }
+        }
+
+        private static async Task<DiscordConfigs> LoadOrCreateConfig()
+        {
+            try
+            {
+                if (!File.Exists(ConfigPath))
+                {
+                    var defaultConfig = new DiscordConfigs
+                    {
+                        Token = "YOUR_BOT_TOKEN_HERE",
+                        GuildId = 0,
+                        UcpPanelChannelId = 0,
+                        UcpPanelMessageId = 0,
+                        AutoCreateUcpPanel = true,
+                        UcpPanelTitle = "🎮 State Side UCP Panel",
+                        UcpPanelDescription = "Halo! Selamat datang di server State Side Roleplay! Di sini, Anda akan mendaftar akun UCP (User Control Panel), melakukan verifikasi ulang akun, dan mengirim ulang kode.\n\nJangan ragu untuk bertanya jika Anda membutuhkan bantuan lebih lanjut.",
+                        UcpPanelThumbnailUrl = "https://i.imgur.com/example.png",
+                        UcpPanelFooterText = "State Side Roleplay",
+                        UcpPanelFooterIconUrl = "https://i.imgur.com/footer.png"
+                    };
+
+                    var json = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true });
+                    await File.WriteAllTextAsync(ConfigPath, json);
+
+                    Console.WriteLine($"[Discord] Created default config at {ConfigPath}");
+                    Console.WriteLine("[Discord] Please configure Token, GuildId, and UcpPanelChannelId");
+
+                    return defaultConfig;
+                }
+
+                var configJson = await File.ReadAllTextAsync(ConfigPath);
+                return JsonSerializer.Deserialize<DiscordConfigs>(configJson) ?? new DiscordConfigs();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Discord] Error loading config: {ex.Message}");
+                return new DiscordConfigs();
+            }
+        }
+
+        private static async Task SaveConfig()
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(_config, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(ConfigPath, json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Discord] Error saving config: {ex.Message}");
             }
         }
 
