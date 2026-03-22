@@ -1,4 +1,5 @@
 ﻿using ProjectSMP.Core;
+using ProjectSMP.Core.Discords;
 using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.Needs;
@@ -26,6 +27,15 @@ namespace ProjectSMP
 
         protected override void OnInitialized(EventArgs e) {
             base.OnInitialized(e);
+
+            // Initialize Discord C#
+            Task.Run(async () => {
+                try {
+                    await DiscordService.InitializeAsync();
+                } catch (Exception ex) {
+                    Console.WriteLine($"[Discord] Init failed: {ex.Message}");
+                }
+            });
 
             // Initialize Weapon Config
             var (wcCfg, wcWeapons) = WeaponConfigLoader.Load();
@@ -152,6 +162,14 @@ namespace ProjectSMP
             ConditionService.Dispose();
             JailService.Dispose();
             PlaytimeService.Dispose();
+
+            try {
+                DiscordService.ShutdownAsync().GetAwaiter().GetResult();
+                DiscordEventBus.Clear();
+            } catch (Exception ex) {
+                Console.WriteLine($"[Discord] Shutdown error: {ex.Message}");
+            }
+
             base.OnExited(e);
         }
     }
