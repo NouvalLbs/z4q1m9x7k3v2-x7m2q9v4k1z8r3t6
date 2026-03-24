@@ -1,5 +1,5 @@
 ﻿using ProjectSMP.Entities.Players.Character;
-using ProjectSMP.Features.Bank;
+using ProjectSMP.Features.Bank.Data;
 using SampSharp.GameMode;
 using System.Collections.Generic;
 

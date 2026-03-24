@@ -1,4 +1,5 @@
 ﻿using ProjectSMP.Core;
+using ProjectSMP.Features.Bank.Data;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using System;

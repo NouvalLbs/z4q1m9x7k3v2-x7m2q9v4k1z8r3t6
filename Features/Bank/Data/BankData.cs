@@ -1,4 +1,4 @@
-﻿namespace ProjectSMP.Features.Bank
+﻿namespace ProjectSMP.Features.Bank.Data
 {
     public class PlayerBankAccount
     {

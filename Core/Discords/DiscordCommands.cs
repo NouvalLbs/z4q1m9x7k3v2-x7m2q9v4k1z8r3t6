@@ -1,5 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ProjectSMP.Core.Discords
@@ -19,18 +21,18 @@ namespace ProjectSMP.Core.Discords
             if (existing != null)
             {
                 await RespondAsync(embed: DiscordEmbeds.BuildError("Already Registered",
-                    $"Akun Discord Anda sudah terdaftar dengan UCP: **{existing.ucp}**"), ephemeral: true);
+                    $"Your Discord is already linked to UCP: **{existing.ucp}**"), ephemeral: true);
                 return;
             }
 
-            await DatabaseManager.ExecuteAsync(
-                "INSERT INTO discord_actions (user_id, discord_id, action, data) VALUES (@UserId, @DiscordId, 'register', '')",
-                new { UserId = (long)user.Id, DiscordId = discordId });
+            var modal = new ModalBuilder()
+                .WithTitle("Register UCP - Prestige World")
+                .WithCustomId("modal_register")
+                .AddTextInput("UCP Name", "ucp_name", TextInputStyle.Short,
+                    "Enter your desired UCP name", 3, 24)
+                .Build();
 
-            DiscordEventBus.Publish("discord.register", new { UserId = user.Id, DiscordId = discordId });
-
-            await RespondAsync(embed: DiscordEmbeds.BuildSuccess("Registration Started",
-                "Permintaan registrasi Anda telah dikirim! Admin akan segera memproses."), ephemeral: true);
+            await RespondWithModalAsync(modal);
         }
 
         [ComponentInteraction("btn_resend")]
@@ -40,20 +42,44 @@ namespace ProjectSMP.Core.Discords
             var discordId = user.Id.ToString();
 
             var ucpData = await DatabaseManager.QueryFirstAsync<dynamic>(
-                "SELECT ucp, verifycode FROM player_ucp WHERE discordId = @DiscordId AND password = '' LIMIT 1",
+                "SELECT ucp, verifycode, password FROM player_ucp WHERE discordId = @DiscordId LIMIT 1",
                 new { DiscordId = discordId });
 
             if (ucpData == null)
             {
-                await RespondAsync(embed: DiscordEmbeds.BuildError("Not Found",
-                    "Akun Anda tidak ditemukan atau sudah terverifikasi."), ephemeral: true);
+                await RespondAsync(embed: DiscordEmbeds.BuildError(
+                    "Not Found",
+                    "Your Discord account is not linked to any UCP.\nPlease register first using the **Register** button."), ephemeral: true);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(ucpData.password))
+            {
+                await RespondAsync(embed: DiscordEmbeds.BuildError(
+                    "Already Activated",
+                    $"Your UCP **{ucpData.ucp}** is already activated.\nYou don't need a verification pin anymore."), ephemeral: true);
                 return;
             }
 
             var code = ucpData.verifycode.ToString();
-            var embed = DiscordEmbeds.BuildVerificationCode(ucpData.ucp, code);
+            var config = DiscordService.GetConfig();
 
-            await RespondAsync(embed: embed, ephemeral: true);
+            try
+            {
+                var dmChannel = await user.CreateDMChannelAsync();
+                var embed = DiscordEmbeds.BuildResendCode(ucpData.ucp, code, config);
+                await dmChannel.SendMessageAsync(embed: embed);
+
+                await RespondAsync(embed: DiscordEmbeds.BuildSuccess(
+                    "PIN Resent!",
+                    $"Your verification PIN for **{ucpData.ucp}** has been sent to your DM.\nPlease check your Direct Messages."), ephemeral: true);
+            }
+            catch
+            {
+                await RespondAsync(embed: DiscordEmbeds.BuildError(
+                    "DM Failed",
+                    "Cannot send you a DM. Please enable DMs from server members."), ephemeral: true);
+            }
         }
 
         [ComponentInteraction("btn_chgpass")]
@@ -63,24 +89,35 @@ namespace ProjectSMP.Core.Discords
             var discordId = user.Id.ToString();
 
             var ucpData = await DatabaseManager.QueryFirstAsync<dynamic>(
-                "SELECT ucp FROM player_ucp WHERE discordId = @DiscordId AND password != '' LIMIT 1",
+                "SELECT ucp, password FROM player_ucp WHERE discordId = @DiscordId LIMIT 1",
                 new { DiscordId = discordId });
 
             if (ucpData == null)
             {
-                await RespondAsync(embed: DiscordEmbeds.BuildError("Not Verified",
-                    "Akun Anda belum terverifikasi. Silakan aktivasi terlebih dahulu."), ephemeral: true);
+                await RespondAsync(embed: DiscordEmbeds.BuildError(
+                    "No UCP Found",
+                    "Your Discord account is not linked to any UCP.\nPlease register first using the **Register** button."), ephemeral: true);
                 return;
             }
 
-            await DatabaseManager.ExecuteAsync(
-                "INSERT INTO discord_actions (user_id, discord_id, action, data) VALUES (@UserId, @DiscordId, 'changepass', @Ucp)",
-                new { UserId = (long)user.Id, DiscordId = discordId, Ucp = ucpData.ucp });
+            if (string.IsNullOrEmpty(ucpData.password))
+            {
+                await RespondAsync(embed: DiscordEmbeds.BuildError(
+                    "Account Not Activated",
+                    $"Your UCP **{ucpData.ucp}** is not activated yet.\nPlease activate your account in-game first."), ephemeral: true);
+                return;
+            }
 
-            DiscordEventBus.Publish("discord.changepass", new { UserId = user.Id, Ucp = ucpData.ucp });
+            var modal = new ModalBuilder()
+                .WithTitle("Change Password - Prestige World")
+                .WithCustomId("modal_changepass")
+                .AddTextInput("New Password", "new_password", TextInputStyle.Short,
+                    "Enter your new password", 6, 32)
+                .AddTextInput("Confirm New Password", "confirm_password", TextInputStyle.Short,
+                    "Re-enter your new password", 6, 32)
+                .Build();
 
-            await RespondAsync(embed: DiscordEmbeds.BuildInfo("Password Reset",
-                "Permintaan reset password telah dikirim. Ikuti instruksi yang diberikan."), ephemeral: true);
+            await RespondWithModalAsync(modal);
         }
 
         [ComponentInteraction("btn_reverif")]
@@ -89,14 +126,80 @@ namespace ProjectSMP.Core.Discords
             var user = Context.User;
             var discordId = user.Id.ToString();
 
-            await DatabaseManager.ExecuteAsync(
-                "INSERT INTO discord_actions (user_id, discord_id, action, data) VALUES (@UserId, @DiscordId, 'reverif', '')",
-                new { UserId = (long)user.Id, DiscordId = discordId });
+            var ucpData = await DatabaseManager.QueryFirstAsync<dynamic>(
+                "SELECT ucp FROM player_ucp WHERE discordId = @DiscordId LIMIT 1",
+                new { DiscordId = discordId });
 
-            DiscordEventBus.Publish("discord.reverif", new { UserId = user.Id, DiscordId = discordId });
+            if (ucpData == null)
+            {
+                await RespondAsync(embed: DiscordEmbeds.BuildError(
+                    "No UCP Found",
+                    "Your Discord account is not linked to any UCP.\nPlease register first using the **Register** button."), ephemeral: true);
+                return;
+            }
 
-            await RespondAsync(embed: DiscordEmbeds.BuildInfo("Reverification",
-                "Permintaan reverifikasi telah dikirim. Silakan tunggu admin untuk memproses."), ephemeral: true);
+            var config = DiscordService.GetConfig();
+
+            if (config.ReverifRoleId == 0)
+            {
+                await RespondAsync(embed: DiscordEmbeds.BuildError(
+                    "Configuration Error",
+                    "Reverification role is not configured. Please contact server administrator."), ephemeral: true);
+                return;
+            }
+
+            try
+            {
+                var guild = Context.Guild;
+                if (guild == null)
+                {
+                    await RespondAsync(embed: DiscordEmbeds.BuildError(
+                        "Error",
+                        "This command must be used in a server."), ephemeral: true);
+                    return;
+                }
+
+                var guildUser = guild.GetUser(user.Id);
+                if (guildUser == null)
+                {
+                    await RespondAsync(embed: DiscordEmbeds.BuildError(
+                        "Error",
+                        "Cannot find your user profile in this server."), ephemeral: true);
+                    return;
+                }
+
+                var role = guild.GetRole(config.ReverifRoleId);
+                if (role == null)
+                {
+                    await RespondAsync(embed: DiscordEmbeds.BuildError(
+                        "Configuration Error",
+                        "Reverification role not found. Please contact server administrator."), ephemeral: true);
+                    return;
+                }
+
+                if (guildUser.Roles.Any(r => r.Id == config.ReverifRoleId))
+                {
+                    await RespondAsync(embed: DiscordEmbeds.BuildInfo(
+                        "Already Verified",
+                        $"You already have the verification role: **{role.Name}**"), ephemeral: true);
+                    return;
+                }
+
+                await guildUser.AddRoleAsync(role);
+
+                await RespondAsync(embed: DiscordEmbeds.BuildSuccess(
+                    "Reverification Successful!",
+                    $"You have been granted the **{role.Name}** role.\nYour UCP: **{ucpData.ucp}**"), ephemeral: true);
+
+                Console.WriteLine($"[Discord] Reverif: {user.Username} ({user.Id}) -> UCP: {ucpData.ucp}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Discord] Reverif error: {ex.Message}");
+                await RespondAsync(embed: DiscordEmbeds.BuildError(
+                    "Permission Error",
+                    "Bot doesn't have permission to assign roles. Please contact server administrator."), ephemeral: true);
+            }
         }
     }
 }

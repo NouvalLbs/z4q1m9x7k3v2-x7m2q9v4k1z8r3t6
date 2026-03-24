@@ -22,18 +22,14 @@ namespace ProjectSMP.Core.Discords
         public static async Task InitializeAsync()
         {
             _config = await LoadOrCreateConfig();
-            Console.WriteLine(_config.Token);
-
             if (string.IsNullOrEmpty(_config.Token))
             {
                 Console.WriteLine("[Discord] Token not configured in DiscordConfig.json");
                 return;
             }
 
-            var config = new DiscordSocketConfig
-            {
-                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMessages,
-                AlwaysDownloadUsers = true
+            var config = new DiscordSocketConfig {
+                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMembers, AlwaysDownloadUsers = true
             };
 
             _client = new DiscordSocketClient(config);
@@ -44,6 +40,7 @@ namespace ProjectSMP.Core.Discords
             _client.InteractionCreated += HandleInteraction;
 
             await _interactions.AddModuleAsync<DiscordCommands>(null);
+            await _interactions.AddModuleAsync<DiscordModals>(null);
 
             await _client.LoginAsync(TokenType.Bot, _config.Token);
             await _client.StartAsync();
@@ -213,10 +210,10 @@ namespace ProjectSMP.Core.Discords
 
                 var embed = DiscordEmbeds.BuildUCPPanel(_config);
                 var component = new ComponentBuilder()
-                    .WithButton("Register", "btn_register", ButtonStyle.Primary, row: 0)
-                    .WithButton("Resend Code", "btn_resend", ButtonStyle.Secondary, row: 0)
-                    .WithButton("Reverif", "btn_reverif", ButtonStyle.Success, row: 0)
-                    .WithButton("Change Password", "btn_chgpass", ButtonStyle.Danger, row: 0)
+                    .WithButton("📝 Register", "btn_register", ButtonStyle.Primary, row: 0)
+                    .WithButton("🔑 Resend Code", "btn_resend", ButtonStyle.Secondary, row: 0)
+                    .WithButton("📑 Reverif", "btn_reverif", ButtonStyle.Success, row: 0)
+                    .WithButton("📌 Change Password", "btn_chgpass", ButtonStyle.Danger, row: 0)
                     .Build();
 
                 var message = await channel.SendMessageAsync(embed: embed, components: component);
@@ -282,6 +279,10 @@ namespace ProjectSMP.Core.Discords
             {
                 Console.WriteLine($"[Discord] Error saving config: {ex.Message}");
             }
+        }
+
+        public static DiscordConfigs GetConfig() {
+            return _config;
         }
 
         public static bool IsRunning => _isRunning;

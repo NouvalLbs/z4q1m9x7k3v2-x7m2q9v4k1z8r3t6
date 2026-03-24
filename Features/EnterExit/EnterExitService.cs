@@ -1,5 +1,4 @@
 ﻿using ProjectSMP.Extensions;
-using SampSharp.GameMode.World;
 using System;
 using System.Collections.Generic;
 using System.Threading;
