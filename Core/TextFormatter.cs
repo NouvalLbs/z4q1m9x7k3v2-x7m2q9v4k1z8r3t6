@@ -35,8 +35,5 @@
         public const string AME = "{ebe6ae}[AME]{D0AEEB}";
         public const string Sick = "{ffa500}SICK:{FFFFFF}";
         public const string Report = "{fff000}[REPORT]{FFFFFF}";
-        public const string Report_G = "{fff000}[REPORT]{888888}";
-        public const string Report_A = "{fff000}[REPORT][ANSWER]{FFFFFF}";
-        public const string Report_R = "{fff000}[RESPOND]{fffccc}";
     }
 }
