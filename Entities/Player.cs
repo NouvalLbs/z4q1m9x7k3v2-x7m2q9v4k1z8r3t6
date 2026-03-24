@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using ProjectSMP.Entities.Players.Account;
+using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Character;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.NameTag;
@@ -53,6 +54,7 @@ namespace ProjectSMP
             ConditionService.UnregisterPlayer(this);
             NameTagService.Cleanup(this);
             ChatService.Cleanup(this);
+            AskService.ClearPlayerAsks(this);
             this.ClearPlayerData();
             base.OnDisconnected(e);
         }

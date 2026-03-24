@@ -91,6 +91,9 @@ namespace ProjectSMP
             // Initialize Report Service
             ReportService.Initialize();
 
+            // Initialize Ask Service
+            AskService.Initialize();
+
             // Initialize Dynamic Pickups
             PickupService.Initialize();
             var pickupDataList = Task.Run(PickupService.LoadDataAsync).GetAwaiter().GetResult();
@@ -166,6 +169,7 @@ namespace ProjectSMP
             JailService.Dispose();
             PlaytimeService.Dispose();
             ReportService.Dispose();
+            AskService.Dispose();
 
             try {
                 DiscordService.ShutdownAsync().GetAwaiter().GetResult();

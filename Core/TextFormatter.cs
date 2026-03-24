@@ -36,5 +36,7 @@
         public const string Sick = "{ffa500}SICK:{FFFFFF}";
         public const string Report = "{ffff66}[REPORT]{fff8bf}";
         public const string Report_R = "{ffff66}[RESPOND]{fff8bf}";
+        public const string Ask = "{C6E2FF}[ASK]{ffffff}";
+        public const string Ask_A = "{C6E2FF}[ANS]{ff0000}";
     }
 }
