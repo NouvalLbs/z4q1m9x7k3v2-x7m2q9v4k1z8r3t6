@@ -34,6 +34,7 @@
         public const string ADO = "{ebe6ae}[ADO]{FFFFFF}";
         public const string AME = "{ebe6ae}[AME]{D0AEEB}";
         public const string Sick = "{ffa500}SICK:{FFFFFF}";
-        public const string Report = "{fff000}[REPORT]{FFFFFF}";
+        public const string Report = "{ffff66}[REPORT]{fff8bf}";
+        public const string Report_R = "{ffff66}[RESPOND]{fff8bf}";
     }
 }
