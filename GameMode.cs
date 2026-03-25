@@ -1,10 +1,11 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using ProjectSMP.Core.Discords;
 using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank.DynamicBank;
+using ProjectSMP.Features.Bank.Paycheck;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.Dynamic.DynamicPickups;
 using ProjectSMP.Features.LevelSystem;
@@ -13,7 +14,9 @@ using ProjectSMP.Plugins.Anticheat;
 using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.RealtimeClock;
+using ProjectSMP.Plugins.SampCEF;
 using ProjectSMP.Plugins.WeaponConfig;
+using SampSharp.Core.Callbacks;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Events;
 using SampSharp.GameMode.SAMP;
@@ -28,6 +31,7 @@ namespace ProjectSMP
 
         protected override void OnInitialized(EventArgs e) {
             base.OnInitialized(e);
+            CefService.Subscribe("onLoginSubmit", "CEF_OnLoginSubmit");
 
             // Initialize Discord C#
             Task.Run(async () => {
@@ -89,6 +93,9 @@ namespace ProjectSMP
             // Initialize Playing Time Service
             PlaytimeService.Initialize();
 
+            // Initialize Paycheck Service
+            PaycheckService.Initialize();
+
             // Initialize Report Service
             ReportService.Initialize();
 
@@ -146,10 +153,16 @@ namespace ProjectSMP
 
         protected override void OnPlayerCommandText(BasePlayer player, CommandTextEventArgs e)
         {
+            if (player is Player p && !p.IsLoggedIn)
+            {
+                e.Success = true;
+                return;
+            }
+
             base.OnPlayerCommandText(player, e);
 
-            if (!e.Success && player is Player p) {
-                p.SendClientMessage(Color.White, $"{{b9b9b9}}Command '{e.Text}' tidak ada, gunakan '/help'.");
+            if (!e.Success && player is Player p2) {
+                p2.SendClientMessage(Color.White, $"{{b9b9b9}}Command '{e.Text}' tidak ada, gunakan '/help'.");
                 e.Success = true;
             }
         }
@@ -174,6 +187,7 @@ namespace ProjectSMP
             ConditionService.Dispose();
             JailService.Dispose();
             PlaytimeService.Dispose();
+            PaycheckService.Dispose();
             ReportService.Dispose();
             AskService.Dispose();
 
@@ -185,6 +199,18 @@ namespace ProjectSMP
             }
 
             base.OnExited(e);
+        }
+
+        [Callback]
+        public void OnCefInitialize(int playerId, int success)
+        {
+            Console.WriteLine($"[CEF] OnCefInitialize dipanggil - player:{playerId} success:{success}");
+        }
+
+        [Callback]
+        public void OnCefBrowserCreated(int playerId, int browserId, int statusCode)
+        {
+            Console.WriteLine($"[CEF] Browser {browserId} dibuat - player:{playerId} status:{statusCode}");
         }
     }
 }

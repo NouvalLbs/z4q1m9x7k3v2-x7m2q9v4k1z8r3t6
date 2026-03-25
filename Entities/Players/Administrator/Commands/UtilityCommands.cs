@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Extensions;
+using ProjectSMP.Extensions;
 using ProjectSMP.Core;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
@@ -119,7 +119,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             if (!ValidateTarget(player, target)) return;
 
             target.SetInteriorSafe(interiorId);
-            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah mengubah interior {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} menjadi {{00FFFF}}{interiorId}{{FFFFFF}}!");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah mengubah interior {{00FFFF}}{target.CharInfo.Username} (ID:{target.Id}){{FFFFFF}} menjadi {{00FFFF}}{interiorId}{{FFFFFF}}!");
             target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengubah interior kamu menjadi {{00FFFF}}{interiorId}{{FFFFFF}}");
         }
 
@@ -132,7 +132,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             if (!ValidateTarget(player, target)) return;
 
             target.SetVirtualWorldSafe(vwId);
-            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah mengubah virtual world {{00FFFF}}{target.Username} (ID:{target.Id}){{FFFFFF}} menjadi {{00FFFF}}{vwId}{{FFFFFF}}!");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah mengubah virtual world {{00FFFF}}{target.CharInfo.Username} (ID:{target.Id}){{FFFFFF}} menjadi {{00FFFF}}{vwId}{{FFFFFF}}!");
             target.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengubah virtual world kamu menjadi {{00FFFF}}{vwId}{{FFFFFF}}");
         }
 
@@ -145,7 +145,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             if (!ValidateTarget(player, target)) return;
 
             var ip = target.IP;
-            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Informasi IP {{00FFFF}}{target.Username} (ID:{target.Id} | UCP: {target.Ucp}){{FFFFFF}}");
+            player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Informasi IP {{00FFFF}}{target.CharInfo.Username} (ID:{target.Id} | UCP: {target.Ucp}){{FFFFFF}}");
             player.SendClientMessage(Color.White, $"{{FF6347}}>{{FFFFFF}} IP Address: {{00FFFF}}{ip}");
         }
     }

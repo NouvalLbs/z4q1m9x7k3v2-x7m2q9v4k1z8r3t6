@@ -1,4 +1,4 @@
-﻿using SampSharp.GameMode;
+using SampSharp.GameMode;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using SampSharp.Streamer.World;
@@ -101,8 +101,8 @@ namespace ProjectSMP.Features.Chat
             if (sender.Settings.ToggleUppercase && msg.Length > 0)
                 msg = char.ToUpper(msg[0]) + msg.Substring(1);
 
-            sender.SendClientMessage(new Color(ChatColors.Whisper), $"Whisper to {target.Username}({target.Id}): {msg}");
-            target.SendClientMessage(new Color(ChatColors.Whisper), $"Whisper from {sender.Username}({target.Id}): {msg}");
+            sender.SendClientMessage(new Color(ChatColors.Whisper), $"Whisper to {target.CharInfo.Username}({target.Id}): {msg}");
+            target.SendClientMessage(new Color(ChatColors.Whisper), $"Whisper from {sender.CharInfo.Username}({target.Id}): {msg}");
             target.PlaySound(1085, Vector3.Zero);
         }
 
@@ -112,8 +112,8 @@ namespace ProjectSMP.Features.Chat
             if (sender.Settings.ToggleUppercase && msg.Length > 0)
                 msg = char.ToUpper(msg[0]) + msg.Substring(1);
 
-            sender.SendClientMessage(new Color(ChatColors.Whisper), $"(( PM to {target.Username}({target.Id}): {msg} ))");
-            target.SendClientMessage(new Color(ChatColors.Whisper), $"(( PM from {sender.Username}({sender.Id}): {msg} ))");
+            sender.SendClientMessage(new Color(ChatColors.Whisper), $"(( PM to {target.CharInfo.Username}({target.Id}): {msg} ))");
+            target.SendClientMessage(new Color(ChatColors.Whisper), $"(( PM from {sender.CharInfo.Username}({sender.Id}): {msg} ))");
             target.PlaySound(1085, Vector3.Zero);
         }
 

@@ -23,7 +23,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             if (logs.Count == 0)
             {
-                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Tidak ada damage log untuk {{00FFFF}}{target.Username}{{FFFFFF}}.");
+                player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Tidak ada damage log untuk {{00FFFF}}{target.CharInfo.Username}{{FFFFFF}}.");
                 return;
             }
 
@@ -66,8 +66,8 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             player.SetData("DamageLog_Logs", logs);
 
             var title = totalPages > 1
-                ? $"Damage Log: {target.Username} (Page {page + 1}/{totalPages})"
-                : $"Damage Log: {target.Username}";
+                ? $"Damage Log: {target.CharInfo.Username} (Page {page + 1}/{totalPages})"
+                : $"Damage Log: {target.CharInfo.Username}";
 
             player.ShowTabList(title, new[] { "Issuer", "Date & Time", "Weapon", "Damage" })
                 .WithRows(rows.ToArray())

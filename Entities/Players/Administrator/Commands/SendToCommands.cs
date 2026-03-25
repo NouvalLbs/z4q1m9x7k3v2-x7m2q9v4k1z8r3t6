@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Administrator.Data;
 using ProjectSMP.Extensions;
 using SampSharp.GameMode.Definitions;
@@ -114,7 +114,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
                     TeleportHelper.TeleportToLocation(tgt, loc.X, loc.Y, loc.Z, loc.Interior, loc.VirtualWorld);
                     tgt.PutCameraBehindPlayer();
 
-                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah mengirim {{00FFFF}}{tgt.Username} (ID:{tgt.Id}){{FFFFFF}} ke {{00FFFF}}{loc.Name}{{FFFFFF}}!");
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Kamu telah mengirim {{00FFFF}}{tgt.CharInfo.Username} (ID:{tgt.Id}){{FFFFFF}} ke {{00FFFF}}{loc.Name}{{FFFFFF}}!");
                     tgt.SendClientMessage(Color.White, $"{Msg.AdmCmd} Admin {{00FFFF}}{player.Ucp}{{FFFFFF}} telah mengirim kamu ke {{00FFFF}}{loc.Name}{{FFFFFF}}");
 
                     player.SetData("SendTo_Target", -1);

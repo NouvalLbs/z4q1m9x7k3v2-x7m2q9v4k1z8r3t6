@@ -1,7 +1,8 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Character;
 using ProjectSMP.Features.Bank.Data;
-using SampSharp.GameMode;
+using ProjectSMP.Features.Bank.Paycheck;
+using System;
 using System.Collections.Generic;
 
 namespace ProjectSMP
@@ -13,14 +14,9 @@ namespace ProjectSMP
         public string RegDate { get; set; } = "";
         public string LastLogin { get; set; } = "";
         public bool IsCharLoaded { get; set; }
+        public bool IsLoggedIn { get; set; }
 
-        public string Username { get; set; } = "";
-        public int CharSkin { get; set; }
-        public int Gender { get; set; }
-        public string BirthDate { get; set; } = "";
-        public int Height { get; set; } = 150;
-        public string Hair { get; set; } = "";
-        public string Eye { get; set; } = "";
+        public CharInfo CharInfo { get; set; } = new();
         public int VerifiedChar { get; set; }
 
         public int Level { get; set; } = 1;
@@ -30,7 +26,6 @@ namespace ProjectSMP
         public int Admin { get; set; }
         public int MaskId { get; set; }
         public int Warn { get; set; }
-        public int Paycheck { get; set; }
         public bool Cuffed { get; set; }
 
         public CharPosition CharSpawnPos { get; set; } = new();
@@ -43,11 +38,13 @@ namespace ProjectSMP
         public CharCondition Condition { get; set; } = new();
         public CharSettings Settings { get; set; } = new();
         public List<CharJob> Jobs { get; set; } = new();
+        public PaycheckData PaycheckData { get; set; } = new();
 
         public List<PlayerBankAccount> BankAccounts { get; set; } = new();
         public long LastSpawnTick { get; set; }
         public ClientType ClientType { get; set; } = ClientType.PC;
         public string ClientVersion { get; set; } = string.Empty;
         public string ClientCISerial { get; set; } = string.Empty;
+        public DateTime LastDoorInteraction { get; set; } = DateTime.MinValue;
     }
 }

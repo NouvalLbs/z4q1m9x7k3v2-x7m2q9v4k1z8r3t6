@@ -83,13 +83,13 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
 
             var inputLower = input.ToLower();
             var exactMatch = BasePlayer.All.OfType<Player>()
-                .FirstOrDefault(p => p.IsConnected && p.Username.ToLower() == inputLower);
+                .FirstOrDefault(p => p.IsConnected && p.CharInfo.Username.ToLower() == inputLower);
 
             if (exactMatch != null)
                 return exactMatch;
 
             var matches = BasePlayer.All.OfType<Player>()
-                .Where(p => p.IsConnected && p.Username.Contains(input, StringComparison.OrdinalIgnoreCase))
+                .Where(p => p.IsConnected && p.CharInfo.Username.Contains(input, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             if (matches.Count == 0)
@@ -107,7 +107,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             for (var i = 0; i < displayCount; i++)
             {
                 var match = matches[i];
-                sender.SendClientMessage(Color.White, $"{{FF6347}}>{{FFFFFF}} {match.Username} {{c8c8c8}}(ID: {match.Id})");
+                sender.SendClientMessage(Color.White, $"{{FF6347}}>{{FFFFFF}} {match.CharInfo.Username} {{c8c8c8}}(ID: {match.Id})");
             }
 
             if (matches.Count > 10)

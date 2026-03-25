@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Administrator.Data;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
@@ -77,13 +77,13 @@ namespace ProjectSMP.Entities.Players.Administrator
             report.InUse = true;
             report.Message = message;
             report.ReporterId = player.Id;
-            report.ReporterName = player.Username;
+            report.ReporterName = player.CharInfo.Username;
             report.TimeToExpire = ExpireTimeSeconds;
             report.CreatedAt = DateTime.Now;
             report.CheckingBy = -1;
 
             _playerCooldown[player.Id] = CooldownSeconds;
-            Utilities.SendStaffMessage(-1, "{0}[{1}] {2}: {3}", Msg.Report, player.Id, player.Username, message);
+            Utilities.SendStaffMessage(-1, "{0}[{1}] {2}: {3}", Msg.Report, player.Id, player.CharInfo.Username, message);
         }
 
         public static void AcceptReport(Player admin, int reportId)
@@ -100,7 +100,7 @@ namespace ProjectSMP.Entities.Players.Administrator
                 return;
             }
 
-            Utilities.SendStaffMessage(-1, "{0}[{1}] {{ff0000}}{2} {{fff8bf}}has responded to {{ffff66}}{3}{{fff8bf}}'s report", Msg.Report, reporter.Id, admin.Ucp, reporter.Username);
+            Utilities.SendStaffMessage(-1, "{0}[{1}] {{ff0000}}{2} {{fff8bf}}has responded to {{ffff66}}{3}{{fff8bf}}'s report", Msg.Report, reporter.Id, admin.Ucp, reporter.CharInfo.Username);
             reporter.SendClientMessage(Color.White, $"{Msg.Report} Your report is currently being handled by {{ff0000}}{admin.Ucp}{{fff8bf}}. Please wait patiently.");
             ClearReport(report);
         }
@@ -113,7 +113,7 @@ namespace ProjectSMP.Entities.Players.Administrator
             if (!report.InUse) return;
 
             var reporter = BasePlayer.Find(report.ReporterId) as Player;
-            var reporterName = reporter?.Username ?? report.ReporterName;
+            var reporterName = reporter?.CharInfo.Username ?? report.ReporterName;
             var reporterId = reporter?.Id ?? -1;
 
             Utilities.SendStaffMessage(-1, "{0}[{1}] has trashed {{ffff66}}{2}{{fff8bf}}'s report", Msg.Report_R, reporterId, reporterName);

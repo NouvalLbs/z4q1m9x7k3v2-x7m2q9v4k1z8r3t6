@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using System;
@@ -38,12 +38,12 @@ namespace ProjectSMP
             if (player.MaskActive)
                 return $"Mask_#{player.MaskId}";
 
-            return player.Username.Replace('_', ' ');
+            return player.CharInfo.Username.Replace('_', ' ');
         }
 
         public static string ReturnNameEx(Player player)
         {
-            return player.Username;
+            return player.CharInfo.Username;
         }
 
         public static bool NearPlayer(BasePlayer player, BasePlayer target, float radius)
@@ -149,13 +149,13 @@ namespace ProjectSMP
 
             var inputLower = input.ToLower();
             var exactMatch = BasePlayer.All.OfType<Player>()
-                .FirstOrDefault(p => p.IsConnected && p.Username.ToLower() == inputLower);
+                .FirstOrDefault(p => p.IsConnected && p.CharInfo.Username.ToLower() == inputLower);
 
             if (exactMatch != null)
                 return exactMatch;
 
             var matches = BasePlayer.All.OfType<Player>()
-                .Where(p => p.IsConnected && p.Username.Contains(input, StringComparison.OrdinalIgnoreCase))
+                .Where(p => p.IsConnected && p.CharInfo.Username.Contains(input, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             if (matches.Count == 0)
@@ -173,7 +173,7 @@ namespace ProjectSMP
             for (var i = 0; i < displayCount; i++)
             {
                 var match = matches[i];
-                sender.SendClientMessage(Color.White, $"{{FF6347}}>{{FFFFFF}} {match.Username} {{c8c8c8}}(ID: {match.Id})");
+                sender.SendClientMessage(Color.White, $"{{FF6347}}>{{FFFFFF}} {match.CharInfo.Username} {{c8c8c8}}(ID: {match.Id})");
             }
 
             if (matches.Count > 10)

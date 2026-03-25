@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Administrator.Data;
 using ProjectSMP.Extensions;
 using SampSharp.GameMode.SAMP;
@@ -88,13 +88,13 @@ namespace ProjectSMP.Entities.Players.Administrator
 
             ask.InUse = true;
             ask.PlayerId = player.Id;
-            ask.PlayerName = player.Username;
+            ask.PlayerName = player.CharInfo.Username;
             ask.Question = question;
             ask.TimeToExpire = ExpireTimeSeconds;
             ask.CreatedAt = DateTime.Now;
 
             _playerCooldown[player.Id] = CooldownSeconds;
-            Utilities.SendStaffMessage(-1, "{0} {1}[{2}]:{{ffff66}} {3}", Msg.Ask, player.Username, player.Id, question);
+            Utilities.SendStaffMessage(-1, "{0} {1}[{2}]:{{ffff66}} {3}", Msg.Ask, player.CharInfo.Username, player.Id, question);
         }
 
         public static void AnswerAsk(Player admin, int targetId, string answer)

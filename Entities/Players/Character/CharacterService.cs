@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
@@ -6,6 +6,7 @@ using ProjectSMP.Entities.Players.NameTag;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Entities.Players.Settings;
 using ProjectSMP.Extensions;
+using ProjectSMP.Features.Bank.Paycheck;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.EnterExit;
 using ProjectSMP.Features.LevelSystem;
@@ -80,6 +81,17 @@ namespace ProjectSMP.Entities.Players.Character
         public string RegisterDate = "";
     }
 
+    public class CharInfo
+    {
+        public string Username { get; set; } = "";
+        public int Skin { get; set; }
+        public int Gender { get; set; }
+        public string BirthDate { get; set; } = "";
+        public int Height { get; set; } = 150;
+        public string Hair { get; set; } = "";
+        public string Eye { get; set; } = "";
+    }
+
     internal sealed class CharCreationData
     {
         public string Name { get; set; } = "";
@@ -100,13 +112,6 @@ namespace ProjectSMP.Entities.Players.Character
         public string Reg_date { get; set; } = "";
         public string Last_login { get; set; } = "";
         public int Verified_char { get; set; }
-        public string Username { get; set; } = "";
-        public int Skin { get; set; }
-        public int Gender { get; set; }
-        public string Birth_date { get; set; } = "";
-        public int Height { get; set; } = 150;
-        public string Hair { get; set; } = "";
-        public string Eye { get; set; } = "";
         public int Level { get; set; } = 1;
         public int Level_points { get; set; }
         public int Level_points_exp { get; set; }
@@ -125,6 +130,8 @@ namespace ProjectSMP.Entities.Players.Character
         public string? Condition { get; set; }
         public string? Settings { get; set; }
         public string? Jobs { get; set; }
+        public string? Paychecks { get; set; }
+        public string? Char_info { get; set; }
     }
 
     internal sealed class CharListItem
@@ -166,7 +173,7 @@ namespace ProjectSMP.Entities.Players.Character
             try
             {
                 var rows = await DatabaseManager.QueryAsync<CharListItem>(
-                    $"SELECT citizen_id, username, level, last_login FROM `{Table}` WHERE ucp = @Ucp LIMIT {MaxChars}",
+                    $"SELECT citizen_id, JSON_UNQUOTE(JSON_EXTRACT(char_info, '$.Username')) AS username, level, last_login FROM `{Table}` WHERE ucp = @Ucp LIMIT {MaxChars}",
                     new { Ucp = player.Name });
 
                 if (player.IsDisposed) return;
@@ -196,11 +203,11 @@ namespace ProjectSMP.Entities.Players.Character
             player.ToggleControllableSafe(true);
             player.Score = player.Level;
             player.Color = Color.White;
-            player.Name = player.Username;
+            player.Name = player.CharInfo.Username;
 
             for (var i = 0; i < 50; i++) player.SendClientMessage(Color.White, "");
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_1"));
-            player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_2", player.Username));
+            player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_2", player.CharInfo.Username));
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_3"));
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_LAST_LOGIN", player.LastLogin));
 
@@ -222,7 +229,9 @@ namespace ProjectSMP.Entities.Players.Character
                 SettingsService.ApplyDynamicObjectPriority(player);
                 JailService.OnPlayerSpawn(player);
                 PlaytimeService.RegisterPlayer(player);
+                PaycheckService.RegisterPlayer(player);
                 player.ToggleControllableSafe(true);
+                player.IsLoggedIn = true;
             });
         }
 
@@ -246,11 +255,12 @@ namespace ProjectSMP.Entities.Players.Character
             await DatabaseManager.ExecuteAsync(
                 $"UPDATE `{Table}` SET " +
                 "level=@Level, level_points=@LevelPoints, level_points_exp=@LevelPointsExp, " +
-                "money=@Money, admin=@Admin, mask_id=@MaskId, warn=@Warn, paycheck=@Paycheck, " +
+                "money=@Money, admin=@Admin, mask_id=@MaskId, warn=@Warn, " +
                 "ip=@Ip, last_login=CURRENT_TIMESTAMP(), " +
                 "position=@Pos, vitals=@Vitals, playtime=@Playtime, " +
                 "backpack=@Backpack, phone=@Phone, jail_info=@JailInfo, ban_info=@BanInfo, " +
-                "`condition`=@Condition, `settings`=@Settings, jobs=@Jobs " +
+                "`condition`=@Condition, `settings`=@Settings, jobs=@Jobs, paychecks=@PaycheckData, " +
+                "char_info=@CharInfo " +
                 "WHERE citizen_id=@CitizenId",
                 new
                 {
@@ -261,7 +271,6 @@ namespace ProjectSMP.Entities.Players.Character
                     player.Admin,
                     player.MaskId,
                     player.Warn,
-                    player.Paycheck,
                     Ip = player.IP,
                     Pos = Ser(pos),
                     Vitals = Ser(player.Vitals),
@@ -273,6 +282,8 @@ namespace ProjectSMP.Entities.Players.Character
                     Condition = Ser(player.Condition),
                     Settings = Ser(player.Settings),
                     Jobs = Ser(player.Jobs),
+                    PaycheckData = Ser(player.PaycheckData),
+                    CharInfo = Ser(player.CharInfo),
                     CitizenId = player.CitizenId
                 });
         }
@@ -282,8 +293,10 @@ namespace ProjectSMP.Entities.Players.Character
             _lists.Remove(player.Id);
             _creations.Remove(player.Id);
             player.IsCharLoaded = false;
+            player.IsLoggedIn = false;
             player.LastSpawnTick = 0;
             PlaytimeService.UnregisterPlayer(player);
+            PaycheckService.UnregisterPlayer(player);
         }
 
         private static void ShowCharListDialog(Player player, List<CharListItem> list)
@@ -334,7 +347,7 @@ namespace ProjectSMP.Entities.Players.Character
                 }
 
                 var taken = await DatabaseManager.ExistsAsync(
-                    $"SELECT COUNT(*) FROM `{Table}` WHERE username = @Name", new { Name = name });
+                    $"SELECT COUNT(*) FROM `{Table}` WHERE JSON_UNQUOTE(JSON_EXTRACT(char_info, '$.Username')) = @Name", new { Name = name });
 
                 if (player.IsDisposed) return;
                 if (taken) { ShowCreateNameDialog(player, taken: true); return; }
@@ -565,22 +578,15 @@ namespace ProjectSMP.Entities.Players.Character
 
                 await DatabaseManager.ExecuteAsync(
                     $"INSERT INTO `{Table}` " +
-                    "(citizen_id,ucp,ip,username,skin,gender,birth_date,height,hair,eye,mask_id," +
-                    "position,vitals,playtime,backpack,phone,jail_info,ban_info,`condition`,`settings`,jobs) " +
-                    "VALUES (@Cid,@Ucp,@Ip,@Username,@Skin,@Gender,@BirthDate,@Height,@Hair,@Eye,@MaskId," +
-                    "@Pos,@Vitals,@Playtime,@Backpack,@Phone,@JailInfo,@BanInfo,@Condition,@Settings,@Jobs)",
+                    "(citizen_id,ucp,ip,mask_id," +
+                    "position,vitals,playtime,backpack,phone,jail_info,ban_info,`condition`,`settings`,jobs,paychecks,char_info) " +
+                    "VALUES (@Cid,@Ucp,@Ip,@MaskId," +
+                    "@Pos,@Vitals,@Playtime,@Backpack,@Phone,@JailInfo,@BanInfo,@Condition,@Settings,@Jobs,@PaycheckData,@CharInfo)",
                     new
                     {
                         Cid = cid,
                         Ucp = player.Name,
                         Ip = player.IP,
-                        Username = c.Name,
-                        Skin = c.Skin,
-                        Gender = c.Gender,
-                        BirthDate = c.BirthDate,
-                        Height = c.Height,
-                        Hair = c.Hair,
-                        Eye = c.Eye,
                         MaskId = maskId,
                         Pos = Ser(pos),
                         Vitals = Ser(new CharVitals()),
@@ -591,7 +597,18 @@ namespace ProjectSMP.Entities.Players.Character
                         BanInfo = Ser(new CharBanInfo()),
                         Condition = Ser(new CharCondition()),
                         Settings = Ser(new CharSettings()),
-                        Jobs = Ser(new List<CharJob>())
+                        Jobs = Ser(new List<CharJob>()),
+                        PaycheckData = Ser(new PaycheckData()),
+                        CharInfo = Ser(new CharInfo
+                        {
+                            Username = c.Name,
+                            Skin = c.Skin,
+                            Gender = c.Gender,
+                            BirthDate = c.BirthDate,
+                            Height = c.Height,
+                            Hair = c.Hair,
+                            Eye = c.Eye
+                        })
                     });
 
                 if (player.IsDisposed) return;
@@ -601,17 +618,20 @@ namespace ProjectSMP.Entities.Players.Character
                     Citizen_id = cid,
                     Ucp = player.Name,
                     Ip = player.IP,
-                    Username = c.Name,
-                    Skin = c.Skin,
-                    Gender = c.Gender,
-                    Birth_date = c.BirthDate,
-                    Height = c.Height,
-                    Hair = c.Hair,
-                    Eye = c.Eye,
                     Mask_id = maskId,
                     Position = Ser(pos),
                     Level = 1,
-                    Last_login = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                    Last_login = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                    Char_info = Ser(new CharInfo
+                    {
+                        Username = c.Name,
+                        Skin = c.Skin,
+                        Gender = c.Gender,
+                        BirthDate = c.BirthDate,
+                        Height = c.Height,
+                        Hair = c.Hair,
+                        Eye = c.Eye
+                    })
                 });
 
                 _creations.Remove(player.Id);
@@ -653,7 +673,7 @@ namespace ProjectSMP.Entities.Players.Character
             player.ToggleSpectatingSafe(false);
             player.SetInteriorSafe(player.CharSpawnPos.Interior);
             player.SetVirtualWorldSafe(player.CharSpawnPos.World);
-            player.SetSpawnInfoSafe(0, player.CharSkin, player.CharSpawnPos.X, player.CharSpawnPos.Y, player.CharSpawnPos.Z, player.CharSpawnPos.A);
+            player.SetSpawnInfoSafe(0, player.CharInfo.Skin, player.CharSpawnPos.X, player.CharSpawnPos.Y, player.CharSpawnPos.Z, player.CharSpawnPos.A);
             player.SpawnPlayerSafe();
         }
         public static void RespawnCharacter(Player player)
@@ -662,7 +682,7 @@ namespace ProjectSMP.Entities.Players.Character
             var pos = player.CharSpawnPos;
             player.SetInteriorSafe(pos.Interior);
             player.SetVirtualWorldSafe(pos.World);
-            player.SetSpawnInfoSafe(0, player.CharSkin, pos.X, pos.Y, pos.Z, pos.A);
+            player.SetSpawnInfoSafe(0, player.CharInfo.Skin, pos.X, pos.Y, pos.Z, pos.A);
             player.ToggleSpectatingSafe(false);
         }
 
@@ -673,13 +693,6 @@ namespace ProjectSMP.Entities.Players.Character
             player.RegDate = r.Reg_date;
             player.LastLogin = r.Last_login;
             player.VerifiedChar = r.Verified_char;
-            player.Username = r.Username;
-            player.CharSkin = r.Skin;
-            player.Gender = r.Gender;
-            player.BirthDate = r.Birth_date;
-            player.Height = r.Height;
-            player.Hair = r.Hair;
-            player.Eye = r.Eye;
             player.Level = r.Level;
             player.LevelPoints = r.Level_points;
             player.LevelPointsExp = r.Level_points_exp;
@@ -687,7 +700,7 @@ namespace ProjectSMP.Entities.Players.Character
             player.Admin = r.Admin;
             player.MaskId = r.Mask_id;
             player.Warn = r.Warn;
-            player.Paycheck = r.Paycheck;
+            player.CharInfo = Des<CharInfo>(r.Char_info) ?? new();
             player.Vitals = Des<CharVitals>(r.Vitals) ?? new();
             player.Playtime = Des<CharPlaytime>(r.Playtime) ?? new();
             player.Backpack = Des<CharBackpack>(r.Backpack) ?? new();
@@ -698,6 +711,7 @@ namespace ProjectSMP.Entities.Players.Character
             player.Condition = Des<CharCondition>(r.Condition) ?? new();
             player.Settings = Des<CharSettings>(r.Settings) ?? new();
             player.Jobs = Des<List<CharJob>>(r.Jobs) ?? new();
+            player.PaycheckData = Des<PaycheckData>(r.Paychecks) ?? new();
             player.IsCharLoaded = true;
         }
 

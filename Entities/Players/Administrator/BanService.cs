@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using System;
 using System.Threading.Tasks;
 
@@ -42,7 +42,7 @@ namespace ProjectSMP.Entities.Players.Administrator
         private static void ShowBanDialog(Player player)
         {
             var message = FormatBanMessage(player);
-            var header = $"{{ffffff}}Character {{34ebc0}}{player.Username}{{ffffff}} dalam status banned";
+            var header = $"{{ffffff}}Character {{34ebc0}}{player.CharInfo.Username}{{ffffff}} dalam status banned";
 
             player.ShowMessage(header, message)
                 .WithButtons("Close")
@@ -59,7 +59,7 @@ namespace ProjectSMP.Entities.Players.Administrator
                 var hours = (timeLeft % 86400) / 3600;
 
                 return $"{{ffffff}}Charactermu sedang dalam status banned!\n\n" +
-                       $"Character: {{34ebc0}}{player.Username}{{ffffff}}\n" +
+                       $"Character: {{34ebc0}}{player.CharInfo.Username}{{ffffff}}\n" +
                        $"Alasan: {{ffff00}}{player.BanInfo.Reason}{{ffffff}}\n" +
                        $"Admin: {{ff0000}}{player.BanInfo.Admin}{{ffffff}}\n" +
                        $"Waktu tersisa: {{ff0000}}{days} hari {hours} jam{{ffffff}}\n\n" +
@@ -67,7 +67,7 @@ namespace ProjectSMP.Entities.Players.Administrator
             }
 
             return $"{{ffffff}}Charactermu sedang dalam status banned!\n\n" +
-                   $"Character: {{34ebc0}}{player.Username}{{ffffff}}\n" +
+                   $"Character: {{34ebc0}}{player.CharInfo.Username}{{ffffff}}\n" +
                    $"Alasan: {{ffff00}}{player.BanInfo.Reason}{{ffffff}}\n" +
                    $"Admin: {{ff0000}}{player.BanInfo.Admin}{{ffffff}}\n" +
                    $"Waktu tersisa: {{ff0000}}Permanent{{ffffff}}\n\n" +

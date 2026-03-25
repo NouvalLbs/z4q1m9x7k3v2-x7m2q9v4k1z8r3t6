@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.EnterExit;
 using SampSharp.GameMode;
@@ -185,7 +185,8 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
             var extLabelText = $"{{00FFFF}}[ID: {data.Id}]\n{{FFFF00}}{data.Name}\n{{FFFFFF}}Press '{{FF0000}}{keyText}{{FFFFFF}}' to enter/exit the door";
             data.ExtLabel = new DynamicTextLabel(extLabelText, Color.Yellow, extPosition + new Vector3(0, 0, 0.35f), 5.0f, null, streamdistance: 5.0f);
 
-            if (data.MapIconId != -1) {
+            if (data.MapIconId != -1)
+            {
                 data.ExtMapIcon = new DynamicMapIcon(
                     extPosition,
                     data.MapIconId,
@@ -313,7 +314,8 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
             }
 
             player.PutCameraBehindPlayer();
-            EnterExitService.ProcessEnterExit(player, () => {
+            EnterExitService.ProcessEnterExit(player, () =>
+            {
                 if (!player.IsDisposed)
                     player.ToggleControllableSafe(true);
             });
@@ -361,6 +363,13 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
         {
             if (!player.IsCharLoaded)
                 return;
+
+            if ((DateTime.Now - player.LastDoorInteraction).TotalSeconds < 3.0)
+            {
+                player.SendClientMessage(Color.White, $"{Msg.Error} Kamu harus menunggu beberapa detik sebelum menggunakan pintu lagi.");
+                return;
+            }
+            player.LastDoorInteraction = DateTime.Now;
 
             var doorId = CheckPlayerInDoor(player, out bool isOutside);
             if (doorId == -1)

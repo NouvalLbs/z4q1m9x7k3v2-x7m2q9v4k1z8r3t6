@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using ProjectSMP.Extensions;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
@@ -168,7 +168,7 @@ namespace ProjectSMP.Entities.Players.Administrator.Commands
             }
 
             AskService.ClearAllAsks();
-            Utilities.SendStaffMessage(Color.White, "CLEAR: {{FFFFFF}}{0} telah menghapus semua ask di server.", player.Username);
+            Utilities.SendStaffMessage(Color.White, "CLEAR: {{FFFFFF}}{0} telah menghapus semua ask di server.", player.CharInfo.Username);
         }
     }
 }

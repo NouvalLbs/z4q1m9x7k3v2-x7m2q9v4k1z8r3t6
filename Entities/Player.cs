@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Administrator;
@@ -15,7 +15,9 @@ using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.EnterExit;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.RealtimeClock;
+using ProjectSMP.Plugins.SampCEF;
 using ProjectSMP.Plugins.WeaponConfig;
+using SampSharp.Core.Callbacks;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Events;
@@ -32,6 +34,8 @@ namespace ProjectSMP
         public override void OnConnected(EventArgs e)
         {
             base.OnConnected(e);
+            CefService.NotifyConnect(Id, IP);
+
             ClientManager.CheckPlayerClient(this);
             WeaponConfigService.OnConnect(this);
             WeaponConfigService.PlayerDamage += OnPlayerDamage;
@@ -59,6 +63,8 @@ namespace ProjectSMP
             ChatService.Cleanup(this);
             AskService.ClearPlayerAsks(this);
             this.ClearPlayerData();
+
+            CefService.NotifyDisconnect(Id);
             base.OnDisconnected(e);
         }
 
@@ -76,11 +82,14 @@ namespace ProjectSMP
             if (IsCharLoaded) _ = BankService.LoadAsync(this);
         }
 
-        public override void OnDeath(DeathEventArgs e) {
+        public override void OnDeath(DeathEventArgs e)
+        {
             base.OnDeath(e);
-            if (IsCharLoaded) {
+            if (IsCharLoaded)
+            {
                 var p = Position;
-                CharSpawnPos = new CharPosition {
+                CharSpawnPos = new CharPosition
+                {
                     X = p.X,
                     Y = p.Y,
                     Z = p.Z,
@@ -98,7 +107,7 @@ namespace ProjectSMP
             WeaponConfigService.OnRequestClass(this);
             if (!IsCharLoaded || WeaponConfigService.IsPlayerInClassSelection(this)) return;
 
-            SetSpawnInfo(0, CharSkin, new Vector3(CharSpawnPos.X, CharSpawnPos.Y, CharSpawnPos.Z), CharSpawnPos.A);
+            SetSpawnInfo(0, CharInfo.Skin, new Vector3(CharSpawnPos.X, CharSpawnPos.Y, CharSpawnPos.Z), CharSpawnPos.A);
             Spawn();
         }
 
@@ -175,8 +184,13 @@ namespace ProjectSMP
 
         public override void OnText(TextEventArgs e)
         {
-            ChatService.ProcessChatText(this, e.Text);
             e.SendToPlayers = false;
+            if (!IsLoggedIn)
+            {
+                base.OnText(e);
+                return;
+            }
+            ChatService.ProcessChatText(this, e.Text);
             base.OnText(e);
         }
 
@@ -197,8 +211,10 @@ namespace ProjectSMP
             if (e.NewKeys.HasFlag(Keys.SecondaryAttack))
             {
                 var doorId = DoorService.CheckPlayerInDoor(this, out bool isOutside);
-                if (doorId != -1) {
-                    if (!DoorService.GetDoor(doorId).IsGarage) {
+                if (doorId != -1)
+                {
+                    if (!DoorService.GetDoor(doorId).IsGarage)
+                    {
                         DoorService.HandleDoorKeyPress(this);
                         return;
                     }

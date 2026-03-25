@@ -346,7 +346,7 @@ namespace ProjectSMP.Commands
         [Command("stats")]
         public static void Stats(Player player)
         {
-            var gender = player.Gender == 0 ? "Male" : "Female";
+            var gender = player.CharInfo.Gender == 0 ? "Male" : "Female";
             var phoneStatus = player.Phone.Off == 0 ? "{FF0000}Offline{FFFFFF}" : "{91ff00}Online{FFFFFF}";
             var charStatus = player.VerifiedChar == 1 ? "{91ff00}Verified{FFFFFF}" : "{FF0000}Unverified{FFFFFF}";
             var admin = Utilities.GetAdminString(player);
@@ -354,24 +354,25 @@ namespace ProjectSMP.Commands
             var jobs = JobService.GetAllJobsString(player);
             var pointsRequired = LevelService.GetPointsRequired(player.Level);
 
-            var bankText = BankService.GetAccountCount(player) > 0
-                ? $"{{00f000}}{Utilities.GroupDigits(player.BankAccounts.Where(a => a.IsActive).Sum(a => a.Balance))}{{FFFFFF}}"
+            var activeAccount = player.BankAccounts.FirstOrDefault(a => a.IsActive);
+            var bankText = activeAccount != null
+                ? $"{{00f000}}{Utilities.GroupDigits(player.BankAccounts.Where(a => a.IsActive).Sum(a => a.Balance))}{{FFFFFF}}] | Bank Account: [{{b8d2ec}}{activeAccount.AccountNumber}{{FFFFFF}}"
                 : "{FF0000}Unregistered{FFFFFF}";
 
             var stats = TextFormatter.Build(
                 "{FFFF00}IC Information:\n",
-                $"{{FFFFFF}}Gender: [{{b8d2ec}}{gender}{{FFFFFF}}] | Birthdate: [{{b8d2ec}}{player.BirthDate}{{FFFFFF}}] | Money: [{{00f000}}{Utilities.GroupDigits(player.CharMoney)}{{FFFFFF}}] | Bank: [{bankText}]\n",
+                $"{{FFFFFF}}Gender: [{{b8d2ec}}{gender}{{FFFFFF}}] | Birthdate: [{{b8d2ec}}{player.CharInfo.BirthDate}{{FFFFFF}}] | Money: [{{00f000}}{Utilities.GroupDigits(player.CharMoney)}{{FFFFFF}}] | Bank: [{bankText}]\n",
                 $"{{FFFFFF}}Phone Status: [{phoneStatus}] | Phone Number: [{{ebeb00}}{player.Phone.Number}{{FFFFFF}}] | Phone Credit: [{{ebeb00}}{player.Phone.Credit}{{FFFFFF}}] | Mask ID: [{{b8d2ec}}{player.MaskId}{{FFFFFF}}]\n",
                 $"{{FFFFFF}}Jobs: [{jobs}{{FFFFFF}}] | Faction: [Civilian{{FFFFFF}}] | Family: [None]\n",
                 $"{{FFFFFF}}Working at: [None] [None (0){{FFFFFF}}] | Wealth: [None]\n",
                 "\n",
                 "{FFFF00}OOC Information:\n",
-                $"{{FFFFFF}}CitizenId: [{{77efc7}}{player.CitizenId}{{FFFFFF}}] | Level: [{{77efc7}}{player.Level} - ({player.LevelPoints}/{pointsRequired}){{FFFFFF}}] | Paychecks: [{{b8d2ec}}{player.Paycheck}{{FFFFFF}}] | Time Played: [{{b8d2ec}}{player.Playtime.Hours} hour(s) {player.Playtime.Minutes} minute(s) {player.Playtime.Seconds} second(s){{FFFFFF}}]\n",
+                $"{{FFFFFF}}CitizenId: [{{77efc7}}{player.CitizenId}{{FFFFFF}}] | Level: [{{77efc7}}{player.Level} - ({player.LevelPoints}/{pointsRequired}){{FFFFFF}}] | Paychecks: [{{b8d2ec}}{player.PaycheckData.PaycheckTime}{{FFFFFF}}] | Time Played: [{{b8d2ec}}{player.Playtime.Hours} hour(s) {player.Playtime.Minutes} minute(s) {player.Playtime.Seconds} second(s){{FFFFFF}}]\n",
                 $"{{FFFFFF}}Character Story: [{charStatus}] | Staff: [{admin}] | Warns: [{warn}] | Prestige Coin: [0]\n",
                 $"{{FFFFFF}}World: [{{ebeb00}}{player.VirtualWorld}{{FFFFFF}}] | Interior: [{{ebeb00}}{player.Interior}{{FFFFFF}}] | MaxHP: [{{ab0000}}{player.Vitals.MaxHealth:F1}{{FFFFFF}}] | Health: [{{ab0000}}{player.Vitals.Health:F1}{{FFFFFF}}] | Armour: [{{9f9f9f}}{player.Vitals.Armour:F1}{{FFFFFF}}]"
             );
 
-            var title = $"{{6fe0ba}}{player.Username} Statistic {{c8c8c8}}(UCP: {player.Ucp})";
+            var title = $"{{6fe0ba}}{player.CharInfo.Username} Statistic {{c8c8c8}}(UCP: {player.Ucp})";
             player.ShowMessage(title, stats).WithButtons("Settings", "Close").Show();
         }
 
@@ -386,7 +387,8 @@ namespace ProjectSMP.Commands
                     new[] { "/toggle", "Mengaktifkan atau menonaktifkan fitur tertentu" },
                     new[] { "/clear(chat)", "Menghapus semua pesan di chat" },
                     new[] { "/report", "Melaporkan masalah atau pelanggaran kepada admin" },
-                    new[] { "/ask", "Bertanya kepada admin/helper yang sedang online" }
+                    new[] { "/ask", "Bertanya kepada admin/helper yang sedang online" },
+                    new[] { "/mysalary", "Menampilkan informasi gaji karakter kamu" }
                 )
                 .WithButtons("Close", "")
                 .Show();

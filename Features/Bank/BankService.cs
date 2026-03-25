@@ -204,7 +204,7 @@ namespace ProjectSMP.Features.Bank
             return true;
         }
 
-        private static void UpdateTransactionDate(PlayerBankAccount account)
+        public static void UpdateTransactionDate(PlayerBankAccount account)
         {
             account.LastTransaction = DateTime.Now.ToString("yyyy-MM-dd");
         }

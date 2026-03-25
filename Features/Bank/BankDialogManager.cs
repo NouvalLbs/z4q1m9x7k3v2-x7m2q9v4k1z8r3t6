@@ -1,4 +1,6 @@
+﻿using System.Linq;
 using ProjectSMP.Core;
+using ProjectSMP.Features.Bank.Paycheck;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 
@@ -62,7 +64,7 @@ namespace ProjectSMP.Features.Bank
                     new[] { "{FFFF00}> {FFFFFF}Deposit Uang", "" },
                     new[] { "{FFFF00}> {FFFFFF}Withdraw Uang", "" },
                     new[] { "{FFFF00}> {FFFFFF}Transfer Uang", "" },
-                    new[] { "{FFFF00}> {FFFFFF}Ambil Gaji (Paycheck)", "" })
+                    new[] { "{FFFF00}> {FFFFFF}Ambil Paycheck", "" })
                 .WithButtons("Select", "Close")
                 .Show(e =>
                 {
@@ -74,7 +76,28 @@ namespace ProjectSMP.Features.Bank
                         case 4: ShowWithdrawDialog(player, accountIndex); break;
                         case 5: ShowTransferAccountDialog(player, accountIndex); break;
                         case 6:
-                            player.SendClientMessage(Color.White, $"{Msg.Bank} Fitur Paycheck akan segera tersedia.");
+                            if (!PaycheckService.CanClaim(player)) {
+                                player.SendClientMessage(Color.White,
+                                    $"{Msg.Bank} Gaji belum bisa diambil! Tunggu {{FF6347}}{PaycheckService.GetTimeLeft(player)}{{FFFFFF}} lagi.");
+                                return;
+                            }
+
+                            var claimTotal = PaycheckService.GetTotal(player);
+                            if (claimTotal <= 0) {
+                                player.SendClientMessage(Color.White, $"{Msg.Bank} Tidak ada gaji yang bisa diambil saat ini.");
+                                return;
+                            }
+
+                            var claimAccount = player.BankAccounts.FirstOrDefault(a => a.IsActive);
+                            if (claimAccount == null) {
+                                player.SendClientMessage(Color.White, $"{Msg.Bank} Kamu tidak memiliki rekening bank aktif!");
+                                return;
+                            }
+
+                            if (PaycheckService.ClaimPaycheck(player)) {
+                                player.SendClientMessage(Color.White,
+                                    $"{Msg.Bank} Berhasil mengambil gaji {{00FF00}}{Utilities.GroupDigits(claimTotal)}{{FFFFFF}} ke rekening {{FFFF00}}{claimAccount.AccountName}{{FFFFFF}}!");
+                            }
                             break;
                         default:
                             ShowBankMenu(player, 0);
