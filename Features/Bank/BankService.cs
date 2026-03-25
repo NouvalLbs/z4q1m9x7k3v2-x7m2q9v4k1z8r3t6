@@ -29,9 +29,9 @@ namespace ProjectSMP.Features.Bank
         public static async Task SaveAccountAsync(PlayerBankAccount account)
         {
             await DatabaseManager.ExecuteAsync(
-                $"UPDATE `{Table}` SET balance=@Balance, last_transaction=CURDATE(), " +
+                $"UPDATE `{Table}` SET balance=@Balance, last_transaction=@LastTransaction, " +
                 $"is_active=@IsActive WHERE id=@Id",
-                new { account.Balance, account.IsActive, account.Id });
+                new { account.Balance, account.LastTransaction, account.IsActive, account.Id });
         }
 
         public static PlayerBankAccount GetAccount(Player player, int index)
@@ -94,30 +94,26 @@ namespace ProjectSMP.Features.Bank
 
         public static bool Deposit(Player player, PlayerBankAccount account, int amount)
         {
-            if (!account.IsActive || amount <= 0)
-                return false;
-
-            if (player.CharMoney < amount)
-                return false;
+            if (!account.IsActive || amount <= 0) return false;
+            if (player.CharMoney < amount) return false;
 
             account.Balance += amount;
             player.CharMoney -= amount;
             UpdateTransactionDate(account);
+            _ = SaveAccountAsync(account);
 
             return true;
         }
 
         public static bool Withdraw(Player player, PlayerBankAccount account, int amount)
         {
-            if (!account.IsActive || amount <= 0)
-                return false;
-
-            if (account.Balance < amount)
-                return false;
+            if (!account.IsActive || amount <= 0) return false;
+            if (account.Balance < amount) return false;
 
             account.Balance -= amount;
             player.CharMoney += amount;
             UpdateTransactionDate(account);
+            _ = SaveAccountAsync(account);
 
             return true;
         }
