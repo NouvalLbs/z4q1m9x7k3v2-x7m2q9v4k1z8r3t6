@@ -4,6 +4,7 @@ using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
+using ProjectSMP.Features.Bank.DynamicBank;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.Dynamic.DynamicPickups;
 using ProjectSMP.Features.LevelSystem;
@@ -103,6 +104,11 @@ namespace ProjectSMP
             DoorService.Initialize();
             var doorDataList = Task.Run(DoorService.LoadDataAsync).GetAwaiter().GetResult();
             DoorService.CreateDoorObjects(doorDataList);
+
+            // Initialize Dynamic Banks
+            BankPickupService.Initialize();
+            var bankDataList = Task.Run(BankPickupService.LoadDataAsync).GetAwaiter().GetResult();
+            BankPickupService.CreateObjects(bankDataList);
         }
 
         private void OnAnticheatPunishment(int playerId, string checkName, PunishAction action)

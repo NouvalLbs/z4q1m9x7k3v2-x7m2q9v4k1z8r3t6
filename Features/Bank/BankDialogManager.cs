@@ -15,12 +15,6 @@ namespace ProjectSMP.Features.Bank
                 return;
             }
 
-            var pickupId = PickupService.GetPickupByCallback(player, "OnBankInteract");
-            if (pickupId == -1) {
-                player.SendClientMessage(Color.White, $"{Msg.Error} Kamu tidak berada di area Bank!");
-                return;
-            }
-
             if (BankService.GetAccountCount(player) < 1)
             {
                 ShowCreateAccountDialog(player);

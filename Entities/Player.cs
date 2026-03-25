@@ -8,6 +8,7 @@ using ProjectSMP.Entities.Players.NameTag;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank;
+using ProjectSMP.Features.Bank.DynamicBank;
 using ProjectSMP.Features.Chat;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
@@ -196,14 +197,14 @@ namespace ProjectSMP
             if (e.NewKeys.HasFlag(Keys.SecondaryAttack))
             {
                 var doorId = DoorService.CheckPlayerInDoor(this, out bool isOutside);
-                if (doorId != -1)
-                {
-                    if (!DoorService.GetDoor(doorId).IsGarage)
-                    {
+                if (doorId != -1) {
+                    if (!DoorService.GetDoor(doorId).IsGarage) {
                         DoorService.HandleDoorKeyPress(this);
                         return;
                     }
                 }
+
+                BankPickupService.HandleInteract(this);
             }
 
             if (e.NewKeys.HasFlag(Keys.Walk))
