@@ -33,7 +33,7 @@ namespace ProjectSMP
         public static string ReturnName(Player player)
         {
             if (player.AdminOnDuty)
-                return "Admin";
+                return $"{player.Ucp}";
 
             if (player.MaskActive)
                 return $"Mask_#{player.MaskId}";

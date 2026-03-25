@@ -53,7 +53,7 @@ namespace ProjectSMP.Features.Chat
 
             if (player.AdminOnDuty)
             {
-                var adminMsg = $"{{FF6347}}[Admin] {Utilities.ReturnName(player)}: (( {{D0D0D0}}{msg}{{FF6347}} ))";
+                var adminMsg = $"{{ff0000}}{Utilities.ReturnName(player)}:{{E0FFFF}} (( {{D0D0D0}}{msg}{{E0FFFF}} ))";
                 player.SendClientMessage(new Color(ChatColors.LocalOOC), adminMsg);
 
                 var pos = player.Position;

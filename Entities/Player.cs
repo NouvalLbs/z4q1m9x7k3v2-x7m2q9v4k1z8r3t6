@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Character;
@@ -30,6 +31,7 @@ namespace ProjectSMP
         public override void OnConnected(EventArgs e)
         {
             base.OnConnected(e);
+            ClientManager.CheckPlayerClient(this);
             WeaponConfigService.OnConnect(this);
             WeaponConfigService.PlayerDamage += OnPlayerDamage;
             WeaponConfigService.PlayerDeathFinished += OnDeathFinished;

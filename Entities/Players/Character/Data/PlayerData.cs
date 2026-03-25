@@ -1,4 +1,5 @@
-﻿using ProjectSMP.Entities.Players.Character;
+﻿using ProjectSMP.Core;
+using ProjectSMP.Entities.Players.Character;
 using ProjectSMP.Features.Bank.Data;
 using SampSharp.GameMode;
 using System.Collections.Generic;
@@ -45,5 +46,8 @@ namespace ProjectSMP
 
         public List<PlayerBankAccount> BankAccounts { get; set; } = new();
         public long LastSpawnTick { get; set; }
+        public ClientType ClientType { get; set; } = ClientType.PC;
+        public string ClientVersion { get; set; } = string.Empty;
+        public string ClientCISerial { get; set; } = string.Empty;
     }
 }

@@ -61,7 +61,7 @@ namespace ProjectSMP.Commands
             string formatted;
             if (player.AdminOnDuty)
             {
-                formatted = $"(( {{ff0000}}Admin {player.Ucp} [{player.Id}]: {{ffffff}}{msg} {{E0FFFF}}))";
+                formatted = $"(( {{ff0000}}Admin {player.Ucp}: {{ffffff}}{msg} {{E0FFFF}}))";
             }
             else
             {
@@ -378,7 +378,9 @@ namespace ProjectSMP.Commands
                     new[] { "/settings", "Mengubah pengaturan character kamu" },
                     new[] { "/hud", "Mengubah tampilan HUD character kamu" },
                     new[] { "/toggle", "Mengaktifkan atau menonaktifkan fitur tertentu" },
-                    new[] { "/clear(chat)", "Menghapus semua pesan di chat" }
+                    new[] { "/clear(chat)", "Menghapus semua pesan di chat" },
+                    new[] { "/report", "Melaporkan masalah atau pelanggaran kepada admin" },
+                    new[] { "/ask", "Bertanya kepada admin/helper yang sedang online" }
                 )
                 .WithButtons("Close", "")
                 .Show();

@@ -88,7 +88,7 @@ namespace ProjectSMP.Entities.Players.Account
         {
             player.ShowMessage(
                 L("AUTH", "INVALID_NAME_TITLE"),
-                L("AUTH", "INVALID_NAME_MSG", player.Name))
+                L("AUTH", "INVALID_NAME_MSG", player.Name, player.ClientType, player.ClientVersion))
                 .WithButtons(L("GENERAL", "BTN_OK"))
                 .Show();
         }
@@ -97,7 +97,7 @@ namespace ProjectSMP.Entities.Players.Account
         {
             player.ShowMessage(
                 L("AUTH", "NOT_REGISTERED_TITLE"),
-                L("AUTH", "NOT_REGISTERED_MSG", player.Name))
+                L("AUTH", "NOT_REGISTERED_MSG", player.Name, player.ClientType, player.ClientVersion))
                 .WithButtons(L("GENERAL", "BTN_OK"))
                 .Show();
         }
@@ -105,7 +105,7 @@ namespace ProjectSMP.Entities.Players.Account
         private static void ShowActivateDialog(Player player, string? errKey = null)
         {
             var session = _sessions[player.Id];
-            var body = L("AUTH", "ACTIVATE_MSG", session.UCP);
+            var body = L("AUTH", "ACTIVATE_MSG", session.UCP, player.ClientType, player.ClientVersion);
             if (errKey != null) body += $"\n{{FF0000}}" + L("AUTH", errKey);
 
             player.ShowInput(L("AUTH", "ACTIVATE_TITLE"), body)
@@ -142,7 +142,7 @@ namespace ProjectSMP.Entities.Players.Account
 
             player.ShowInput(
                 L("AUTH", "LOGIN_TITLE"),
-                L("AUTH", "LOGIN_MSG", session.UCP, session.LoginAttempt))
+                L("AUTH", "LOGIN_MSG", session.UCP, player.ClientType, player.ClientVersion, session.LoginAttempt))
                 .AsPassword()
                 .WithButtons(L("GENERAL", "BTN_LOGIN"), L("GENERAL", "BTN_ABORT"))
                 .Show(e =>

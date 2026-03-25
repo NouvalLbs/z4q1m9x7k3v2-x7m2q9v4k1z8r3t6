@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace ProjectSMP.Entities.Players.Ban
+namespace ProjectSMP.Entities.Players.Administrator
 {
     internal static class BanService
     {

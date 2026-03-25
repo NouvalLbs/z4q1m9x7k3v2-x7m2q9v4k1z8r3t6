@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Administrator;
-using ProjectSMP.Entities.Players.Ban;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.NameTag;
 using ProjectSMP.Entities.Players.Needs;
@@ -182,15 +181,15 @@ namespace ProjectSMP.Entities.Players.Character
         public static void HandleSpawn(Player player)
         {
             if (!player.IsCharLoaded) return;
-            
+
             const int SpawnCooldownMs = 2000;
             var currentTick = Environment.TickCount;
-            
+
             if (currentTick - player.LastSpawnTick < SpawnCooldownMs)
                 return;
-            
+
             player.LastSpawnTick = currentTick;
-            
+
             if (BanService.IsPlayerBanned(player))
                 return;
 
@@ -220,10 +219,10 @@ namespace ProjectSMP.Entities.Players.Character
             {
                 if (!player.IsDisposed)
                     NameTagService.Refresh(player);
-                    SettingsService.ApplyDynamicObjectPriority(player);
-                    JailService.OnPlayerSpawn(player);
-                    PlaytimeService.RegisterPlayer(player);
-                    player.ToggleControllableSafe(true);
+                SettingsService.ApplyDynamicObjectPriority(player);
+                JailService.OnPlayerSpawn(player);
+                PlaytimeService.RegisterPlayer(player);
+                player.ToggleControllableSafe(true);
             });
         }
 
@@ -294,7 +293,7 @@ namespace ProjectSMP.Entities.Players.Character
                 rows.Add(new[] { $"{{ffffff}}{c.Username}", c.Level.ToString(), c.Last_login });
             if (list.Count < MaxChars)
                 rows.Add(new[] { L(player, "CHAR", "LIST_CREATE_BTN"), "\0", "\0" });
-            
+
             player.ShowTabList(
                 L(player, "CHAR", "LIST_TITLE"),
                 new[] { L(player, "CHAR", "LIST_COL_NAME"), L(player, "CHAR", "LIST_COL_LEVEL"), L(player, "CHAR", "LIST_COL_LOGIN") })
@@ -380,8 +379,10 @@ namespace ProjectSMP.Entities.Players.Character
                     new[] { L(player, "CHAR", "SETTINGS_ROW_CREATE"),    "" }
                 })
                 .WithButtons(L(player, "GENERAL", "BTN_SELECT"), L(player, "GENERAL", "BTN_CANCEL"))
-                .Show(e => {
-                    if (e.DialogButton != DialogButton.Left) {
+                .Show(e =>
+                {
+                    if (e.DialogButton != DialogButton.Left)
+                    {
                         _lists.TryGetValue(player.Id, out var l);
                         ShowCharListDialog(player, l ?? new());
                         return;
@@ -509,7 +510,8 @@ namespace ProjectSMP.Entities.Players.Character
             ShowSettingsDialog(player);
         }
 
-        private static void ShowEyeColorDialog(Player player) {
+        private static void ShowEyeColorDialog(Player player)
+        {
             player.ShowList(
                 L(player, "CHAR", "EYE_TITLE"),
                 L(player, "CHAR", "EYE_BLACK"),
