@@ -32,7 +32,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
                 $"garage AS Garage, custom AS Custom, extvw AS Extvw, extint AS Extint, " +
                 $"extposx AS Extposx, extposy AS Extposy, extposz AS Extposz, extposa AS Extposa, " +
                 $"intvw AS Intvw, intint AS Intint, intposx AS Intposx, intposy AS Intposy, " +
-                $"intposz AS Intposz, intposa AS Intposa FROM `{Table}`");
+                $"intposz AS Intposz, intposa AS Intposa, mapicon AS Mapicon FROM `{Table}`");
 
             var dataList = new List<DynamicDoorData>();
 
@@ -41,6 +41,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
                 var data = new DynamicDoorData
                 {
                     Id = row.ID,
+                    MapIconId = row.Mapicon,
                     Name = row.Name,
                     Password = row.Password,
                     Icon = row.Icon,
@@ -90,6 +91,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
             var data = new DynamicDoorData
             {
                 Id = doorId,
+                MapIconId = -1,
                 Name = name,
                 ExtPosX = position.X,
                 ExtPosY = position.Y,
@@ -100,18 +102,19 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
             };
 
             await DatabaseManager.ExecuteAsync(
-                $"INSERT INTO `{Table}` (ID, name, extvw, extint, extposx, extposy, extposz, extposa) " +
-                "VALUES (@Id, @Name, @Extvw, @Extint, @ExtPosX, @ExtPosY, @ExtPosZ, @ExtAngle)",
+                $"INSERT INTO `{Table}` (ID, mapicon, name, extvw, extint, extposx, extposy, extposz, extposa) " +
+                "VALUES (@Id, @MapIconId, @Name, @Extvw, @Extint, @ExtPosX, @ExtPosY, @ExtPosZ, @ExtAngle)",
                 new
                 {
                     data.Id,
+                    data.MapIconId,
                     data.Name,
                     Extvw = data.ExtVirtualWorld,
                     Extint = data.ExtInterior,
                     data.ExtPosX,
                     data.ExtPosY,
                     data.ExtPosZ,
-                    data.ExtAngle
+                    data.ExtAngle,
                 });
 
             Doors[doorId] = data;
@@ -128,7 +131,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
                 $"UPDATE `{Table}` SET name=@Name, password=@Password, icon=@Icon, locked=@Locked, " +
                 "admin=@Admin, vip=@Vip, faction=@Faction, family=@Family, garage=@Garage, custom=@Custom, " +
                 "extvw=@Extvw, extint=@Extint, extposx=@ExtPosX, extposy=@ExtPosY, extposz=@ExtPosZ, extposa=@ExtAngle, " +
-                "intvw=@Intvw, intint=@Intint, intposx=@IntPosX, intposy=@IntPosY, intposz=@IntPosZ, intposa=@IntAngle " +
+                "intvw=@Intvw, intint=@Intint, intposx=@IntPosX, intposy=@IntPosY, intposz=@IntPosZ, intposa=@IntAngle, mapicon=@MapIconId " +
                 "WHERE ID=@Id",
                 new
                 {
@@ -154,6 +157,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
                     data.IntPosY,
                     data.IntPosZ,
                     data.IntAngle,
+                    data.MapIconId,
                     data.Id
                 });
         }
@@ -180,6 +184,19 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
             var keyText = data.IsGarage ? "ALT" : "ENTER";
             var extLabelText = $"{{00FFFF}}[ID: {data.Id}]\n{{FFFF00}}{data.Name}\n{{FFFFFF}}Press '{{FF0000}}{keyText}{{FFFFFF}}' to enter/exit the door";
             data.ExtLabel = new DynamicTextLabel(extLabelText, Color.Yellow, extPosition + new Vector3(0, 0, 0.35f), 5.0f, null, streamdistance: 5.0f);
+
+            if (data.MapIconId != -1) {
+                data.ExtMapIcon = new DynamicMapIcon(
+                    extPosition,
+                    data.MapIconId,
+                    MapIconType.Global,
+                    data.ExtVirtualWorld,
+                    data.ExtInterior,
+                    null,
+                    150.0f
+                );
+            }
+
             data.ExtLabel.World = data.ExtVirtualWorld;
             data.ExtLabel.Interior = data.ExtInterior;
 
@@ -316,6 +333,8 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
         {
             data.ExtPickup?.Dispose();
             data.ExtLabel?.Dispose();
+            data.ExtMapIcon?.Dispose();
+            data.ExtMapIcon = null;
             data.ExtPolygon?.Clear();
             DoorGridManager.RemoveDoor(data.Id, data.ExtPosX, data.ExtPosY);
 

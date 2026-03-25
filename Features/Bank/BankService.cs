@@ -143,7 +143,7 @@ namespace ProjectSMP.Features.Bank
                 await SaveAccountAsync(selfAccount);
 
                 sender.SendClientMessage(Color.White,
-                    $"{Msg.Bank} Transfer {Utilities.GroupDigits(amount)} dari {senderAccount.AccountName} ke {selfAccount.AccountName} berhasil!");
+                    $"{Msg.Bank} Transfer {{00FF00}}{Utilities.GroupDigits(amount)}{{FFFFFF}} dari {senderAccount.AccountName} ke {selfAccount.AccountName} berhasil!");
                 return true;
             }
 
@@ -173,14 +173,14 @@ namespace ProjectSMP.Features.Bank
                 new { Amount = amount, AccountNumber = targetAccountNumber });
 
             sender.SendClientMessage(Color.White,
-                $"{Msg.Bank} Transfer {Utilities.GroupDigits(amount)} ke {targetAccountNumber} berhasil! Saldo: {Utilities.GroupDigits(senderAccount.Balance)}");
+                $"{Msg.Bank} Transfer {{00FF00}}{Utilities.GroupDigits(amount)}{{FFFFFF}} ke {targetAccountNumber} berhasil! Saldo: {{00FF00}}{Utilities.GroupDigits(senderAccount.Balance)}{{FFFFFF}}");
 
             int targetPlayerId = targetData.ID;
             var target = BasePlayer.Find(targetPlayerId) as Player;
             if (target != null && target.IsConnected)
             {
                 target.SendClientMessage(Color.White,
-                    $"{Msg.Bank} Kamu menerima transfer {Utilities.GroupDigits(amount)} dari {senderAccount.AccountNumber}.");
+                    $"{Msg.Bank} Kamu menerima transfer {{00FF00}}{Utilities.GroupDigits(amount)}{{FFFFFF}} dari {senderAccount.AccountNumber}.");
             }
 
             return true;
@@ -194,7 +194,7 @@ namespace ProjectSMP.Features.Bank
             if (account.Balance > 0)
             {
                 player.SendClientMessage(Color.White,
-                    $"{Msg.Error} Kamu masih memiliki saldo {Utilities.GroupDigits(account.Balance)}. Tarik semua uang sebelum menutup akun!");
+                    $"{Msg.Error} Kamu masih memiliki saldo {{00FF00}}{Utilities.GroupDigits(account.Balance)}{{FFFFFF}}. Tarik semua uang sebelum menutup akun!");
                 return false;
             }
 

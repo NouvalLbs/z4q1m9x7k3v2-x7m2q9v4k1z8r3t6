@@ -1,7 +1,9 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using ProjectSMP.Features.Chat;
 using ProjectSMP.Features.Jobs;
 using ProjectSMP.Features.LevelSystem;
+using ProjectSMP.Features.Bank;
+using System.Linq;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
@@ -352,9 +354,13 @@ namespace ProjectSMP.Commands
             var jobs = JobService.GetAllJobsString(player);
             var pointsRequired = LevelService.GetPointsRequired(player.Level);
 
+            var bankText = BankService.GetAccountCount(player) > 0
+                ? $"{{00f000}}{Utilities.GroupDigits(player.BankAccounts.Where(a => a.IsActive).Sum(a => a.Balance))}{{FFFFFF}}"
+                : "{FF0000}Unregistered{FFFFFF}";
+
             var stats = TextFormatter.Build(
                 "{FFFF00}IC Information:\n",
-                $"{{FFFFFF}}Gender: [{{b8d2ec}}{gender}{{FFFFFF}}] | Birthdate: [{{b8d2ec}}{player.BirthDate}{{FFFFFF}}] | Money: [{{00f000}}{Utilities.GroupDigits(player.CharMoney)}{{FFFFFF}}] | Bank: [{{00f000}}0{{FFFFFF}}]\n",
+                $"{{FFFFFF}}Gender: [{{b8d2ec}}{gender}{{FFFFFF}}] | Birthdate: [{{b8d2ec}}{player.BirthDate}{{FFFFFF}}] | Money: [{{00f000}}{Utilities.GroupDigits(player.CharMoney)}{{FFFFFF}}] | Bank: [{bankText}]\n",
                 $"{{FFFFFF}}Phone Status: [{phoneStatus}] | Phone Number: [{{ebeb00}}{player.Phone.Number}{{FFFFFF}}] | Phone Credit: [{{ebeb00}}{player.Phone.Credit}{{FFFFFF}}] | Mask ID: [{{b8d2ec}}{player.MaskId}{{FFFFFF}}]\n",
                 $"{{FFFFFF}}Jobs: [{jobs}{{FFFFFF}}] | Faction: [Civilian{{FFFFFF}}] | Family: [None]\n",
                 $"{{FFFFFF}}Working at: [None] [None (0){{FFFFFF}}] | Wealth: [None]\n",

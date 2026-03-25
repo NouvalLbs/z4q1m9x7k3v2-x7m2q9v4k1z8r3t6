@@ -1,5 +1,4 @@
-﻿using ProjectSMP.Core;
-using ProjectSMP.Features.Dynamic.DynamicPickups;
+using ProjectSMP.Core;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 
@@ -90,7 +89,7 @@ namespace ProjectSMP.Features.Bank
             if (account == null) return;
 
             player.ShowInput("Bank - Deposit Uang",
-                $"Saldo saat ini: {{00FF00}}{Utilities.GroupDigits(account.Balance)}\n\n{{FFFFFF}}Masukkan jumlah uang yang ingin Anda deposit:")
+                $"Saldo saat ini: {{00FF00}}{Utilities.GroupDigits(account.Balance)}\n\n{{FFFFFF}}Masukkan jumlah uang yang ingin Anda deposit:\n{{c8c8c8}}Tip: Kamu dapat menggunakan titik/koma (Cth: 10.50)")
                 .WithButtons("Deposit", "Kembali")
                 .Show(e =>
                 {
@@ -100,7 +99,15 @@ namespace ProjectSMP.Features.Bank
                         return;
                     }
 
-                    if (!int.TryParse(e.InputText, out var amount) || amount <= 0)
+                    if (!double.TryParse(e.InputText.Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var inputParsed) || inputParsed <= 0)
+                    {
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Format nominal tidak valid!");
+                        ShowDepositDialog(player, accountIndex);
+                        return;
+                    }
+
+                    var amount = (int)System.Math.Round(inputParsed * 100);
+                    if (amount <= 0)
                     {
                         player.SendClientMessage(Color.White, $"{Msg.Error} Jumlah deposit harus lebih dari $0!");
                         ShowDepositDialog(player, accountIndex);
@@ -110,7 +117,7 @@ namespace ProjectSMP.Features.Bank
                     if (BankService.Deposit(player, account, amount))
                     {
                         player.SendClientMessage(Color.White,
-                            $"{Msg.Bank} Berhasil deposit {Utilities.GroupDigits(amount)} ke akun {account.AccountName}. Saldo: {Utilities.GroupDigits(account.Balance)}");
+                            $"{Msg.Bank} Berhasil deposit {{00FF00}}{Utilities.GroupDigits(amount)}{{FFFFFF}} ke akun {account.AccountName}. Saldo: {{00FF00}}{Utilities.GroupDigits(account.Balance)}{{FFFFFF}}");
                     }
                     else
                     {
@@ -125,7 +132,7 @@ namespace ProjectSMP.Features.Bank
             if (account == null) return;
 
             player.ShowInput("Bank - Tarik Uang",
-                $"Saldo saat ini: {{00FF00}}{Utilities.GroupDigits(account.Balance)}\n\n{{FFFFFF}}Masukkan jumlah uang yang ingin Anda tarik:")
+                $"Saldo saat ini: {{00FF00}}{Utilities.GroupDigits(account.Balance)}\n\n{{FFFFFF}}Masukkan jumlah uang yang ingin Anda tarik:\n{{c8c8c8}}Tip: Kamu dapat menggunakan titik/koma (Cth: 10.50)")
                 .WithButtons("Tarik", "Kembali")
                 .Show(e =>
                 {
@@ -135,7 +142,15 @@ namespace ProjectSMP.Features.Bank
                         return;
                     }
 
-                    if (!int.TryParse(e.InputText, out var amount) || amount <= 0)
+                    if (!double.TryParse(e.InputText.Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var inputParsed) || inputParsed <= 0)
+                    {
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Format nominal tidak valid!");
+                        ShowWithdrawDialog(player, accountIndex);
+                        return;
+                    }
+
+                    var amount = (int)System.Math.Round(inputParsed * 100);
+                    if (amount <= 0)
                     {
                         player.SendClientMessage(Color.White, $"{Msg.Error} Jumlah penarikan harus lebih dari $0!");
                         ShowWithdrawDialog(player, accountIndex);
@@ -145,7 +160,7 @@ namespace ProjectSMP.Features.Bank
                     if (BankService.Withdraw(player, account, amount))
                     {
                         player.SendClientMessage(Color.White,
-                            $"{Msg.Bank} Berhasil menarik {Utilities.GroupDigits(amount)} dari akun {account.AccountName}. Saldo: {Utilities.GroupDigits(account.Balance)}");
+                            $"{Msg.Bank} Berhasil menarik {{00FF00}}{Utilities.GroupDigits(amount)}{{FFFFFF}} dari akun {account.AccountName}. Saldo: {{00FF00}}{Utilities.GroupDigits(account.Balance)}{{FFFFFF}}");
                     }
                     else
                     {
@@ -187,7 +202,7 @@ namespace ProjectSMP.Features.Bank
             if (account == null) return;
 
             player.ShowInput("Bank - Transfer Uang",
-                $"Saldo saat ini: {{00FF00}}{Utilities.GroupDigits(account.Balance)}\n{{FFFFFF}}Rekening tujuan: {{FFFF00}}{targetAccount}\n\n{{FFFFFF}}Masukkan jumlah uang yang ingin Anda transfer:")
+                $"Saldo saat ini: {{00FF00}}{Utilities.GroupDigits(account.Balance)}\n{{FFFFFF}}Rekening tujuan: {{FFFF00}}{targetAccount}\n\n{{FFFFFF}}Masukkan jumlah uang yang ingin Anda transfer:\n{{c8c8c8}}Tip: Kamu dapat menggunakan titik/koma (Cth: 10.50)")
                 .WithButtons("Transfer", "Kembali")
                 .Show(e =>
                 {
@@ -197,7 +212,15 @@ namespace ProjectSMP.Features.Bank
                         return;
                     }
 
-                    if (!int.TryParse(e.InputText, out var amount) || amount <= 0)
+                    if (!double.TryParse(e.InputText.Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var inputParsed) || inputParsed <= 0)
+                    {
+                        player.SendClientMessage(Color.White, $"{Msg.Error} Format nominal tidak valid!");
+                        ShowTransferAmountDialog(player, accountIndex, targetAccount);
+                        return;
+                    }
+
+                    var amount = (int)System.Math.Round(inputParsed * 100);
+                    if (amount <= 0)
                     {
                         player.SendClientMessage(Color.White, $"{Msg.Error} Jumlah transfer harus lebih dari $0!");
                         ShowTransferAmountDialog(player, accountIndex, targetAccount);

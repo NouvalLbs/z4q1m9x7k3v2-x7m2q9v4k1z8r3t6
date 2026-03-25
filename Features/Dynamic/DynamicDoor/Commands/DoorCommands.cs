@@ -187,6 +187,18 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor.Commands
                     player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Virtual world DoorId {doorId} disesuaikan.");
                     break;
 
+                case "mapicon":
+                    if (!int.TryParse(value, out int mapIconId) || mapIconId < -1)
+                    {
+                        player.SendClientMessage(Color.White, $"{Msg.AdmCmd} Input MapIcon ID [-1 untuk disable]!");
+                        return;
+                    }
+                    door.MapIconId = mapIconId;
+                    await DoorService.SaveAsync(doorId);
+                    DoorService.UpdateDoor(doorId);
+                    player.SendClientMessage(Color.White, $"{Msg.AdmCmd} MapIcon DoorId {doorId} diubah menjadi {mapIconId}.");
+                    break;
+
                 case "delete":
                     await DoorService.DeleteAsync(doorId);
                     player.SendClientMessage(Color.White, $"{Msg.AdmCmd} DoorId {doorId} berhasil dihapus.");
@@ -194,7 +206,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor.Commands
 
                 default:
                     player.SendClientMessage(Color.White, $"{Msg.AdmCmd_G} Gunakan /editdoor [DoorId] [Prefix]");
-                    player.SendClientMessage(Color.White, "{FF6347}>> Prefix{888888}: location, interior, password, name, locked, admin, vip, faction, family, custom, virtual, garage, delete");
+                    player.SendClientMessage(Color.White, "{FF6347}>> Prefix{888888}: location, interior, password, name, locked, admin, vip, faction, family, custom, virtual, garage, mapicon, delete");
                     break;
             }
         }

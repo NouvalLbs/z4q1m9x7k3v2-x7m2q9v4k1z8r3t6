@@ -12,10 +12,7 @@ namespace ProjectSMP.Core
 
     public static class ClientManager
     {
-        // Fixed CI serial used by all SA-MP Mobile (Android) clients
-        // Source: https://github.com/adib-yg/SAMP-Mobile-Checker
-        private static readonly HashSet<string> MobileCISerials = new(StringComparer.OrdinalIgnoreCase)
-        {
+        private static readonly HashSet<string> MobileCISerials = new(StringComparer.OrdinalIgnoreCase) {
             "ED40ED0E8089CC44C08EE9580F4C8C44EE8EE990"
         };
 

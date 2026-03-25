@@ -9,6 +9,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
         public string Name { get; set; } = "";
         public string Password { get; set; } = "";
         public int Icon { get; set; } = 19130;
+        public int MapIconId { get; set; } = -1;
         public bool Locked { get; set; }
         public int AdminLevel { get; set; }
         public int VipLevel { get; set; }
@@ -33,6 +34,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
 
         public DynamicPickup ExtPickup { get; set; }
         public DynamicTextLabel ExtLabel { get; set; }
+        public DynamicMapIcon ExtMapIcon { get; set; }
         public Core.Polygon ExtPolygon { get; set; }
 
         public DynamicPickup IntPickup { get; set; }
@@ -46,6 +48,7 @@ namespace ProjectSMP.Features.Dynamic.DynamicDoor
         public string Name { get; set; }
         public string Password { get; set; }
         public int Icon { get; set; }
+        public int Mapicon { get; set; }
         public int Locked { get; set; }
         public int Admin { get; set; }
         public int Vip { get; set; }
