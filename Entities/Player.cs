@@ -14,6 +14,7 @@ using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.EnterExit;
 using ProjectSMP.Features.PreviewModelDialog;
+using ProjectSMP.Plugins.CEF;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
@@ -32,6 +33,8 @@ namespace ProjectSMP
         public override void OnConnected(EventArgs e)
         {
             base.OnConnected(e);
+            CefService.OnPlayerConnect(Id, IP);
+
             ClientManager.CheckPlayerClient(this);
             WeaponConfigService.OnConnect(this);
             WeaponConfigService.PlayerDamage += OnPlayerDamage;
@@ -44,6 +47,8 @@ namespace ProjectSMP
 
         public override void OnDisconnected(DisconnectEventArgs e)
         {
+            CefService.OnPlayerDisconnect(Id);
+
             WeaponConfigService.PlayerDeathFinished -= OnDeathFinished;
             WeaponConfigService.PlayerDamage -= OnPlayerDamage;
             CinematicCameraService.Stop(this);

@@ -12,6 +12,7 @@ using ProjectSMP.Features.LevelSystem;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.Anticheat;
 using ProjectSMP.Plugins.Anticheat.Configuration;
+using ProjectSMP.Plugins.CEF;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
@@ -30,6 +31,12 @@ namespace ProjectSMP
 
         protected override void OnInitialized(EventArgs e) {
             base.OnInitialized(e);
+
+            CefService.OnInitialized += (playerId, success) =>
+            {
+                if (!success) return;
+                Console.WriteLine($"[CEF] Player {playerId} plugin ready");
+            };
 
             // Initialize Discord C#
             Task.Run(async () => {
@@ -201,14 +208,10 @@ namespace ProjectSMP
 
         [Callback]
         public void OnCefInitialize(int player_id, int success)
-        {
-            Console.WriteLine($"[CEF] OnCefInitialize fired - player:{player_id} success:{success}");
-        }
+            => CefService.HandleCefInitialize(player_id, success);
 
         [Callback]
         public void OnCefBrowserCreated(int player_id, int browser_id, int status_code)
-        {
-            Console.WriteLine($"[CEF] Browser {browser_id} created - player:{player_id} status:{status_code}");
-        }
+            => CefService.HandleBrowserCreated(player_id, browser_id, status_code);
     }
 }
