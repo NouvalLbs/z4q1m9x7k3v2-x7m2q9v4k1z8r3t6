@@ -14,7 +14,6 @@ using ProjectSMP.Plugins.Anticheat;
 using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.RealtimeClock;
-using ProjectSMP.Plugins.SampCEF;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.Core.Callbacks;
 using SampSharp.GameMode;
@@ -31,9 +30,6 @@ namespace ProjectSMP
 
         protected override void OnInitialized(EventArgs e) {
             base.OnInitialized(e);
-
-            // Subscribe ke event CefExtension
-            CefService.Subscribe("onLoginSubmit", "CEF_OnLoginSubmit");
 
             // Initialize Discord C#
             Task.Run(async () => {
