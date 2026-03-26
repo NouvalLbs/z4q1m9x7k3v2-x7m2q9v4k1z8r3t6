@@ -19,55 +19,55 @@
             Url = url;
             IsHidden = hidden;
 
-            _n.cef_create_browser(playerId, browserId, url, hidden, focused);
+            _n.CefCreateBrowser(playerId, browserId, url, hidden, focused);
         }
 
         public void Destroy()
-            => _n.cef_destroy_browser(PlayerId, BrowserId);
+            => _n.CefDestroyBrowser(PlayerId, BrowserId);
 
         public void Hide()
         {
             IsHidden = true;
-            _n.cef_hide_browser(PlayerId, BrowserId, true);
+            _n.CefHideBrowser(PlayerId, BrowserId, true);
         }
 
         public void Show()
         {
             IsHidden = false;
-            _n.cef_hide_browser(PlayerId, BrowserId, false);
+            _n.CefHideBrowser(PlayerId, BrowserId, false);
         }
 
         public void SetVisible(bool visible)
         {
             IsHidden = !visible;
-            _n.cef_hide_browser(PlayerId, BrowserId, !visible);
+            _n.CefHideBrowser(PlayerId, BrowserId, !visible);
         }
 
         public void Focus(bool focused)
-            => _n.cef_focus_browser(PlayerId, BrowserId, focused);
+            => _n.CefFocusBrowser(PlayerId, BrowserId, focused);
 
         public void LoadUrl(string url)
         {
             Url = url;
-            _n.cef_load_url(PlayerId, BrowserId, url);
+            _n.CefLoadUrl(PlayerId, BrowserId, url);
         }
 
         public void EmitEvent(string eventName, params CefValue[] args)
-            => _n.cef_emit_event(PlayerId, eventName, args.Flatten());
+            => _n.CefEmitEvent(PlayerId, eventName, args.Flatten());
 
         public void AppendToObject(int objectId)
-            => _n.cef_append_to_object(PlayerId, BrowserId, objectId);
+            => _n.CefAppendToObject(PlayerId, BrowserId, objectId);
 
         public void RemoveFromObject(int objectId)
-            => _n.cef_remove_from_object(PlayerId, BrowserId, objectId);
+            => _n.CefRemoveFromObject(PlayerId, BrowserId, objectId);
 
         public void ToggleDevTools(bool enabled)
-            => _n.cef_toggle_dev_tools(PlayerId, BrowserId, enabled);
+            => _n.CefToggleDevTools(PlayerId, BrowserId, enabled);
 
         public void SetAudioSettings(float maxDistance = DefaultMaxDist, float referenceDistance = DefaultRefDist)
-            => _n.cef_set_audio_settings(PlayerId, BrowserId, maxDistance, referenceDistance);
+            => _n.CefSetAudioSettings(PlayerId, BrowserId, maxDistance, referenceDistance);
 
         public void AlwaysListenKeys(bool listen)
-            => _n.cef_always_listen_keys(PlayerId, BrowserId, listen);
+            => _n.CefAlwaysListenKeys(PlayerId, BrowserId, listen);
     }
 }
