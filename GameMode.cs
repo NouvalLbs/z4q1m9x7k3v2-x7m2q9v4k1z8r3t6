@@ -31,6 +31,8 @@ namespace ProjectSMP
 
         protected override void OnInitialized(EventArgs e) {
             base.OnInitialized(e);
+
+            // Subscribe ke event CefExtension
             CefService.Subscribe("onLoginSubmit", "CEF_OnLoginSubmit");
 
             // Initialize Discord C#
@@ -202,15 +204,15 @@ namespace ProjectSMP
         }
 
         [Callback]
-        public void OnCefInitialize(int playerId, int success)
+        public void OnCefInitialize(int player_id, int success)
         {
-            Console.WriteLine($"[CEF] OnCefInitialize dipanggil - player:{playerId} success:{success}");
+            Console.WriteLine($"[CEF] OnCefInitialize fired - player:{player_id} success:{success}");
         }
 
         [Callback]
-        public void OnCefBrowserCreated(int playerId, int browserId, int statusCode)
+        public void OnCefBrowserCreated(int player_id, int browser_id, int status_code)
         {
-            Console.WriteLine($"[CEF] Browser {browserId} dibuat - player:{playerId} status:{statusCode}");
+            Console.WriteLine($"[CEF] Browser {browser_id} created - player:{player_id} status:{status_code}");
         }
     }
 }

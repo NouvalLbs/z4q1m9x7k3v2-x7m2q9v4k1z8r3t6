@@ -17,7 +17,6 @@ using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.SampCEF;
 using ProjectSMP.Plugins.WeaponConfig;
-using SampSharp.Core.Callbacks;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Events;
@@ -34,8 +33,6 @@ namespace ProjectSMP
         public override void OnConnected(EventArgs e)
         {
             base.OnConnected(e);
-            CefService.NotifyConnect(Id, IP);
-
             ClientManager.CheckPlayerClient(this);
             WeaponConfigService.OnConnect(this);
             WeaponConfigService.PlayerDamage += OnPlayerDamage;
@@ -63,8 +60,6 @@ namespace ProjectSMP
             ChatService.Cleanup(this);
             AskService.ClearPlayerAsks(this);
             this.ClearPlayerData();
-
-            CefService.NotifyDisconnect(Id);
             base.OnDisconnected(e);
         }
 

@@ -4,68 +4,71 @@ namespace ProjectSMP.Plugins.SampCEF
 {
     public class CefNatives : NativeObjectSingleton<CefNatives>
     {
-        [NativeMethod(Function = "cef_create_browser")]
-        public virtual int CreateBrowser(int playerId, int browserId, string url, bool hidden, bool focused)
-            => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_on_player_connect(int player_id, string ip) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_on_player_disconnect(int player_id) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_create_browser(int player_id, int browser_id, string url, bool hidden, bool focused) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_destroy_browser(int player_id, int browser_id) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_subscribe(string event_name, string callback) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_hide_browser(int player_id, int browser_id, bool hide) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_create_ext_browser(int player_id, int browser_id, string texture, string url, int scale) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_append_to_object(int player_id, int browser_id, int object_id) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_remove_from_object(int player_id, int browser_id, int object_id) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_player_has_plugin(int player_id) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_toggle_dev_tools(int player_id, int browser_id, bool enabled) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_set_audio_settings(int player_id, int browser_id, float max_distance, float reference_distance) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_focus_browser(int player_id, int browser_id, bool focused) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_always_listen_keys(int player_id, int browser_id, bool listen) => throw new NativeNotImplementedException();
+        [NativeMethod] public virtual int cef_load_url(int player_id, int browser_id, string url) => throw new NativeNotImplementedException();
+    }
 
-        [NativeMethod(Function = "cef_destroy_browser")]
-        public virtual int DestroyBrowser(int playerId, int browserId)
-            => throw new NativeNotImplementedException();
+    // cef_emit_event is variadic — each class maps same native with a different signature
+    internal class CefEmit0 : NativeObjectSingleton<CefEmit0>
+    {
+        [NativeMethod] public virtual int cef_emit_event(int player_id, string event_name) => throw new NativeNotImplementedException();
+    }
 
-        [NativeMethod(Function = "cef_on_player_connect")]
-        public virtual int OnPlayerConnect(int playerId, string ip)
-            => throw new NativeNotImplementedException();
+    internal class CefEmit1S : NativeObjectSingleton<CefEmit1S>
+    {
+        [NativeMethod] public virtual int cef_emit_event(int player_id, string event_name, int t1, string v1) => throw new NativeNotImplementedException();
+    }
 
-        [NativeMethod(Function = "cef_on_player_disconnect")]
-        public virtual int OnPlayerDisconnect(int playerId)
-            => throw new NativeNotImplementedException();
+    internal class CefEmit1I : NativeObjectSingleton<CefEmit1I>
+    {
+        [NativeMethod] public virtual int cef_emit_event(int player_id, string event_name, int t1, int v1) => throw new NativeNotImplementedException();
+    }
 
-        [NativeMethod(Function = "cef_subscribe")]
-        public virtual int Subscribe(string eventName, string callback)
-            => throw new NativeNotImplementedException();
+    internal class CefEmit1F : NativeObjectSingleton<CefEmit1F>
+    {
+        [NativeMethod] public virtual int cef_emit_event(int player_id, string event_name, int t1, float v1) => throw new NativeNotImplementedException();
+    }
 
-        [NativeMethod(Function = "cef_hide_browser")]
-        public virtual int HideBrowser(int playerId, int browserId, bool hide)
-            => throw new NativeNotImplementedException();
+    internal class CefEmit2SS : NativeObjectSingleton<CefEmit2SS>
+    {
+        [NativeMethod] public virtual int cef_emit_event(int player_id, string event_name, int t1, string v1, int t2, string v2) => throw new NativeNotImplementedException();
+    }
 
-        [NativeMethod(Function = "cef_create_ext_browser")]
-        public virtual int CreateExtBrowser(int playerId, int browserId, string texture, string url, int scale)
-            => throw new NativeNotImplementedException();
+    internal class CefEmit2SI : NativeObjectSingleton<CefEmit2SI>
+    {
+        [NativeMethod] public virtual int cef_emit_event(int player_id, string event_name, int t1, string v1, int t2, int v2) => throw new NativeNotImplementedException();
+    }
 
-        [NativeMethod(Function = "cef_append_to_object")]
-        public virtual int AppendToObject(int playerId, int browserId, int objectId)
-            => throw new NativeNotImplementedException();
+    internal class CefEmit2SF : NativeObjectSingleton<CefEmit2SF>
+    {
+        [NativeMethod] public virtual int cef_emit_event(int player_id, string event_name, int t1, string v1, int t2, float v2) => throw new NativeNotImplementedException();
+    }
 
-        [NativeMethod(Function = "cef_remove_from_object")]
-        public virtual int RemoveFromObject(int playerId, int browserId, int objectId)
-            => throw new NativeNotImplementedException();
+    internal class CefEmit2IS : NativeObjectSingleton<CefEmit2IS>
+    {
+        [NativeMethod] public virtual int cef_emit_event(int player_id, string event_name, int t1, int v1, int t2, string v2) => throw new NativeNotImplementedException();
+    }
 
-        [NativeMethod(Function = "cef_player_has_plugin")]
-        public virtual int PlayerHasPlugin(int playerId)
-            => throw new NativeNotImplementedException();
+    internal class CefEmit2II : NativeObjectSingleton<CefEmit2II>
+    {
+        [NativeMethod] public virtual int cef_emit_event(int player_id, string event_name, int t1, int v1, int t2, int v2) => throw new NativeNotImplementedException();
+    }
 
-        [NativeMethod(Function = "cef_toggle_dev_tools")]
-        public virtual int ToggleDevTools(int playerId, int browserId, bool enabled)
-            => throw new NativeNotImplementedException();
-
-        [NativeMethod(Function = "cef_set_audio_settings")]
-        public virtual int SetAudioSettings(int playerId, int browserId, float maxDistance, float refDistance)
-            => throw new NativeNotImplementedException();
-
-        [NativeMethod(Function = "cef_focus_browser")]
-        public virtual int FocusBrowser(int playerId, int browserId, bool focused)
-            => throw new NativeNotImplementedException();
-
-        [NativeMethod(Function = "cef_always_listen_keys")]
-        public virtual int AlwaysListenKeys(int playerId, int browserId, bool listen)
-            => throw new NativeNotImplementedException();
-
-        [NativeMethod(Function = "cef_load_url")]
-        public virtual int LoadUrl(int playerId, int browserId, string url)
-            => throw new NativeNotImplementedException();
-
-        [NativeMethod(Function = "cef_emit_event")]
-        public virtual int EmitEvent(int playerId, string eventName, params object[] args)
-            => throw new NativeNotImplementedException();
+    internal class CefEmit2IF : NativeObjectSingleton<CefEmit2IF>
+    {
+        [NativeMethod] public virtual int cef_emit_event(int player_id, string event_name, int t1, int v1, int t2, float v2) => throw new NativeNotImplementedException();
     }
 }
