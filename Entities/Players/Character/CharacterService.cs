@@ -2,6 +2,7 @@
 using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
+using ProjectSMP.Entities.Players.Inventory.Data;
 using ProjectSMP.Entities.Players.NameTag;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Entities.Players.Settings;
@@ -27,7 +28,7 @@ namespace ProjectSMP.Entities.Players.Character
     public class CharPosition { public float X, Y, Z, A; public int Interior, World; }
     public class CharVitals { public float MaxHealth = 100, Health = 100, Armour, Hunger = 100, Energy = 100, Stress = 0; }
     public class CharPlaytime { public int Hours, Minutes, Seconds; }
-    public class CharBackpack { public int Enabled, Slots = 32, MaxWeight = 60000; }
+
     public class CharPhone { public int Number, Off, Credit; }
     public class CharJailInfo { public int Jailed, Time; public string Reason = ""; }
     public class CharBanInfo { public int Banned, Time, Expire; public string Reason = "", Admin = ""; }
@@ -277,7 +278,7 @@ namespace ProjectSMP.Entities.Players.Character
                     Pos = Ser(pos),
                     Vitals = Ser(player.Vitals),
                     Playtime = Ser(player.Playtime),
-                    Backpack = Ser(player.Backpack),
+                    Backpack = Ser(player.InventoryData),
                     Phone = Ser(player.Phone),
                     JailInfo = Ser(player.JailInfo),
                     BanInfo = Ser(player.BanInfo),
@@ -593,7 +594,7 @@ namespace ProjectSMP.Entities.Players.Character
                         Pos = Ser(pos),
                         Vitals = Ser(new CharVitals()),
                         Playtime = Ser(new CharPlaytime()),
-                        Backpack = Ser(new CharBackpack()),
+                        Backpack = Ser(new InventoryData()),
                         Phone = Ser(new CharPhone()),
                         JailInfo = Ser(new CharJailInfo()),
                         BanInfo = Ser(new CharBanInfo()),
@@ -704,7 +705,8 @@ namespace ProjectSMP.Entities.Players.Character
             player.CharInfo = Des<CharInfo>(r.Char_info) ?? new();
             player.Vitals = Des<CharVitals>(r.Vitals) ?? new();
             player.Playtime = Des<CharPlaytime>(r.Playtime) ?? new();
-            player.Backpack = Des<CharBackpack>(r.Backpack) ?? new();
+
+            player.InventoryData = Des<InventoryData>(r.Backpack) ?? new();
             player.Phone = Des<CharPhone>(r.Phone) ?? new();
             player.JailInfo = Des<CharJailInfo>(r.Jail_info) ?? new();
             player.BanInfo = Des<CharBanInfo>(r.Ban_info) ?? new();

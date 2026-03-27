@@ -1,5 +1,6 @@
 using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Character;
+using ProjectSMP.Entities.Players.Inventory.Data;
 using ProjectSMP.Features.Bank.Data;
 using ProjectSMP.Features.Bank.Paycheck;
 using System;
@@ -30,7 +31,8 @@ namespace ProjectSMP
         public CharPosition CharSpawnPos { get; set; } = new();
         public CharVitals Vitals { get; set; } = new();
         public CharPlaytime Playtime { get; set; } = new();
-        public CharBackpack Backpack { get; set; } = new();
+
+        public InventoryData InventoryData { get; set; } = new();
         public CharPhone Phone { get; set; } = new();
         public CharJailInfo JailInfo { get; set; } = new();
         public CharBanInfo BanInfo { get; set; } = new();

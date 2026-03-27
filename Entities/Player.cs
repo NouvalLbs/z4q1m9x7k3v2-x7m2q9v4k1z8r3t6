@@ -6,6 +6,7 @@ using ProjectSMP.Entities.Players.Character;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.NameTag;
 using ProjectSMP.Entities.Players.Needs;
+using ProjectSMP.Entities.Players.Inventory;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank;
 using ProjectSMP.Features.Bank.DynamicBank;
@@ -58,6 +59,7 @@ namespace ProjectSMP
             NameTagService.Cleanup(this);
             ChatService.Cleanup(this);
             AskService.ClearPlayerAsks(this);
+            _ = InventoryService.SaveAsync(this);
             this.ClearPlayerData();
             base.OnDisconnected(e);
         }
@@ -73,7 +75,11 @@ namespace ProjectSMP
             base.OnSpawned(e);
             WeaponConfigService.OnSpawn(this);
             CharacterService.HandleSpawn(this);
-            if (IsCharLoaded) _ = BankService.LoadAsync(this);
+            if (IsCharLoaded)
+            {
+                _ = BankService.LoadAsync(this);
+                InventoryService.Initialize(this);
+            }
         }
 
         public override void OnDeath(DeathEventArgs e)
