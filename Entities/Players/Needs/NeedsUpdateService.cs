@@ -93,8 +93,17 @@ namespace ProjectSMP.Entities.Players.Needs
 
             player.Vitals.Health = player.GetHealthSafe();
             player.Vitals.Armour = player.GetArmourSafe();
-            SetPlayerHunger(player, player.Vitals.Hunger - hungerAdjust);
-            SetPlayerEnergy(player, player.Vitals.Energy - energyAdjust);
+
+            if (player.Settings.HBEMode == 0)
+            {
+                NeedsService.SendHudDataToCef(player);
+            }
+            else
+            {
+                SetPlayerHunger(player, player.Vitals.Hunger - hungerAdjust);
+                SetPlayerEnergy(player, player.Vitals.Energy - energyAdjust);
+                NeedsHudManager.UpdateHud(player);
+            }
         }
 
         private static void SetPlayerHunger(Player player, float hunger)

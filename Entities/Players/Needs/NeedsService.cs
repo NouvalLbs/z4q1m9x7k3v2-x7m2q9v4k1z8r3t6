@@ -1,4 +1,6 @@
-﻿namespace ProjectSMP.Entities.Players.Needs
+﻿using ProjectSMP.Plugins.CEF;
+
+namespace ProjectSMP.Entities.Players.Needs
 {
     public static class NeedsService
     {
@@ -18,7 +20,16 @@
         {
             NeedsUpdateService.RegisterPlayer(player);
             NeedsEffectService.RegisterPlayer(player);
-            NeedsHudManager.Initialize(player);
+
+            if (player.Settings.HBEMode == 0)
+            {
+                SendHudDataToCef(player);
+                CefService.EmitEvent(player.Id, "setHudVisible", new { visible = true });
+            }
+            else
+            {
+                NeedsHudManager.Initialize(player);
+            }
         }
 
         public static void OnPlayerDisconnect(Player player)
@@ -48,7 +59,37 @@
 
         public static void RefreshHud(Player player)
         {
-            NeedsHudManager.RegenerateHud(player);
+            if (player.Settings.HBEMode == 0)
+            {
+                SendHudDataToCef(player);
+            }
+            else
+            {
+                NeedsHudManager.RegenerateHud(player);
+            }
+        }
+
+        public static void SendHudDataToCef(Player player)
+        {
+            var hudData = new
+            {
+                ShowHealth = player.Settings.ShowHealth,
+                HealthValue = (int)player.Vitals.Health,
+
+                ShowArmour = player.Settings.ShowArmour,
+                ArmourValue = (int)player.Vitals.Armour,
+
+                ShowHunger = player.Settings.ShowHunger,
+                HungerValue = (int)player.Vitals.Hunger,
+
+                ShowThirst = player.Settings.ShowThirst,
+                ThirstValue = (int)player.Vitals.Energy,
+
+                ShowStress = player.Settings.ShowStress,
+                StressValue = (int)player.Vitals.Stress
+            };
+
+            CefService.EmitEvent(player.Id, "updateHud", hudData);
         }
     }
 }

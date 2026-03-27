@@ -3,6 +3,7 @@ using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.Streamer;
+using ProjectSMP.Plugins.CEF;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using System.Collections.Generic;
@@ -112,9 +113,11 @@ namespace ProjectSMP.Entities.Players.Settings
 
         private static void ShowHBEHudSettings(Player player)
         {
+
+            var modeLabel = player.Settings.HBEMode == 0 ? "CEF Modern" : "TextDraw Modern";
             var rows = new List<string[]>
             {
-                new[] { "{ffffff}HBE Style", "Modern" },
+                new[] { "{ffffff}HBE Style", $"{{bdff66}}{modeLabel}" },
                 new[] { "{ffffff}Show Health", GetToggleLabel(player.Settings.ShowHealth) },
                 new[] { "{ffffff}Show Armour", GetToggleLabel(player.Settings.ShowArmour) },
                 new[] { "{ffffff}Show Hunger", GetToggleLabel(player.Settings.ShowHunger) },
@@ -133,7 +136,20 @@ namespace ProjectSMP.Entities.Players.Settings
                     switch (e.ListItem)
                     {
                         case 0:
-                            player.SendClientMessage(Color.White, $"{Msg.Settings} Pilihan Mode HBE akan ada kedepannya, untuk sementara waktu opsi HBE hanya {{bdff66}}Modern{{ffffff}}.");
+                            player.Settings.HBEMode = player.Settings.HBEMode == 0 ? 1 : 0;
+                            if (player.Settings.HBEMode == 0)
+                            {
+                                NeedsHudManager.Cleanup(player);
+                                NeedsService.SendHudDataToCef(player);
+                                CefService.EmitEvent(player.Id, "setHudVisible", new { visible = true });
+                            }
+                            else
+                            {
+                                CefService.EmitEvent(player.Id, "setHudVisible", new { visible = false });
+                                NeedsHudManager.Initialize(player);
+                            }
+
+                            player.SendClientMessage(Color.White, $"{Msg.Settings} HBE Mode changed to {modeLabel}");
                             break;
                         case 1:
                             player.Settings.ShowHealth = !player.Settings.ShowHealth;
@@ -318,7 +334,8 @@ namespace ProjectSMP.Entities.Players.Settings
                 });
         }
 
-        public static void ApplyDynamicObjectPriority(Player player) {
+        public static void ApplyDynamicObjectPriority(Player player)
+        {
             var settings = new (int visible, float radius)[] {
                 (150, 0.25f), (500, 0.5f), (750, 1.0f), (1000, 2.0f)
             };
