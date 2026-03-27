@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using SampSharp.Core.Natives.NativeObjects;
 using System;
 using System.Text.Json;
@@ -74,14 +74,13 @@ namespace ProjectSMP.Plugins.CEF
 
         public static void EmitEvent(int playerId, string eventName, object? args = null)
         {
-            var json = JsonSerializer.Serialize(new { e = eventName, d = args });
+            var json = args != null ? JsonSerializer.Serialize(args) : "{}";
             Call("CefBridge_EmitEvent", playerId, eventName, json);
         }
 
         public static bool HasPlugin(int playerId)
         {
-            N.CallRemoteFunction("CefBridge_HasPlugin", "d", playerId);
-            return true;
+            return N.CallRemoteFunction("CefBridge_HasPlugin", "d", playerId) != 0;
         }
 
         public static void ToggleDevTools(int playerId, int browserId, bool enabled)

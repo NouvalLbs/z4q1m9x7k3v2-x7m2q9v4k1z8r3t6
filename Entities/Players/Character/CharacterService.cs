@@ -212,26 +212,29 @@ namespace ProjectSMP.Entities.Players.Character
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_LAST_LOGIN", player.LastLogin));
 
             RealtimeClockService.OnPlayerSpawn(player.Id, player.Settings.ShowTime);
-            NeedsService.OnPlayerSpawn(player);
-
-            ConditionService.RegisterPlayer(player);
-            ConditionService.RestoreDeathState(player);
-
-            if (player.Condition.Injured == 0)
-            {
-                player.SetHealthSafe(player.Vitals.Health, player.Vitals.Armour);
-            }
-
             EnterExitService.ProcessEnterExit(player, () =>
             {
                 if (!player.IsDisposed)
+                {
                     NameTagService.Refresh(player);
-                SettingsService.ApplyDynamicObjectPriority(player);
-                JailService.OnPlayerSpawn(player);
-                PlaytimeService.RegisterPlayer(player);
-                PaycheckService.RegisterPlayer(player);
-                player.ToggleControllableSafe(true);
-                player.IsLoggedIn = true;
+                    SettingsService.ApplyDynamicObjectPriority(player);
+                    JailService.OnPlayerSpawn(player);
+                    PlaytimeService.RegisterPlayer(player);
+                    PaycheckService.RegisterPlayer(player);
+
+                    NeedsService.OnPlayerSpawn(player);
+
+                    ConditionService.RegisterPlayer(player);
+                    ConditionService.RestoreDeathState(player);
+
+                    if (player.Condition.Injured == 0)
+                    {
+                        player.SetHealthSafe(player.Vitals.Health, player.Vitals.Armour);
+                    }
+
+                    player.ToggleControllableSafe(true);
+                    player.IsLoggedIn = true;
+                }
             });
         }
 

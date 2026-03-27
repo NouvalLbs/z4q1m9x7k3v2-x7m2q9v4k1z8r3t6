@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Plugins.RealtimeClock;
@@ -136,20 +136,7 @@ namespace ProjectSMP.Entities.Players.Settings
                     switch (e.ListItem)
                     {
                         case 0:
-                            player.Settings.HBEMode = player.Settings.HBEMode == 0 ? 1 : 0;
-                            if (player.Settings.HBEMode == 0)
-                            {
-                                NeedsHudManager.Cleanup(player);
-                                NeedsService.SendHudDataToCef(player);
-                                CefService.EmitEvent(player.Id, "setHudVisible", new { visible = true });
-                            }
-                            else
-                            {
-                                CefService.EmitEvent(player.Id, "setHudVisible", new { visible = false });
-                                NeedsHudManager.Initialize(player);
-                            }
-
-                            player.SendClientMessage(Color.White, $"{Msg.Settings} HBE Mode changed to {modeLabel}");
+                            ShowHBEStyleSelection(player);
                             break;
                         case 1:
                             player.Settings.ShowHealth = !player.Settings.ShowHealth;
@@ -176,6 +163,60 @@ namespace ProjectSMP.Entities.Players.Settings
                             NeedsService.RefreshHud(player);
                             player.SendClientMessage(Color.White, $"{Msg.Settings} Kamu {{bdff66}}berhasil{{FFFFFF}} merubah settings Show Stress menjadi {GetToggleLabel(player.Settings.ShowStress)}");
                             break;
+                    }
+                });
+        }
+
+        private static void ShowHBEStyleSelection(Player player)
+        {
+            player.ShowList(
+                "Select HBE Style",
+                "CEF Modern",
+                "TextDraw Modern")
+                .WithButtons("Select", "Cancel")
+                .Show(e =>
+                {
+                    if (e.DialogButton != DialogButton.Left)
+                    {
+                        ShowHBEHudSettings(player);
+                        return;
+                    }
+
+                    if (e.ListItem == 0)
+                    {
+                        if (!CefService.HasPlugin(player.Id))
+                        {
+                            player.SendClientMessage(Color.White, $"{Msg.Error} Kamu belum menginstall CEF Plugin, tidak bisa menggunakan CEF HUD.");
+                            ShowHBEHudSettings(player);
+                            return;
+                        }
+
+                        if (player.Settings.HBEMode != 0)
+                        {
+                            player.Settings.HBEMode = 0;
+                            NeedsHudManager.Cleanup(player);
+                            NeedsService.SendHudDataToCef(player);
+                            CefService.EmitEvent(player.Id, "setHudVisible", new { visible = true });
+                            player.SendClientMessage(Color.White, $"{Msg.Settings} HBE Mode changed to CEF Modern");
+                        }
+                        else
+                        {
+                            ShowHBEHudSettings(player);
+                        }
+                    }
+                    else if (e.ListItem == 1)
+                    {
+                        if (player.Settings.HBEMode != 1)
+                        {
+                            player.Settings.HBEMode = 1;
+                            CefService.EmitEvent(player.Id, "setHudVisible", new { visible = false });
+                            NeedsHudManager.Initialize(player);
+                            player.SendClientMessage(Color.White, $"{Msg.Settings} HBE Mode changed to TextDraw Modern");
+                        }
+                        else
+                        {
+                            ShowHBEHudSettings(player);
+                        }
                     }
                 });
         }
