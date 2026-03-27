@@ -21,7 +21,6 @@ namespace ProjectSMP
 
         public int Level { get; set; } = 1;
         public int LevelPoints { get; set; }
-        public int LevelPointsExp { get; set; }
         public int CharMoney { get; set; }
         public int Admin { get; set; }
         public int MaskId { get; set; }

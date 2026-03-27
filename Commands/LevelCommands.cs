@@ -1,15 +1,16 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using ProjectSMP.Features.LevelSystem;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
+using System;
 using System.Collections.Generic;
 
 namespace ProjectSMP.Commands
 {
     public class LevelCommands
     {
-        private const int LevelsPerPage = 10;
+        private const int LevelsPerPage = 50;
 
         [Command("levels")]
         public static void Levels(Player player)
@@ -25,42 +26,37 @@ namespace ProjectSMP.Commands
 
         private static void ShowLevelProgression(Player player, int page)
         {
+            const int MaxLevel = 100;
             var startLevel = page * LevelsPerPage + 1;
-            var endLevel = startLevel + LevelsPerPage - 1;
-
-            if (endLevel > player.Level)
-                endLevel = player.Level;
+            var endLevel = Math.Min(startLevel + LevelsPerPage - 1, MaxLevel);
 
             var rows = new List<string[]>();
 
             for (var i = startLevel; i <= endLevel; i++)
             {
                 var pointsRequired = LevelService.GetPointsRequired(i);
-                var expRequired = LevelService.GetExpRequired(i);
+                var totalHours = LevelService.GetCumulativeHoursRequired(i);
 
                 var completed = player.Level > i;
                 var isCurrentLevel = player.Level == i;
 
                 var currentPoints = isCurrentLevel ? player.LevelPoints : (completed ? pointsRequired : 0);
-                var currentExp = isCurrentLevel ? player.LevelPointsExp : (completed ? expRequired : 0);
 
                 var progressPoints = LevelService.CreateProgressBar(currentPoints, pointsRequired, completed);
-                var progressExp = LevelService.CreateProgressBar(currentExp, expRequired, completed);
 
                 var levelText = $"{{ffffff}}Level {i}{(isCurrentLevel ? " (current level)" : "")}";
                 var pointsText = $"{progressPoints} {{ffeea8}}({currentPoints}/{pointsRequired})";
-                var expText = $"{progressExp} {{ffeea8}}({currentExp}/{expRequired})";
 
-                rows.Add(new[] { levelText, pointsText, expText });
+                rows.Add(new[] { levelText, pointsText, totalHours.ToString() });
             }
 
             if (page > 0)
                 rows.Add(new[] { "{FF69B4}<< Previous", "", "" });
 
-            if (endLevel < player.Level)
+            if (endLevel < MaxLevel)
                 rows.Add(new[] { "{ADFF2F}>> Next", "", "" });
 
-            player.ShowTabList("Level Progress", new[] { "Level", "Points", "EXP" })
+            player.ShowTabList("Level Progress", new[] { "Level", "Points", "Total Jam" })
                 .WithRows(rows.ToArray())
                 .WithButtons("Select", "Close")
                 .Show(e =>

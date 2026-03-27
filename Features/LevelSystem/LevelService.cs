@@ -1,4 +1,4 @@
-﻿using SampSharp.GameMode.SAMP;
+using SampSharp.GameMode.SAMP;
 
 namespace ProjectSMP.Features.LevelSystem
 {
@@ -6,28 +6,20 @@ namespace ProjectSMP.Features.LevelSystem
     {
         public static int GetPointsRequired(int level)
         {
-            return 3 + ((level - 1) / 5 * 3);
+            return level * 4;
         }
 
-        public static int GetExpRequired(int level)
+        public static int GetHoursRequired(int level)
         {
-            return GetPointsRequired(level) * 100;
+            return GetPointsRequired(level);
         }
 
-        public static bool AddExp(Player player, int expAmount)
+        public static int GetCumulativeHoursRequired(int level)
         {
-            var expRequired = GetExpRequired(player.Level);
-
-            if (player.LevelPoints >= GetPointsRequired(player.Level))
-                return false;
-
-            player.LevelPointsExp += expAmount;
-
-            if (player.LevelPointsExp >= expRequired)
-                player.LevelPointsExp = expRequired;
-
-            player.SendClientMessage(Color.Yellow, $"{{FFFF00}}✅ Kamu mendapatkan {expAmount} EXP!");
-            return true;
+            var total = 0;
+            for (var i = 1; i <= level; i++)
+                total += GetPointsRequired(i);
+            return total;
         }
 
         public static string CreateProgressBar(int current, int max, bool completed)
@@ -54,8 +46,7 @@ namespace ProjectSMP.Features.LevelSystem
 
         public static bool CanLevelUp(Player player)
         {
-            return player.LevelPoints >= GetPointsRequired(player.Level) &&
-                   player.LevelPointsExp >= GetExpRequired(player.Level);
+            return player.LevelPoints >= GetPointsRequired(player.Level);
         }
 
         public static void LevelUp(Player player)
@@ -65,9 +56,17 @@ namespace ProjectSMP.Features.LevelSystem
 
             player.Level++;
             player.LevelPoints = 0;
-            player.LevelPointsExp = 0;
 
             player.SendClientMessage(Color.Yellow, $"{{00FF00}}🎉 Selamat! Kamu naik ke Level {player.Level}!");
+        }
+
+        public static void AddPlaytimePoint(Player player)
+        {
+            player.LevelPoints++;
+            player.SendClientMessage(Color.Yellow, $"{{FFFF00}}⏱ Kamu mendapatkan 1 Point Progress dari waktu bermain!");
+
+            if (CanLevelUp(player))
+                LevelUp(player);
         }
     }
 }

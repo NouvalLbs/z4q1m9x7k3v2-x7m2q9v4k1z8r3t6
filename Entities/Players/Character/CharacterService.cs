@@ -114,7 +114,7 @@ namespace ProjectSMP.Entities.Players.Character
         public int Verified_char { get; set; }
         public int Level { get; set; } = 1;
         public int Level_points { get; set; }
-        public int Level_points_exp { get; set; }
+
         public int Money { get; set; }
         public int Admin { get; set; }
         public int Mask_id { get; set; }
@@ -254,7 +254,7 @@ namespace ProjectSMP.Entities.Players.Character
 
             await DatabaseManager.ExecuteAsync(
                 $"UPDATE `{Table}` SET " +
-                "level=@Level, level_points=@LevelPoints, level_points_exp=@LevelPointsExp, " +
+                "level=@Level, level_points=@LevelPoints, " +
                 "money=@Money, admin=@Admin, mask_id=@MaskId, warn=@Warn, " +
                 "ip=@Ip, last_login=CURRENT_TIMESTAMP(), " +
                 "position=@Pos, vitals=@Vitals, playtime=@Playtime, " +
@@ -266,7 +266,6 @@ namespace ProjectSMP.Entities.Players.Character
                 {
                     player.Level,
                     LevelPoints = player.LevelPoints,
-                    LevelPointsExp = player.LevelPointsExp,
                     Money = player.CharMoney,
                     player.Admin,
                     player.MaskId,
@@ -695,7 +694,6 @@ namespace ProjectSMP.Entities.Players.Character
             player.VerifiedChar = r.Verified_char;
             player.Level = r.Level;
             player.LevelPoints = r.Level_points;
-            player.LevelPointsExp = r.Level_points_exp;
             player.CharMoney = r.Money;
             player.Admin = r.Admin;
             player.MaskId = r.Mask_id;

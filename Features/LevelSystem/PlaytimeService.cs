@@ -1,4 +1,4 @@
-﻿using SampSharp.GameMode;
+using SampSharp.GameMode;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using System.Collections.Generic;
@@ -50,6 +50,7 @@ namespace ProjectSMP.Features.LevelSystem
                     {
                         player.Playtime.Minutes = 0;
                         player.Playtime.Hours++;
+                        LevelService.AddPlaytimePoint(player);
                     }
                 }
             }

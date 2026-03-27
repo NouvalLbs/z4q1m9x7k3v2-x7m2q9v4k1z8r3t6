@@ -35,8 +35,18 @@ namespace ProjectSMP
             CefService.OnInitialized += (playerId, success) =>
             {
                 if (!success) return;
-                Console.WriteLine($"[CEF] Player {playerId} plugin ready");
+                var player = BasePlayer.Find(playerId) as Player;
+                if (player == null) return;
+
+                CefService.CreateBrowser(playerId, browserId: 1, url: "http://localhost/#/", hidden: false, focused: false);
             };
+
+            CefService.OnBrowserCreated += (playerId, browserId, statusCode) =>
+            {
+                Console.WriteLine($"[CEF] Browser created: player={playerId} browser={browserId} status={statusCode}");
+            };
+
+            CefEventHandler.Initialize();
 
             // Initialize Discord C#
             Task.Run(async () => {
@@ -207,11 +217,15 @@ namespace ProjectSMP
         }
 
         [Callback]
-        public void OnCefInitialize(int player_id, int success)
+        public void OnCefInitializeCS(int player_id, int success)
             => CefService.HandleCefInitialize(player_id, success);
 
         [Callback]
-        public void OnCefBrowserCreated(int player_id, int browser_id, int status_code)
+        public void OnCefBrowserCreatedCS(int player_id, int browser_id, int status_code)
             => CefService.HandleBrowserCreated(player_id, browser_id, status_code);
+
+        [Callback]
+        public void OnCefClientEventCS(int player_id, string args_json)
+            => CefService.HandleClientEvent(player_id, args_json);
     }
 }
