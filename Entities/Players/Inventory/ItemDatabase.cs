@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Entities.Players.Inventory.Data;
+using ProjectSMP.Entities.Players.Inventory.Data;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,7 +6,7 @@ namespace ProjectSMP.Entities.Players.Inventory
 {
     public static class ItemDatabase
     {
-        private static readonly Dictionary<string, ItemDefinition> Items = new();
+        private static readonly Dictionary<string, ItemDefinition> Items = new(System.StringComparer.OrdinalIgnoreCase);
 
         static ItemDatabase()
         {

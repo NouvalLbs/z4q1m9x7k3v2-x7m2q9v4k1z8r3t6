@@ -6,7 +6,7 @@ namespace ProjectSMP.Features.Jobs
 {
     public static class JobService
     {
-        private const int MaxJobs = 10;
+        private const int MaxJobs = 2;
 
         public static bool AddJob(Player player, string jobName)
         {

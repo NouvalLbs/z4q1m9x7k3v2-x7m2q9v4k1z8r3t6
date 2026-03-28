@@ -4,9 +4,9 @@ using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Character;
 using ProjectSMP.Entities.Players.Condition;
+using ProjectSMP.Entities.Players.Inventory;
 using ProjectSMP.Entities.Players.NameTag;
 using ProjectSMP.Entities.Players.Needs;
-using ProjectSMP.Entities.Players.Inventory;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank;
 using ProjectSMP.Features.Bank.DynamicBank;
@@ -15,6 +15,8 @@ using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.EnterExit;
 using ProjectSMP.Features.PreviewModelDialog;
+using ProjectSMP.Features.ProgressBar;
+using ProjectSMP.Features.ProgressBar.Data;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
@@ -41,6 +43,7 @@ namespace ProjectSMP
             UserControlService.InitAsync(this);
             RealtimeClockService.OnPlayerConnect(Id);
             ChatService.Initialize(this);
+            ProgressBarData = new ProgressBarData();
         }
 
         public override void OnDisconnected(DisconnectEventArgs e)
@@ -60,6 +63,7 @@ namespace ProjectSMP
             ChatService.Cleanup(this);
             AskService.ClearPlayerAsks(this);
             _ = InventoryService.SaveAsync(this);
+            ProgressBarService.OnPlayerDisconnect(this);
             this.ClearPlayerData();
             base.OnDisconnected(e);
         }

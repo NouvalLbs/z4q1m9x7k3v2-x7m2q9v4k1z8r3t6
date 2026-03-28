@@ -10,6 +10,7 @@ using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.Dynamic.DynamicPickups;
 using ProjectSMP.Features.LevelSystem;
 using ProjectSMP.Features.PreviewModelDialog;
+using ProjectSMP.Features.ProgressBar;
 using ProjectSMP.Plugins.Anticheat;
 using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.CEF;
@@ -56,6 +57,9 @@ namespace ProjectSMP
                     Console.WriteLine($"[Discord] Init failed: {ex.Message}");
                 }
             });
+
+            // Initialize GeoLocation
+            GeoLocationService.Initialize();
 
             // Initialize Weapon Config
             var (wcCfg, wcWeapons) = WeaponConfigLoader.Load();
@@ -116,6 +120,9 @@ namespace ProjectSMP
 
             // Initialize Ask Service
             AskService.Initialize();
+
+            // Initialize Progressbar
+            ProgressBarService.Initialize();
 
             // Initialize Dynamic Pickups
             PickupService.Initialize();
@@ -205,6 +212,8 @@ namespace ProjectSMP
             PaycheckService.Dispose();
             ReportService.Dispose();
             AskService.Dispose();
+            ProgressBarService.Dispose();
+            GeoLocationService.Dispose();
 
             try {
                 DiscordService.ShutdownAsync().GetAwaiter().GetResult();

@@ -1,4 +1,4 @@
-﻿using ProjectSMP.Core;
+using ProjectSMP.Core;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP.Commands;
 
@@ -55,11 +55,14 @@ namespace ProjectSMP.Entities.Players.Inventory.Commands
             var target = Utilities.GetPlayerFromPartOfName(player, targetInput);
             if (target == null || !target.IsCharLoaded) return;
 
-            if (!ItemDatabase.Exists(itemName))
+            var def = ItemDatabase.Get(itemName);
+            if (def == null)
             {
                 player.SendClientMessage(SampSharp.GameMode.SAMP.Color.White, $"{Msg.AdmCmd} Item tidak valid.");
                 return;
             }
+
+            itemName = def.ItemName;
 
             if (amount <= 0)
             {
@@ -83,7 +86,6 @@ namespace ProjectSMP.Entities.Players.Inventory.Commands
             }
             else
             {
-                var def = ItemDatabase.Get(itemName);
                 long durability = 0;
                 if (def.DurabilityDuration > 0)
                     durability = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds() + def.DurabilityDuration;

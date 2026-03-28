@@ -209,8 +209,7 @@ namespace ProjectSMP.Entities.Players.Inventory
                 {
                     Name = g.Key,
                     Total = g.Sum(i => i.Amount),
-                    Mixed = g.Select(i => i.Durability).Distinct().Count() > 1 ||
-                            g.Any(i => i.Amount < ItemDatabase.Get(g.Key)?.ItemStack)
+                    Mixed = g.Select(i => i.Durability).Distinct().Count() > 1
                 })
                 .ToList();
 
@@ -259,9 +258,14 @@ namespace ProjectSMP.Entities.Players.Inventory
                     var selectedGroup = grp[e.ListItem];
 
                     if (selectedGroup.Mixed)
+                    {
                         ShowMixedItemDialog(player, selectedName);
+                    }
                     else
-                        ShowItemActions(player, selectedName, 0);
+                    {
+                        var firstIndex = player.InventoryData.Inventory.FindIndex(i => i.ItemName == selectedName);
+                        ShowItemActions(player, selectedName, firstIndex);
+                    }
                 });
         }
 
@@ -367,6 +371,38 @@ namespace ProjectSMP.Entities.Players.Inventory
                 player.SendClientMessage(Color.White, $"{Msg.Inventory} Item sudah kadaluarsa!");
                 return;
             }
+
+            var def = ItemDatabase.Get(itemName);
+            if (def == null) return;
+
+            if (def.ProgDur > 0)
+            {
+                Features.ProgressBar.ProgressBarService.StartProgress(
+                    player,
+                    duration: def.ProgDur,
+                    text: def.ProgText,
+                    callbackType: Features.ProgressBar.Data.ProgressCallbackType.UseItem,
+                    animIndex: def.ProgAnimIndex,
+                    animLib: def.ProgAnimLib,
+                    animName: def.ProgAnimName,
+                    itemSlot: index,
+                    itemName: itemName
+                );
+                return;
+            }
+
+            ApplyItemEffect(player, itemName, index);
+        }
+
+        public static void OnItemUseComplete(Player player, string itemName, int index)
+        {
+            ApplyItemEffect(player, itemName, index);
+        }
+
+        private static void ApplyItemEffect(Player player, string itemName, int index)
+        {
+            var inventory = player.InventoryData.Inventory;
+            if (index < 0 || index >= inventory.Count) return;
 
             switch (itemName)
             {

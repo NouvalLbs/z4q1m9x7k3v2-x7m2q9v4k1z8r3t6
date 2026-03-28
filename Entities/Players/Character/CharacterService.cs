@@ -19,6 +19,7 @@ using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -211,6 +212,18 @@ namespace ProjectSMP.Entities.Players.Character
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_2", player.CharInfo.Username));
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_3"));
             player.SendClientMessage(Color.White, L(player, "CHAR", "WELCOME_LAST_LOGIN", player.LastLogin));
+
+            if (player.Settings.ToggleJoinLog)
+            {
+                var (city, country) = GeoLocationService.GetLocation(player.IP);
+                var connectMessage = $"{{FFFF00}}** {{FF0000}}{player.CharInfo.Username} {{FFFF00}}telah terkoneksi ke server. ({city}, {country})";
+
+                foreach (var p in SampSharp.GameMode.World.BasePlayer.All.OfType<Player>())
+                {
+                    if (p.IsLoggedIn && p.Settings.ToggleJoinLog)
+                        p.SendClientMessage(Color.Yellow, connectMessage);
+                }
+            }
 
             RealtimeClockService.OnPlayerSpawn(player.Id, player.Settings.ShowTime);
             EnterExitService.ProcessEnterExit(player, () =>

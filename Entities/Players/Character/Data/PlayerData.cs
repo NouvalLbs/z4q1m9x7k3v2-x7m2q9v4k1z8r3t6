@@ -3,6 +3,7 @@ using ProjectSMP.Entities.Players.Character;
 using ProjectSMP.Entities.Players.Inventory.Data;
 using ProjectSMP.Features.Bank.Data;
 using ProjectSMP.Features.Bank.Paycheck;
+using ProjectSMP.Features.ProgressBar.Data;
 using System;
 using System.Collections.Generic;
 
@@ -47,5 +48,6 @@ namespace ProjectSMP
         public string ClientVersion { get; set; } = string.Empty;
         public string ClientCISerial { get; set; } = string.Empty;
         public DateTime LastDoorInteraction { get; set; } = DateTime.MinValue;
+        public ProgressBarData ProgressBarData { get; set; } = new();
     }
 }
