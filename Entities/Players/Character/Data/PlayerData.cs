@@ -16,7 +16,6 @@ namespace ProjectSMP
         public string RegDate { get; set; } = "";
         public string LastLogin { get; set; } = "";
         public bool IsCharLoaded { get; set; }
-        public bool IsLoggedIn { get; set; }
 
         public CharInfo CharInfo { get; set; } = new();
         public int VerifiedChar { get; set; }

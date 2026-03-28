@@ -102,7 +102,7 @@ namespace ProjectSMP.Features.ProgressBar
             int animIndex = -1, string animLib = "", string animName = "",
             int itemSlot = -1, string itemName = "")
         {
-            if (!player.IsConnected || !player.IsLoggedIn || player.ProgressBarData.IsActive)
+            if (!player.IsConnected || !player.IsCharLoaded || player.ProgressBarData.IsActive)
                 return;
 
             CreateProgressBar(player);
@@ -134,7 +134,7 @@ namespace ProjectSMP.Features.ProgressBar
         {
             foreach (var player in SampSharp.GameMode.World.BasePlayer.All)
             {
-                if (player is not Player p || !p.IsConnected || !p.IsLoggedIn) continue;
+                if (player is not Player p || !p.IsConnected || !p.IsCharLoaded) continue;
                 if (!p.ProgressBarData.IsActive) continue;
 
                 UpdateProgress(p);

@@ -14,6 +14,7 @@ using ProjectSMP.Features.Chat;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.EnterExit;
+using ProjectSMP.Features.Jobs.DynamicJob;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Features.ProgressBar;
 using ProjectSMP.Features.ProgressBar.Data;
@@ -189,7 +190,7 @@ namespace ProjectSMP
         public override void OnText(TextEventArgs e)
         {
             e.SendToPlayers = false;
-            if (!IsLoggedIn)
+            if (!IsCharLoaded)
             {
                 base.OnText(e);
                 return;
@@ -225,6 +226,7 @@ namespace ProjectSMP
                 }
 
                 BankPickupService.HandleInteract(this);
+                JobPickupService.HandleInteract(this);
             }
 
             if (e.NewKeys.HasFlag(Keys.Walk))

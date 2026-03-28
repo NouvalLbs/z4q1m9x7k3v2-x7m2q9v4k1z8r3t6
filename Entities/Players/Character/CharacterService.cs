@@ -220,7 +220,7 @@ namespace ProjectSMP.Entities.Players.Character
 
                 foreach (var p in SampSharp.GameMode.World.BasePlayer.All.OfType<Player>())
                 {
-                    if (p.IsLoggedIn && p.Settings.ToggleJoinLog)
+                    if (p.IsCharLoaded && p.Settings.ToggleJoinLog)
                         p.SendClientMessage(Color.Yellow, connectMessage);
                 }
             }
@@ -247,7 +247,6 @@ namespace ProjectSMP.Entities.Players.Character
                     }
 
                     player.ToggleControllableSafe(true);
-                    player.IsLoggedIn = true;
                 }
             });
         }
@@ -309,7 +308,6 @@ namespace ProjectSMP.Entities.Players.Character
             _lists.Remove(player.Id);
             _creations.Remove(player.Id);
             player.IsCharLoaded = false;
-            player.IsLoggedIn = false;
             player.LastSpawnTick = 0;
             PlaytimeService.UnregisterPlayer(player);
             PaycheckService.UnregisterPlayer(player);

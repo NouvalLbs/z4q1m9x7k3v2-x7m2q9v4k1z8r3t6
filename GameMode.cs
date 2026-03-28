@@ -8,6 +8,7 @@ using ProjectSMP.Features.Bank.DynamicBank;
 using ProjectSMP.Features.Bank.Paycheck;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.Dynamic.DynamicPickups;
+using ProjectSMP.Features.Jobs.DynamicJob;
 using ProjectSMP.Features.LevelSystem;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Features.ProgressBar;
@@ -27,10 +28,12 @@ using System.Threading.Tasks;
 
 namespace ProjectSMP
 {
-    public class GameMode : BaseMode {
+    public class GameMode : BaseMode
+    {
         private AnticheatPlugin _anticheat = null!;
 
-        protected override void OnInitialized(EventArgs e) {
+        protected override void OnInitialized(EventArgs e)
+        {
             base.OnInitialized(e);
 
             CefService.OnInitialized += (playerId, success) =>
@@ -50,10 +53,14 @@ namespace ProjectSMP
             CefEventHandler.Initialize();
 
             // Initialize Discord C#
-            Task.Run(async () => {
-                try {
+            Task.Run(async () =>
+            {
+                try
+                {
                     await DiscordService.InitializeAsync();
-                } catch (Exception ex) {
+                }
+                catch (Exception ex)
+                {
                     Console.WriteLine($"[Discord] Init failed: {ex.Message}");
                 }
             });
@@ -99,7 +106,7 @@ namespace ProjectSMP
             RealtimeClockService.Init();
             RealtimeClockService.SetInterval(10000, restartTimer: false);
             RealtimeClockService.Sync(serverTime: true);
-            
+
             // Initialize Needs Service
             NeedsService.Initialize();
 
@@ -138,6 +145,11 @@ namespace ProjectSMP
             BankPickupService.Initialize();
             var bankDataList = Task.Run(BankPickupService.LoadDataAsync).GetAwaiter().GetResult();
             BankPickupService.CreateObjects(bankDataList);
+
+            // Initialize Dynamic Jobs
+            JobPickupService.Initialize();
+            var jobDataList = Task.Run(JobPickupService.LoadDataAsync).GetAwaiter().GetResult();
+            JobPickupService.CreateObjects(jobDataList);
         }
 
         private void OnAnticheatPunishment(int playerId, string checkName, PunishAction action)
@@ -175,7 +187,7 @@ namespace ProjectSMP
 
         protected override void OnPlayerCommandText(BasePlayer player, CommandTextEventArgs e)
         {
-            if (player is Player p && !p.IsLoggedIn)
+            if (player is Player p && !p.IsCharLoaded)
             {
                 e.Success = true;
                 return;
@@ -183,7 +195,8 @@ namespace ProjectSMP
 
             base.OnPlayerCommandText(player, e);
 
-            if (!e.Success && player is Player p2) {
+            if (!e.Success && player is Player p2)
+            {
                 p2.SendClientMessage(Color.White, $"{{b9b9b9}}Command '{e.Text}' tidak ada, gunakan '/help'.");
                 e.Success = true;
             }
@@ -201,7 +214,8 @@ namespace ProjectSMP
             WeaponConfigService.OnVehicleDeath(vehicle.Id);
         }
 
-        protected override void OnExited(EventArgs e) {
+        protected override void OnExited(EventArgs e)
+        {
             WeaponConfigHealthBar.Dispose();
             PreviewModelDialog.Dispose();
             RealtimeClockService.Dispose();
@@ -215,10 +229,13 @@ namespace ProjectSMP
             ProgressBarService.Dispose();
             GeoLocationService.Dispose();
 
-            try {
+            try
+            {
                 DiscordService.ShutdownAsync().GetAwaiter().GetResult();
                 DiscordEventBus.Clear();
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 Console.WriteLine($"[Discord] Shutdown error: {ex.Message}");
             }
 

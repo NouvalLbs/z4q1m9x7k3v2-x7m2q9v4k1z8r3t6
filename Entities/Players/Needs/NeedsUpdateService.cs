@@ -96,6 +96,8 @@ namespace ProjectSMP.Entities.Players.Needs
 
             if (player.Settings.HBEMode == 0)
             {
+                SetPlayerHunger(player, player.Vitals.Hunger - hungerAdjust);
+                SetPlayerEnergy(player, player.Vitals.Energy - energyAdjust);
                 NeedsService.SendHudDataToCef(player);
             }
             else
