@@ -113,6 +113,14 @@ namespace ProjectSMP.Plugins.EVF2
         // ── Data Access ────────────────────────────────────────────────────
         public static EVFVehicleData GetData(int id) => _v.TryGetValue(id, out var d) ? d : null;
         public static EVFPlayerData GetPlayerData(int id) { if (!_p.ContainsKey(id)) _p[id] = new EVFPlayerData(); return _p[id]; }
+        public static int GetVehicleInterior(int id) => GetData(id)?.Interior ?? 0;
+
+        public static void SetVehicleInterior(int id, int interiorId)
+        {
+            var v = BaseVehicle.Find(id); if (v == null) return;
+            v.Interior = interiorId;
+            var d = GetData(id); if (d != null) d.Interior = interiorId;
+        }
 
         // ── Fuel ───────────────────────────────────────────────────────────
         public static int GetFuel(int id) => GetData(id)?.Fuel ?? 0;
@@ -388,8 +396,11 @@ namespace ProjectSMP.Plugins.EVF2
             if (worldId >= 0) v.VirtualWorld = worldId;
             if (interiorId >= 0) v.Interior = interiorId;
             v.Position = pos;
-            if (_v.TryGetValue(id, out var d)) {
+            if (_v.TryGetValue(id, out var d))
+            {
                 d.PosX = pos.X; d.PosY = pos.Y; d.PosZ = pos.Z; d.PosAngle = angle;
+                if (worldId >= 0) d.SpawnWorld = worldId;
+                if (interiorId >= 0) d.Interior = interiorId;
             }
             v.Angle = angle;
         }
@@ -548,6 +559,7 @@ namespace ProjectSMP.Plugins.EVF2
             v.ChangePaintjob(EVFConstants.ResetPaintjobId);
             d.Paintjob = EVFConstants.ResetPaintjobId;
             ChangeColor(vehicleId, d.Color1, d.Color2);
+            d.Health = 1000f;
 
             if (d.SpawnX != 0 || d.SpawnY != 0 || d.SpawnZ != 0)
             {
@@ -657,7 +669,6 @@ namespace ProjectSMP.Plugins.EVF2
                 if (d.UnoccupiedDamage || IsVehicleOccupied(hitId))
                 {
                     var modelType = (VehicleModelType)modelId;
-                    bool tireHit = false;
                     int tireStatus = GetDamageStatus(hitId, EVFDamageType.Tires);
 
                     BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.FrontWheels, out float fwX, out float fwY, out float fwZ);
@@ -788,7 +799,10 @@ namespace ProjectSMP.Plugins.EVF2
         public static (bool Valid, int Price) ValidateVehicleMod(int playerId, int vehicleId, int componentId)
         {
             var pd = GetPlayerData(playerId);
-            bool illegal = !IsValidComponent(vehicleId, componentId) || !pd.InModShop;
+            var player = BasePlayer.Find(playerId);
+            bool illegal = !IsValidComponent(vehicleId, componentId)
+                        || !pd.InModShop
+                        || player?.State == PlayerState.Passenger;  // tambah ini
             int price = GetComponentPrice(componentId);
             VehicleModEx?.Invoke(null, new EVFVehicleModExEventArgs
             {
@@ -825,10 +839,10 @@ namespace ProjectSMP.Plugins.EVF2
                     }
                 }
 
-                if (pos.X != d.PosX || pos.Y != d.PosY || pos.Z != d.PosZ)
+                float pdx = pos.X - d.PosX, pdy = pos.Y - d.PosY, pdz = pos.Z - d.PosZ;
+                if ((float)Math.Sqrt(pdx * pdx + pdy * pdy + pdz * pdz) >= 2f)
                 {
-                    bool allow = true;
-                    VehiclePosChanged?.Invoke(null, new EVFVehiclePosChangeEventArgs
+                    var posArgs = new EVFVehiclePosChangeEventArgs
                     {
                         VehicleId = id,
                         NewX = pos.X,
@@ -839,14 +853,20 @@ namespace ProjectSMP.Plugins.EVF2
                         OldY = d.PosY,
                         OldZ = d.PosZ,
                         OldAngle = d.PosAngle
-                    });
+                    };
+                    VehiclePosChanged?.Invoke(null, posArgs);
+                    if (posArgs.Cancel)
+                    {
+                        TeleportVehicle(id, new Vector3(d.PosX, d.PosY, d.PosZ), d.PosAngle);
+                        continue;
+                    }
                     d.PosX = pos.X; d.PosY = pos.Y; d.PosZ = pos.Z; d.PosAngle = angle;
                 }
 
                 var vel = v.Velocity;
                 if (vel.X != d.VelX || vel.Y != d.VelY || vel.Z != d.VelZ)
                 {
-                    VehicleVelocityChanged?.Invoke(null, new EVFVehicleVelocityChangeEventArgs
+                    var velArgs = new EVFVehicleVelocityChangeEventArgs
                     {
                         VehicleId = id,
                         NewX = vel.X,
@@ -855,7 +875,13 @@ namespace ProjectSMP.Plugins.EVF2
                         OldX = d.VelX,
                         OldY = d.VelY,
                         OldZ = d.VelZ
-                    });
+                    };
+                    VehicleVelocityChanged?.Invoke(null, velArgs);
+                    if (velArgs.Cancel)
+                    {
+                        v.Velocity = new Vector3(d.VelX, d.VelY, d.VelZ);
+                        continue;
+                    }
                     d.VelX = vel.X; d.VelY = vel.Y; d.VelZ = vel.Z;
                 }
 
@@ -891,8 +917,17 @@ namespace ProjectSMP.Plugins.EVF2
                 float h = v.Health;
                 if (Math.Abs(h - d.Health) > 0.01f)
                 {
-                    VehicleHealthChanged?.Invoke(null, new EVFVehicleHealthChangeEventArgs { VehicleId = id, NewHealth = h, OldHealth = d.Health });
-                    d.Health = h;
+                    var hArgs = new EVFVehicleHealthChangeEventArgs
+                    {
+                        VehicleId = id,
+                        NewHealth = h,
+                        OldHealth = d.Health
+                    };
+                    VehicleHealthChanged?.Invoke(null, hArgs);
+                    if (hArgs.Cancel)
+                        v.Health = d.Health;
+                    else
+                        d.Health = h;
                 }
             }
         }
@@ -943,6 +978,24 @@ namespace ProjectSMP.Plugins.EVF2
         {
             var v = BaseVehicle.Find(vehicleId); if (v == null) return "Unknown";
             return GetVehicleName((int)v.Model);
+        }
+
+        public static bool IsVehicleSeatOccupied(int vehicleId, int seatId)
+            => BasePlayer.All.Any(p => p.Vehicle?.Id == vehicleId && p.VehicleSeat == seatId);
+
+        public static int GetVehicleNextSeat(int vehicleId, int startSeat = 1)
+        {
+            int seats = GetVehicleSeats(vehicleId);
+            for (int i = startSeat; i < seats; i++)
+                if (!IsVehicleSeatOccupied(vehicleId, i)) return i;
+            return -1;
+        }
+
+        public static int GetVehiclePassenger(int vehicleId)
+        {
+            var found = BasePlayer.All.FirstOrDefault(p =>
+                p.State == PlayerState.Passenger && p.Vehicle?.Id == vehicleId);
+            return found?.Id ?? -1;
         }
 
         public static float GetTopSpeed(VehicleModelType m) => GetTopSpeed((int)m);

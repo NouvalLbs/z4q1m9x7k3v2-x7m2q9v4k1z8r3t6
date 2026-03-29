@@ -92,6 +92,7 @@ namespace ProjectSMP.Plugins.EVF2
 
     public class EVFVehiclePosChangeEventArgs : EventArgs
     {
+        public bool Cancel { get; set; }
         public int VehicleId { get; set; }
         public float NewX, NewY, NewZ, NewAngle;
         public float OldX, OldY, OldZ, OldAngle;
@@ -99,6 +100,7 @@ namespace ProjectSMP.Plugins.EVF2
 
     public class EVFVehicleVelocityChangeEventArgs : EventArgs
     {
+        public bool Cancel { get; set; }
         public int VehicleId { get; set; }
         public float NewX, NewY, NewZ;
         public float OldX, OldY, OldZ;
@@ -106,6 +108,7 @@ namespace ProjectSMP.Plugins.EVF2
 
     public class EVFVehicleHealthChangeEventArgs : EventArgs
     {
+        public bool Cancel { get; set; }
         public int VehicleId { get; set; }
         public float NewHealth { get; set; }
         public float OldHealth { get; set; }

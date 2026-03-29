@@ -64,24 +64,13 @@ namespace ProjectSMP.Plugins.EVF2
         }
 
         public static bool IsVehicleSeatOccupied(int vehicleId, int seatId)
-            => BasePlayer.All.Any(p => p.Vehicle?.Id == vehicleId && p.VehicleSeat == seatId);
+            => EVFService.IsVehicleSeatOccupied(vehicleId, seatId);
 
         public static int GetVehicleNextSeat(int vehicleId, int startSeat = 1)
-        {
-            var v = BaseVehicle.Find(vehicleId);
-            if (v == null) return -1;
-            int seats = EVFService.GetVehicleSeats(vehicleId);
-            for (int i = startSeat; i < seats; i++)
-                if (!IsVehicleSeatOccupied(vehicleId, i)) return i;
-            return -1;
-        }
+            => EVFService.GetVehicleNextSeat(vehicleId, startSeat);
 
         public static int GetVehiclePassenger(int vehicleId)
-        {
-            var found = BasePlayer.All.FirstOrDefault(pl =>
-                pl.State == PlayerState.Passenger && pl.Vehicle?.Id == vehicleId);
-            return found?.Id ?? -1;
-        }
+            => EVFService.GetVehiclePassenger(vehicleId);
 
         public static void ImportVehicle(int vehicleId, Vector3 pos, float angle,
             int color1, int color2, int worldId, int interiorId, bool unoccupiedDamage)
