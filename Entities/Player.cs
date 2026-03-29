@@ -18,6 +18,7 @@ using ProjectSMP.Features.Jobs.DynamicJob;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Features.ProgressBar;
 using ProjectSMP.Features.ProgressBar.Data;
+using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
@@ -26,6 +27,7 @@ using SampSharp.GameMode.Events;
 using SampSharp.GameMode.Pools;
 using SampSharp.GameMode.World;
 using System;
+using System.Data;
 using System.Threading.Tasks;
 
 namespace ProjectSMP
@@ -40,6 +42,7 @@ namespace ProjectSMP
             WeaponConfigService.OnConnect(this);
             WeaponConfigService.PlayerDamage += OnPlayerDamage;
             WeaponConfigService.PlayerDeathFinished += OnDeathFinished;
+            EVFService.OnPlayerConnect(Id);
             CinematicCameraService.Start(this);
             UserControlService.InitAsync(this);
             RealtimeClockService.OnPlayerConnect(Id);
@@ -51,6 +54,7 @@ namespace ProjectSMP
         {
             WeaponConfigService.PlayerDeathFinished -= OnDeathFinished;
             WeaponConfigService.PlayerDamage -= OnPlayerDamage;
+            EVFService.OnPlayerDisconnect(Id);
             CinematicCameraService.Stop(this);
             EnterExitService.Cleanup(this);
             _ = SaveOnDisconnectAsync();
@@ -120,6 +124,7 @@ namespace ProjectSMP
         {
             base.OnUpdate(e);
             WeaponConfigService.OnUpdate(this);
+            EVFService.OnPlayerUpdate(Id);
         }
 
         private void OnDeathFinished(object? sender, DeathFinishedArgs e)
@@ -212,6 +217,8 @@ namespace ProjectSMP
         public override void OnKeyStateChanged(KeyStateChangedEventArgs e)
         {
             base.OnKeyStateChanged(e);
+            if (e.NewKeys.HasFlag(Keys.Crouch) && !e.OldKeys.HasFlag(Keys.Crouch))
+                EVFExtensions.HandleHorn(this);
 
             if (e.NewKeys.HasFlag(Keys.SecondaryAttack))
             {
@@ -241,6 +248,12 @@ namespace ProjectSMP
                     }
                 }
             }
+        }
+
+        public override void OnStateChanged(StateEventArgs e)
+        {
+            base.OnStateChanged(e);
+            EVFService.OnPlayerStateChange(Id, e.NewState, e.OldState);
         }
     }
 }

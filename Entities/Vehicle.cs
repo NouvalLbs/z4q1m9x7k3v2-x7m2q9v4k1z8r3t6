@@ -1,11 +1,12 @@
 ﻿#nullable enable
 using ProjectSMP.Extensions;
+using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
-using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Events;
 using SampSharp.GameMode.Pools;
+using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using System;
 using System.Linq;
@@ -79,6 +80,7 @@ namespace ProjectSMP.Entities
         public override void OnMod(VehicleModEventArgs e)
         {
             base.OnMod(e);
+            var (valid, price) = EVFService.ValidateVehicleMod(e.Player?.Id ?? -1, Id, e.ComponentId);
             SaveModComponent(e.ComponentId);
             if (e.Player is Player player)
                 OnVehicleModified(player, e.ComponentId);
@@ -90,6 +92,15 @@ namespace ProjectSMP.Entities
             CustomPaintjob = e.PaintjobId;
             if (e.Player is Player player)
                 OnVehiclePaintjobChanged(player, e.PaintjobId);
+            EVFService.OnVehiclePaintjob(Id, e.PaintjobId);
+        }
+
+        public override void OnResprayed(VehicleResprayedEventArgs e)
+        {
+            base.OnResprayed(e);
+            CustomColor1 = e.Color1;
+            CustomColor2 = e.Color2;
+            EVFService.OnVehicleRespray(Id, e.Color1, e.Color2);
         }
 
         public override void OnUnoccupiedUpdate(UnoccupiedVehicleEventArgs e)

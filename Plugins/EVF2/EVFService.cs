@@ -61,7 +61,7 @@ namespace ProjectSMP.Plugins.EVF2
             RegisterVehicle(vehicle.Id, modelId, pos, angle, color1, color2, worldId, interiorId, unoccupiedDamage);
 
             vehicle.VirtualWorld = worldId;
-            vehicle.Interior = interiorId;
+            vehicle.LinkToInterior(interiorId);
 
             VehicleCreated?.Invoke(null, vehicle.Id);
             return vehicle;
@@ -72,19 +72,10 @@ namespace ProjectSMP.Plugins.EVF2
         {
             var d = new EVFVehicleData
             {
-                PosX = pos.X,
-                PosY = pos.Y,
-                PosZ = pos.Z,
-                PosAngle = angle,
-                SpawnX = pos.X,
-                SpawnY = pos.Y,
-                SpawnZ = pos.Z,
-                SpawnAngle = angle,
-                SpawnWorld = worldId,
-                SpawnInterior = interiorId,
-                Interior = interiorId,
-                Color1 = color1,
-                Color2 = color2,
+                PosX = pos.X, PosY = pos.Y, PosZ = pos.Z, PosAngle = angle,
+                SpawnX = pos.X, SpawnY = pos.Y, SpawnZ = pos.Z, SpawnAngle = angle,
+                SpawnWorld = worldId, SpawnInterior = interiorId,
+                Interior = interiorId, Color1 = color1, Color2 = color2,
                 Fuel = EVFConstants.DefaultVehicleFuel,
                 UnoccupiedDamage = unoccupiedDamage,
                 Stored = true
@@ -649,11 +640,8 @@ namespace ProjectSMP.Plugins.EVF2
 
             PlayerShotVehicle?.Invoke(null, new EVFPlayerShotVehicleEventArgs
             {
-                PlayerId = playerId,
-                VehicleId = hitId,
-                WeaponId = weaponId,
-                Damage = dmg,
-                BodyPart = bodyPart
+                PlayerId = playerId, VehicleId = hitId,
+                WeaponId = weaponId, Damage = dmg, BodyPart = bodyPart
             });
         }
 
@@ -701,6 +689,29 @@ namespace ProjectSMP.Plugins.EVF2
             }
         }
 
+        // ── Respray & Paint ─────────────────────────────────────────────────
+        public static void OnVehicleRespray(int vehicleId, int c1, int c2)
+        {
+            var d = GetData(vehicleId);
+            if (d == null) return;
+            d.Color1 = c1;
+            d.Color2 = c2;
+        }
+
+        public static void OnVehiclePaintjob(int vehicleId, int paintjobId)
+        {
+            var d = GetData(vehicleId);
+            if (d == null) return;
+            d.Paintjob = paintjobId;
+        }
+
+        public static (bool Valid, int Price) ValidateVehicleMod(int playerId, int vehicleId, int componentId)
+        {
+            bool valid = IsValidComponent(vehicleId, componentId) && GetPlayerData(playerId).InModShop;
+            return (valid, GetComponentPrice(componentId));
+        }
+
+
         // ── Timer Update ──────────────────────────────────────────────────
         private static void UpdateVehicles()
         {
@@ -730,14 +741,8 @@ namespace ProjectSMP.Plugins.EVF2
                     VehiclePosChanged?.Invoke(null, new EVFVehiclePosChangeEventArgs
                     {
                         VehicleId = id,
-                        NewX = pos.X,
-                        NewY = pos.Y,
-                        NewZ = pos.Z,
-                        NewAngle = angle,
-                        OldX = d.PosX,
-                        OldY = d.PosY,
-                        OldZ = d.PosZ,
-                        OldAngle = d.PosAngle
+                        NewX = pos.X, NewY = pos.Y, NewZ = pos.Z, NewAngle = angle,
+                        OldX = d.PosX, OldY = d.PosY, OldZ = d.PosZ, OldAngle = d.PosAngle
                     });
                     d.PosX = pos.X; d.PosY = pos.Y; d.PosZ = pos.Z; d.PosAngle = angle;
                 }
@@ -748,12 +753,8 @@ namespace ProjectSMP.Plugins.EVF2
                     VehicleVelocityChanged?.Invoke(null, new EVFVehicleVelocityChangeEventArgs
                     {
                         VehicleId = id,
-                        NewX = vel.X,
-                        NewY = vel.Y,
-                        NewZ = vel.Z,
-                        OldX = d.VelX,
-                        OldY = d.VelY,
-                        OldZ = d.VelZ
+                        NewX = vel.X, NewY = vel.Y, NewZ = vel.Z,
+                        OldX = d.VelX, OldY = d.VelY, OldZ = d.VelZ
                     });
                     d.VelX = vel.X; d.VelY = vel.Y; d.VelZ = vel.Z;
                 }

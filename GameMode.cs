@@ -15,6 +15,7 @@ using ProjectSMP.Features.ProgressBar;
 using ProjectSMP.Plugins.Anticheat;
 using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.CEF;
+using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
@@ -23,6 +24,7 @@ using SampSharp.GameMode;
 using SampSharp.GameMode.Events;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
+using SampSharp.GameMode.Definitions;
 using System;
 using System.Threading.Tasks;
 
@@ -77,6 +79,9 @@ namespace ProjectSMP
             _anticheat = AnticheatPlugin.Create(configPath: "scriptfiles/AntiCheat.json", weaponConfigMode: true);
             _anticheat.RegisterEvents(this);
             _anticheat.Warnings.PunishmentRequired += OnAnticheatPunishment;
+
+            // Initialize EVF2
+            EVFService.Initialize();
 
             // Initialize Safe Extensions
             SafeServerExtensions.Initialize(_anticheat);
@@ -206,17 +211,32 @@ namespace ProjectSMP
         {
             base.OnVehicleSpawned(vehicle, e);
             WeaponConfigService.OnVehicleSpawn(vehicle.Id);
+            EVFService.OnVehicleSpawned(vehicle.Id);
         }
 
         protected override void OnVehicleDied(BaseVehicle vehicle, PlayerEventArgs e)
         {
             base.OnVehicleDied(vehicle, e);
             WeaponConfigService.OnVehicleDeath(vehicle.Id);
+            EVFService.OnVehicleDied(vehicle.Id);
+        }
+
+        protected override void OnVehicleDamageStatusUpdated(BaseVehicle vehicle, PlayerEventArgs e)
+        {
+            base.OnVehicleDamageStatusUpdated(vehicle, e);
+            EVFService.OnVehicleDamageStatusUpdate(vehicle.Id);
+        }
+
+        protected override void OnPlayerEnterExitModShop(BasePlayer player, EnterModShopEventArgs e)
+        {
+            base.OnPlayerEnterExitModShop(player, e);
+            EVFService.OnEnterExitModShop(player.Id, e.EnterExit == EnterExit.Entered, e.InteriorId);
         }
 
         protected override void OnExited(EventArgs e)
         {
             WeaponConfigHealthBar.Dispose();
+            EVFService.Dispose();
             PreviewModelDialog.Dispose();
             RealtimeClockService.Dispose();
             NeedsService.Dispose();
