@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using SampSharp.GameMode.SAMP;
 
 namespace ProjectSMP.Plugins.EVF2
@@ -37,6 +37,14 @@ namespace ProjectSMP.Plugins.EVF2
         public int TrailerId = -1;
         public EVFBlinkSide BlinkSide = EVFBlinkSide.None;
         public float BlinkAngle;
+        
+        public SampSharp.Streamer.World.DynamicObject[][] Neons = new SampSharp.Streamer.World.DynamicObject[3][];
+        public SampSharp.Streamer.World.DynamicObject[] Blinks = new SampSharp.Streamer.World.DynamicObject[4];
+
+        public EVFVehicleData()
+        {
+            for (int i = 0; i < 3; i++) Neons[i] = new SampSharp.Streamer.World.DynamicObject[2];
+        }
     }
 
     public class EVFPlayerData

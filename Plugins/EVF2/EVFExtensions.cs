@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System.Linq;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
@@ -77,7 +77,7 @@ namespace ProjectSMP.Plugins.EVF2
         {
             var v = BaseVehicle.Find(vehicleId);
             if (v == null) return;
-            EVFService.RegisterVehicle(vehicleId, v.Model, pos, angle, color1, color2, worldId, interiorId, unoccupiedDamage);
+            EVFService.RegisterVehicle(vehicleId, (int)v.Model, pos, angle, color1, color2, worldId, interiorId, unoccupiedDamage);
         }
 
         public static void HandleHorn(BasePlayer player)
@@ -92,5 +92,26 @@ namespace ProjectSMP.Plugins.EVF2
                 if (p.Position.DistanceTo(pos) <= 35f)
                     p.PlaySound(horn, pos);
         }
+
+        public static void SetVehicleNeonLights(int vehicleId, bool enable = true, int colorModel = 18647, int slotId = 0)
+            => EVFService.SetVehicleNeonLights(vehicleId, enable, colorModel, slotId);
+
+        public static bool GetVehicleNeonLightsState(int vehicleId, int slotId = 0)
+            => EVFService.GetVehicleNeonLightsState(vehicleId, slotId);
+
+        public static bool IsCarBlinking(int vehicleId)
+            => EVFService.IsCarBlinking(vehicleId);
+
+        public static void SetCarBlinking(int vehicleId, EVFBlinkSide side, bool skip = false)
+            => EVFService.SetCarBlinking(vehicleId, side, skip);
+
+        public static int DisableCarBlinking(int vehicleId)
+            => EVFService.DisableCarBlinking(vehicleId);
+
+        public static void ToggleVehicleBlinking(bool toggle)
+            => EVFService.VehicleBlinking = toggle;
+
+        public static bool IsToggledVehicleBlinking()
+            => EVFService.VehicleBlinking;
     }
 }

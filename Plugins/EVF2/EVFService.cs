@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using SampSharp.GameMode;
@@ -14,6 +14,7 @@ namespace ProjectSMP.Plugins.EVF2
         private static readonly Dictionary<int, EVFPlayerData> _p = new();
         private static readonly Random _rng = new();
         private static Timer _updateTimer;
+        public static bool VehicleBlinking { get; set; } = false;
 
         public static event EventHandler<int> VehicleCreated;
         public static event EventHandler<int> VehicleDestroyed;
@@ -108,6 +109,136 @@ namespace ProjectSMP.Plugins.EVF2
         public static void RemoveVehicle(int id)
         {
             if (_v.TryGetValue(id, out var d)) d.Stored = false;
+        }
+
+        // ── Neons ─────────────────────────────────────────────────────────
+        public static bool VehicleSupportsNeonLights(int modelId)
+        {
+            int i = modelId - 400;
+            if (i < 0 || i >= EVFOffsets.NeonOffsetData.Length) return false;
+            var o = EVFOffsets.NeonOffsetData[i];
+            return !(o[0] == 0f && o[1] == 0f && o[2] == 0f);
+        }
+
+        public static void SetVehicleNeonLights(int id, bool enable = true, int colorModel = 18647, int slotId = 0)
+        {
+            var v = BaseVehicle.Find(id); if (v == null) return;
+            if (!VehicleSupportsNeonLights((int)v.Model)) return;
+            var d = GetData(id); if (d == null) return;
+            if (slotId < 0 || slotId > 2) return;
+
+            if (enable)
+            {
+                if (d.Neons[slotId][0] != null) { d.Neons[slotId][0].Dispose(); d.Neons[slotId][0] = null; }
+                if (d.Neons[slotId][1] != null) { d.Neons[slotId][1].Dispose(); d.Neons[slotId][1] = null; }
+
+                if (colorModel != 0)
+                {
+                    int i = (int)v.Model - 400;
+                    var o = EVFOffsets.NeonOffsetData[i];
+
+                    d.Neons[slotId][0] = new SampSharp.Streamer.World.DynamicObject(colorModel, new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+                    d.Neons[slotId][1] = new SampSharp.Streamer.World.DynamicObject(colorModel, new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+
+                    d.Neons[slotId][0].AttachTo(v, new Vector3(o[0], o[1], o[2]), new Vector3(0, 0, 0));
+                    d.Neons[slotId][1].AttachTo(v, new Vector3(-o[0], o[1], o[2]), new Vector3(0, 0, 0));
+                }
+            }
+            else
+            {
+                if (d.Neons[slotId][0] != null) { d.Neons[slotId][0].Dispose(); d.Neons[slotId][0] = null; }
+                if (d.Neons[slotId][1] != null) { d.Neons[slotId][1].Dispose(); d.Neons[slotId][1] = null; }
+            }
+        }
+
+        public static bool GetVehicleNeonLightsState(int id, int slotId = 0)
+        {
+            var d = GetData(id); if (d == null) return false;
+            if (slotId < 0 || slotId > 2) return false;
+            return d.Neons[slotId][0] != null && d.Neons[slotId][1] != null;
+        }
+
+        // ── Blinking ──────────────────────────────────────────────────────
+        public static bool IsCarBlinking(int id) => GetData(id)?.BlinkSide != EVFBlinkSide.None;
+
+        public static int DisableCarBlinking(int id)
+        {
+            var d = GetData(id); if (d == null || !IsCarBlinking(id)) return 0;
+            for (int i = 0; i < 4; i++)
+            {
+                if (d.Blinks[i] != null)
+                {
+                    d.Blinks[i].Dispose();
+                    d.Blinks[i] = null;
+                }
+            }
+            d.BlinkSide = EVFBlinkSide.None;
+            return 1;
+        }
+
+        public static void SetCarBlinking(int id, EVFBlinkSide side, bool skip = false)
+        {
+            var v = BaseVehicle.Find(id); if (v == null) return;
+            var d = GetData(id); if (d == null) return;
+
+            if (IsCarBlinking(id) && !skip)
+            {
+                DisableCarBlinking(id);
+                return;
+            }
+
+            if (!skip) d.BlinkSide = side;
+            d.BlinkAngle = v.Angle;
+
+            int trailerId = v.Trailer?.Id ?? -1;
+            int modelId = (int)v.Model;
+            int offsetIdx = modelId - 400;
+            if (offsetIdx < 0 || offsetIdx >= EVFOffsets.BlinkOffsetData.Length) return;
+
+            var o = EVFOffsets.BlinkOffsetData[offsetIdx];
+            var b = d.Blinks;
+
+            if (side == EVFBlinkSide.Left || side == EVFBlinkSide.Emergency)
+            {
+                if (o[0] != 0f)
+                {
+                    b[0] = new SampSharp.Streamer.World.DynamicObject(19294, new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+                    b[2] = new SampSharp.Streamer.World.DynamicObject(19294, new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+                    b[0].AttachTo(v, new Vector3(o[0], o[1], o[2]), new Vector3(0, 0, 0));
+                    b[2].AttachTo(v, new Vector3(-o[0], o[1], o[2]), new Vector3(0, 0, 0));
+                }
+                if (o[3] != 0f)
+                {
+                    b[1] = new SampSharp.Streamer.World.DynamicObject(19294, new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+                    b[3] = new SampSharp.Streamer.World.DynamicObject(19294, new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+                    if (trailerId >= 0 && BaseVehicle.Find(trailerId) != null)
+                    {
+                        b[1].AttachTo(BaseVehicle.Find(trailerId), new Vector3(o[3], o[4], o[5]), new Vector3(0, 0, 0));
+                        b[3].AttachTo(BaseVehicle.Find(trailerId), new Vector3(-o[3], o[4], o[5]), new Vector3(0, 0, 0));
+                    }
+                    else
+                    {
+                        b[1].AttachTo(v, new Vector3(o[3], o[4], o[5]), new Vector3(0, 0, 0));
+                        b[3].AttachTo(v, new Vector3(-o[3], o[4], o[5]), new Vector3(0, 0, 0));
+                    }
+                }
+            }
+            if (side == EVFBlinkSide.Right)
+            {
+                if (o[0] != 0f)
+                {
+                    b[0] = new SampSharp.Streamer.World.DynamicObject(19294, new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+                    b[0].AttachTo(v, new Vector3(-o[0], o[1], o[2]), new Vector3(0, 0, 0));
+                }
+                if (o[3] != 0f)
+                {
+                    b[1] = new SampSharp.Streamer.World.DynamicObject(19294, new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+                    if (trailerId >= 0 && BaseVehicle.Find(trailerId) != null)
+                        b[1].AttachTo(BaseVehicle.Find(trailerId), new Vector3(-o[3], o[4], o[5]), new Vector3(0, 0, 0));
+                    else
+                        b[1].AttachTo(v, new Vector3(-o[3], o[4], o[5]), new Vector3(0, 0, 0));
+                }
+            }
         }
 
         // ── Data Access ────────────────────────────────────────────────────
@@ -527,7 +658,7 @@ namespace ProjectSMP.Plugins.EVF2
             foreach (var v in BaseVehicle.All)
             {
                 if (v.Id == except) continue;
-                if (v.Model == 590) continue;
+                if ((int)v.Model == 590) continue;
                 if (worldId >= 0 && v.VirtualWorld != worldId) continue;
                 if (interiorId >= 0 && v.Interior != interiorId) continue;
                 float dist = v.Position.DistanceTo(pos);
@@ -573,7 +704,13 @@ namespace ProjectSMP.Plugins.EVF2
 
         public static void OnVehicleDied(int vehicleId)
         {
-            // neon/blink cleanup if Streamer integration added
+            var d = GetData(vehicleId);
+            if (d != null)
+            {
+                for (int slot = 0; slot < 3; slot++)
+                    SetVehicleNeonLights(vehicleId, false, 0, slot);
+                DisableCarBlinking(vehicleId);
+            }
         }
 
         public static void OnVehicleDamageStatusUpdate(int vehicleId)
@@ -610,9 +747,15 @@ namespace ProjectSMP.Plugins.EVF2
             if (d.TrailerId != trailer)
             {
                 if (trailer >= 0)
+                {
                     TrailerHooked?.Invoke(null, new EVFTrailerEventArgs { PlayerId = playerId, VehicleId = vId, TrailerId = trailer });
+                    if (IsCarBlinking(vId)) SetCarBlinking(vId, d.BlinkSide, true);
+                }
                 else if (d.TrailerId >= 0)
+                {
                     TrailerUnhooked?.Invoke(null, new EVFTrailerEventArgs { PlayerId = playerId, VehicleId = vId, TrailerId = d.TrailerId });
+                    if (IsCarBlinking(vId)) DisableCarBlinking(vId);
+                }
                 d.TrailerId = trailer;
             }
         }
@@ -671,7 +814,7 @@ namespace ProjectSMP.Plugins.EVF2
                     var modelType = (VehicleModelType)modelId;
                     int tireStatus = GetDamageStatus(hitId, EVFDamageType.Tires);
 
-                    BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.FrontWheels, out float fwX, out float fwY, out float fwZ);
+                    BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.WheelsFront, out float fwX, out float fwY, out float fwZ);
 
                     if (VectorSize(hitPos.X + fwX, hitPos.Y - fwY, hitPos.Z - fwZ) <= 0.4f)
                     {
@@ -687,7 +830,7 @@ namespace ProjectSMP.Plugins.EVF2
                     }
                     else
                     {
-                        BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.RearWheels, out float rwX, out float rwY, out float rwZ);
+                        BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.WheelsRear, out float rwX, out float rwY, out float rwZ);
 
                         if (VectorSize(hitPos.X + rwX, hitPos.Y - rwY, hitPos.Z - rwZ) <= 0.4f)
                         {
@@ -768,7 +911,7 @@ namespace ProjectSMP.Plugins.EVF2
             if (vehicle != null)
             {
                 var pos = vehicle.Position;
-                World.CreateExplosion(pos, ExplosionType.Large_10s_2s, 30f);
+                CreateExplosion(pos, ExplosionType.LargeVisibleDamage2, 30f);
                 vehicle.Respawn();
             }
             BombExploded?.Invoke(null, new EVFBombEventArgs { PlayerId = playerId, VehicleId = vehicleId });
@@ -928,6 +1071,26 @@ namespace ProjectSMP.Plugins.EVF2
                         v.Health = d.Health;
                     else
                         d.Health = h;
+                }
+
+                if (VehicleBlinking && GetParam(id, EVFParamType.Engine))
+                {
+                    if (Math.Abs(v.Angle - d.BlinkAngle) > 20.0f)
+                    {
+                        if (!IsCarBlinking(id))
+                        {
+                            SetCarBlinking(id, EVFBlinkSide.Emergency);
+                            DisableCarBlinking(id);
+                        }
+                        else
+                        {
+                            DisableCarBlinking(id);
+                        }
+                    }
+                }
+                else if (!GetParam(id, EVFParamType.Engine))
+                {
+                    if (IsCarBlinking(id)) DisableCarBlinking(id);
                 }
             }
         }
