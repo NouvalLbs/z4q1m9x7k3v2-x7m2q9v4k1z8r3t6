@@ -47,6 +47,7 @@ namespace ProjectSMP.Entities.Players.Needs
 
         private static void UpdateNeeds(Player player)
         {
+            if (!player.IsCharLoaded) return;
             if (player.Condition.Injured != 0) return;
             var animIdx = player.AnimationIndex;
             player.GetKeys(out var keys, out _, out _);

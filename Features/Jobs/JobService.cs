@@ -1,4 +1,5 @@
 ﻿using ProjectSMP.Entities.Players.Character;
+using ProjectSMP.Entities.Players.Delay;
 using System;
 using System.Linq;
 
@@ -40,6 +41,7 @@ namespace ProjectSMP.Features.Jobs
                 return false;
 
             player.Jobs.Remove(job);
+            DelayService.SetQuitJobDelay(player, 1);
             return true;
         }
 

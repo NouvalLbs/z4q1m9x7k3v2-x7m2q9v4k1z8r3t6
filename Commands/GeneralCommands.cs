@@ -1,14 +1,16 @@
+using Microsoft.VisualBasic;
 using ProjectSMP.Core;
+using ProjectSMP.Features.Bank;
 using ProjectSMP.Features.Chat;
 using ProjectSMP.Features.Jobs;
 using ProjectSMP.Features.LevelSystem;
-using ProjectSMP.Features.Bank;
-using System.Linq;
 using SampSharp.GameMode.Definitions;
+using SampSharp.GameMode.Display;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 using SampSharp.GameMode.World;
 using System;
+using System.Linq;
 
 namespace ProjectSMP.Commands
 {
@@ -343,6 +345,25 @@ namespace ProjectSMP.Commands
                 player.SendClientMessage(Color.White, "");
         }
 
+        [Command("tte2")]
+        public static void TestUcok(Player player)
+        {
+            var strings = TextFormatter.BuildWithNewLines(
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod, nisl vel tincidunt luctus, nunc nisl",
+                "aliquam nunc, eget aliquam nisl nunc vel nisl. Proin euismod, nisl vel tincidunt luctus, nunc nisl aliquam nunc,",
+                "eget aliquam nisl nunc vel nisl. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam. Sed nisi.",
+                "Nulla quis sem at nibh elementum imperdiet. Duis sagittis ipsum. Praesent mauris.",
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod, nisl vel tincidunt luctus, nunc nisl",
+                "aliquam nunc, eget aliquam nisl nunc vel nisl. Proin euismod, nisl vel tincidunt luctus, nunc nisl aliquam nunc,",
+                "eget aliquam nisl nunc vel nisl. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam. Sed nisi.",
+                "Nulla quis sem at nibh elementum imperdiet. Duis sagittis ipsum. Praesent mauris.",
+                "Nulla quis sem at nibh elementum imperdiet. Duis sagittis ipsum. Praesent maurisssss."
+            );
+            Console.WriteLine(strings.Length);
+            var status = new MessageDialog("Title", strings, "Test", "Test");
+            status.Show(player);
+        }
+
         [Command("stats")]
         public static void Stats(Player player)
         {
@@ -359,19 +380,20 @@ namespace ProjectSMP.Commands
                 ? $"{{00f000}}{Utilities.GroupDigits(player.BankAccounts.Where(a => a.IsActive).Sum(a => a.Balance))}{{FFFFFF}}] | Bank Account: [{{b8d2ec}}{activeAccount.AccountNumber}{{FFFFFF}}"
                 : "{FF0000}Unregistered{FFFFFF}";
 
-            var stats = TextFormatter.Build(
-                "{FFFF00}IC Information:\n",
-                $"{{FFFFFF}}Gender: [{{b8d2ec}}{gender}{{FFFFFF}}] | Birthdate: [{{b8d2ec}}{player.CharInfo.BirthDate}{{FFFFFF}}] | Money: [{{00f000}}{Utilities.GroupDigits(player.CharMoney)}{{FFFFFF}}] | Bank: [{bankText}]\n",
-                $"{{FFFFFF}}Phone Status: [{phoneStatus}] | Phone Number: [{{ebeb00}}{player.Phone.Number}{{FFFFFF}}] | Phone Credit: [{{ebeb00}}{player.Phone.Credit}{{FFFFFF}}] | Mask ID: [{{b8d2ec}}{player.MaskId}{{FFFFFF}}]\n",
-                $"{{FFFFFF}}Jobs: [{jobs}{{FFFFFF}}] | Faction: [Civilian{{FFFFFF}}] | Family: [None]\n",
-                $"{{FFFFFF}}Working at: [None] [None (0){{FFFFFF}}] | Wealth: [None]\n",
-                "\n",
-                "{FFFF00}OOC Information:\n",
-                $"{{FFFFFF}}CitizenId: [{{77efc7}}{player.CitizenId}{{FFFFFF}}] | Level: [{{77efc7}}{player.Level} - ({player.LevelPoints}/{pointsRequired}){{FFFFFF}}] | Paychecks: [{{b8d2ec}}{player.PaycheckData.PaycheckTime}{{FFFFFF}}] | Time Played: [{{b8d2ec}}{player.Playtime.Hours} hour(s) {player.Playtime.Minutes} minute(s) {player.Playtime.Seconds} second(s){{FFFFFF}}]\n",
-                $"{{FFFFFF}}Character Story: [{charStatus}] | Staff: [{admin}] | Warns: [{warn}] | Prestige Coin: [0]\n",
+            var stats = TextFormatter.BuildWithNewLines(
+                "{FFFF00}IC Information:",
+                $"{{FFFFFF}}Gender: [{{b8d2ec}}{gender}{{FFFFFF}}] | Birthdate: [{{b8d2ec}}{player.CharInfo.BirthDate}{{FFFFFF}}] | Money: [{{00f000}}{Utilities.GroupDigits(player.CharMoney)}{{FFFFFF}}] | Bank: [{bankText}]",
+                $"{{FFFFFF}}Phone Status: [{phoneStatus}] | Phone Number: [{{ebeb00}}{player.Phone.Number}{{FFFFFF}}] | Phone Credit: [{{ebeb00}}{player.Phone.Credit}{{FFFFFF}}] | Mask ID: [{{b8d2ec}}{player.MaskId}{{FFFFFF}}]",
+                $"{{FFFFFF}}Jobs: [{jobs}{{FFFFFF}}] | Faction: [Civilian{{FFFFFF}}] | Family: [None]",
+                $"{{FFFFFF}}Working at: [None] [None (0){{FFFFFF}}] | Wealth: [None]",
+                "",
+                "{FFFF00}OOC Information:",
+                $"{{FFFFFF}}CitizenId: [{{77efc7}}{player.CitizenId}{{FFFFFF}}] | Level: [{{77efc7}}{player.Level} - ({player.LevelPoints}/{pointsRequired}){{FFFFFF}}] | Paychecks: [{{b8d2ec}}{player.PaycheckData.PaycheckTime}{{FFFFFF}}] | Time Played: [{{b8d2ec}}{player.Playtime.Hours} hour(s) {player.Playtime.Minutes} minute(s) {player.Playtime.Seconds} second(s){{FFFFFF}}]",
+                $"{{FFFFFF}}Character Story: [{charStatus}] | Staff: [{admin}] | Warns: [{warn}] | Prestige Coin: [0]",
                 $"{{FFFFFF}}World: [{{ebeb00}}{player.VirtualWorld}{{FFFFFF}}] | Interior: [{{ebeb00}}{player.Interior}{{FFFFFF}}] | MaxHP: [{{ab0000}}{player.Vitals.MaxHealth:F1}{{FFFFFF}}] | Health: [{{ab0000}}{player.Vitals.Health:F1}{{FFFFFF}}] | Armour: [{{9f9f9f}}{player.Vitals.Armour:F1}{{FFFFFF}}]"
             );
 
+            Console.WriteLine(stats.Length);
             var title = $"{{6fe0ba}}{player.CharInfo.Username} Statistic {{c8c8c8}}(UCP: {player.Ucp})";
             player.ShowMessage(title, stats).WithButtons("Settings", "Close").Show();
         }

@@ -23,8 +23,8 @@ namespace ProjectSMP.Entities.Players.Needs
 
             if (player.Settings.HBEMode == 0)
             {
-                SendHudDataToCef(player);
                 CefService.EmitEvent(player.Id, "setHudVisible", new { visible = true });
+                SendHudDataToCef(player);
             }
             else
             {

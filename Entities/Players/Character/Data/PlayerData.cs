@@ -1,5 +1,6 @@
 using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Character;
+using ProjectSMP.Entities.Players.Delay.Data;
 using ProjectSMP.Entities.Players.Inventory.Data;
 using ProjectSMP.Features.Bank.Data;
 using ProjectSMP.Features.Bank.Paycheck;
@@ -40,6 +41,7 @@ namespace ProjectSMP
         public CharSettings Settings { get; set; } = new();
         public List<CharJob> Jobs { get; set; } = new();
         public PaycheckData PaycheckData { get; set; } = new();
+        public CharDelays Delays { get; set; } = new();
 
         public List<PlayerBankAccount> BankAccounts { get; set; } = new();
         public long LastSpawnTick { get; set; }

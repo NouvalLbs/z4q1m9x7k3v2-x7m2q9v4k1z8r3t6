@@ -1,4 +1,5 @@
 ﻿using ProjectSMP.Core;
+using ProjectSMP.Entities.Players.Delay;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 
@@ -58,8 +59,15 @@ namespace ProjectSMP.Features.Jobs.DynamicJob
 
         private static void ShowQuitConfirmDialog(Player player, DynamicJobData jobData)
         {
+            if (DelayService.HasQuitJobDelay(player))
+            {
+                var remaining = DelayService.GetQuitJobRemainingTime(player);
+                player.SendClientMessage(Color.White, $"{Msg.Jobs} Kamu dapat keluar dari pekerjaan lagi dalam {remaining.Days} hari {remaining.Hours} jam!");
+                return;
+            }
+
             var message = $"Apakah kamu yakin ingin keluar dari job {{FFFF00}}{jobData.JobName}{{FFFFFF}}?\n\n" +
-                         $"{{FF0000}}Peringatan: Semua progress job kamu akan hilang!";
+                         $"{{FF0000}}Peringatan: Akan ada delay satu hari untuk menggunakan quit job lagi!";
 
             player.ShowMessage("Konfirmasi Quit Job", message)
                 .WithButtons("Ya, Quit", "Batal")

@@ -2,6 +2,7 @@
 using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
+using ProjectSMP.Entities.Players.Delay.Data;
 using ProjectSMP.Entities.Players.Inventory.Data;
 using ProjectSMP.Entities.Players.NameTag;
 using ProjectSMP.Entities.Players.Needs;
@@ -134,6 +135,7 @@ namespace ProjectSMP.Entities.Players.Character
         public string? Jobs { get; set; }
         public string? Paychecks { get; set; }
         public string? Char_info { get; set; }
+        public string? Delays { get; set; }
     }
 
     internal sealed class CharListItem
@@ -276,7 +278,7 @@ namespace ProjectSMP.Entities.Players.Character
                 "position=@Pos, vitals=@Vitals, playtime=@Playtime, " +
                 "backpack=@Backpack, phone=@Phone, jail_info=@JailInfo, ban_info=@BanInfo, " +
                 "`condition`=@Condition, `settings`=@Settings, jobs=@Jobs, paychecks=@PaycheckData, " +
-                "char_info=@CharInfo " +
+                "char_info=@CharInfo, delays=@Delays " +
                 "WHERE citizen_id=@CitizenId",
                 new
                 {
@@ -299,6 +301,7 @@ namespace ProjectSMP.Entities.Players.Character
                     Jobs = Ser(player.Jobs),
                     PaycheckData = Ser(player.PaycheckData),
                     CharInfo = Ser(player.CharInfo),
+                    Delays = Ser(player.Delays),
                     CitizenId = player.CitizenId
                 });
         }
@@ -593,9 +596,9 @@ namespace ProjectSMP.Entities.Players.Character
                 await DatabaseManager.ExecuteAsync(
                     $"INSERT INTO `{Table}` " +
                     "(citizen_id,ucp,ip,mask_id," +
-                    "position,vitals,playtime,backpack,phone,jail_info,ban_info,`condition`,`settings`,jobs,paychecks,char_info) " +
+                    "position,vitals,playtime,backpack,phone,jail_info,ban_info,`condition`,`settings`,jobs,paychecks,char_info, delays) " +
                     "VALUES (@Cid,@Ucp,@Ip,@MaskId," +
-                    "@Pos,@Vitals,@Playtime,@Backpack,@Phone,@JailInfo,@BanInfo,@Condition,@Settings,@Jobs,@PaycheckData,@CharInfo)",
+                    "@Pos,@Vitals,@Playtime,@Backpack,@Phone,@JailInfo,@BanInfo,@Condition,@Settings,@Jobs,@PaycheckData,@CharInfo,@Delays)",
                     new
                     {
                         Cid = cid,
@@ -613,8 +616,7 @@ namespace ProjectSMP.Entities.Players.Character
                         Settings = Ser(new CharSettings()),
                         Jobs = Ser(new List<CharJob>()),
                         PaycheckData = Ser(new PaycheckData()),
-                        CharInfo = Ser(new CharInfo
-                        {
+                        CharInfo = Ser(new CharInfo {
                             Username = c.Name,
                             Skin = c.Skin,
                             Gender = c.Gender,
@@ -622,7 +624,8 @@ namespace ProjectSMP.Entities.Players.Character
                             Height = c.Height,
                             Hair = c.Hair,
                             Eye = c.Eye
-                        })
+                        }),
+                        Delays = Ser(new CharDelays()),
                     });
 
                 if (player.IsDisposed) return;
@@ -726,6 +729,7 @@ namespace ProjectSMP.Entities.Players.Character
             player.Settings = Des<CharSettings>(r.Settings) ?? new();
             player.Jobs = Des<List<CharJob>>(r.Jobs) ?? new();
             player.PaycheckData = Des<PaycheckData>(r.Paychecks) ?? new();
+            player.Delays = Des<CharDelays>(r.Delays) ?? new();
             player.IsCharLoaded = true;
         }
 
