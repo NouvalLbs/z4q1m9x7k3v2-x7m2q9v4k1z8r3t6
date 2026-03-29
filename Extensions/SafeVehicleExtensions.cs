@@ -1,5 +1,6 @@
 ﻿// SafeVehicleExtensions.cs
 #nullable enable
+using ProjectSMP.Entities;
 using ProjectSMP.Plugins.Anticheat;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
@@ -81,12 +82,8 @@ public static class SafeVehicleExtensions
         _anticheat?.OnSetVehicleToRespawn(vehicle.Id);
     }
 
-    public static BaseVehicle CreateSafe(VehicleModelType model, Vector3 position, float rotation,
-        int color1, int color2, int respawnDelay = -1, bool addSiren = false)
-    {
-        var vehicle = BaseVehicle.Create(model, position, rotation, color1, color2, respawnDelay, addSiren);
-        WeaponConfigService.OnVehicleSpawn(vehicle.Id);
-        return vehicle;
+    public static Vehicle CreateSafe(VehicleModelType model, Vector3 position, float rotation, int color1, int color2, int respawnDelay = -1, bool addSiren = false) {
+        return Vehicle.CreateVehicle(model, position, rotation, color1, color2, respawnDelay, addSiren);
     }
 
     public static void DisposeSafe(this BaseVehicle vehicle)
