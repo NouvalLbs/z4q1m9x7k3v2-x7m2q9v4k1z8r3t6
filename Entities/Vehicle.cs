@@ -2,6 +2,7 @@
 using ProjectSMP.Extensions;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
+using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Events;
 using SampSharp.GameMode.Pools;
@@ -17,7 +18,7 @@ namespace ProjectSMP.Entities
         public int DatabaseId { get; set; } = -1;
         public VehicleType VehicleType { get; set; } = VehicleType.None;
 
-        public string PlateText { get; set; } = "NONE";
+        public string PlateText { get; set; } = "";
         public bool IsLocked { get; set; }
         public bool IsEngineOn { get; set; }
 
@@ -86,9 +87,9 @@ namespace ProjectSMP.Entities
         public override void OnPaintjobApplied(VehiclePaintjobEventArgs e)
         {
             base.OnPaintjobApplied(e);
-            CustomPaintjob = e.PaintJobId;
+            CustomPaintjob = e.PaintjobId;
             if (e.Player is Player player)
-                OnVehiclePaintjobChanged(player, e.PaintJobId);
+                OnVehiclePaintjobChanged(player, e.PaintjobId);
         }
 
         public override void OnUnoccupiedUpdate(UnoccupiedVehicleEventArgs e)
@@ -231,7 +232,7 @@ namespace ProjectSMP.Entities
             DestroyVehicleLabel();
             var labelText = GetVehicleLabelText();
             if (!string.IsNullOrEmpty(labelText))
-                VehicleLabel = new TextLabel(labelText, new SampSharp.GameMode.SAMP.Color(255, 255, 255), Position, 10f, 0, false);
+                VehicleLabel = new TextLabel(labelText, new Color(255, 255, 255), Position, 10f, 0, false);
         }
 
         public virtual void UpdateVehicleLabel()
@@ -283,7 +284,12 @@ namespace ProjectSMP.Entities
 
         public static Vehicle CreateVehicle(VehicleModelType modelid, Vector3 position, float rotation, int color1, int color2, int respawnDelay = -1, bool addSiren = false)
         {
-            var vehicle = Create<Vehicle>(modelid, position, rotation, color1, color2, respawnDelay, addSiren);
+            var baseVehicle = Create(modelid, position, rotation, color1, color2, respawnDelay, addSiren);
+            if (baseVehicle is not Vehicle vehicle) {
+                baseVehicle.Dispose();
+                throw new InvalidOperationException("Failed to create Vehicle instance");
+            }
+
             vehicle.SpawnPosition = position;
             vehicle.SpawnRotation = rotation;
             vehicle.CustomColor1 = color1;
@@ -297,7 +303,12 @@ namespace ProjectSMP.Entities
 
         public static T CreateVehicle<T>(VehicleModelType modelid, Vector3 position, float rotation, int color1, int color2, int respawnDelay = -1, bool addSiren = false) where T : Vehicle, new()
         {
-            var vehicle = Create<T>(modelid, position, rotation, color1, color2, respawnDelay, addSiren);
+            var baseVehicle = Create(modelid, position, rotation, color1, color2, respawnDelay, addSiren);
+            if (baseVehicle is not T vehicle) {
+                baseVehicle.Dispose();
+                throw new InvalidOperationException($"Failed to create {typeof(T).Name} instance");
+            }
+
             vehicle.SpawnPosition = position;
             vehicle.SpawnRotation = rotation;
             vehicle.CustomColor1 = color1;

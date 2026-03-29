@@ -1,5 +1,7 @@
-﻿#nullable enable
+#nullable enable
 using System;
+using SampSharp.GameMode.SAMP;
+using ProjectSMP.Core;
 
 namespace ProjectSMP.Entities.Players.Delay
 {
@@ -88,23 +90,37 @@ namespace ProjectSMP.Entities.Players.Delay
 
         public static void ReduceAllDelays(Player player, int minutesElapsed)
         {
-            player.Delays.Lumber = Math.Max(0, player.Delays.Lumber - minutesElapsed);
-            player.Delays.Product = Math.Max(0, player.Delays.Product - minutesElapsed);
-            player.Delays.TruckerHauling = Math.Max(0, player.Delays.TruckerHauling - minutesElapsed);
-            player.Delays.TruckerMission = Math.Max(0, player.Delays.TruckerMission - minutesElapsed);
-            player.Delays.TruckerContainer = Math.Max(0, player.Delays.TruckerContainer - minutesElapsed);
-            player.Delays.TruckerCrate = Math.Max(0, player.Delays.TruckerCrate - minutesElapsed);
-            player.Delays.Forager = Math.Max(0, player.Delays.Forager - minutesElapsed);
-            player.Delays.Farm = Math.Max(0, player.Delays.Farm - minutesElapsed);
-            player.Delays.Sweeper = Math.Max(0, player.Delays.Sweeper - minutesElapsed);
-            player.Delays.Courir = Math.Max(0, player.Delays.Courir - minutesElapsed);
-            player.Delays.Forklifter = Math.Max(0, player.Delays.Forklifter - minutesElapsed);
-            player.Delays.Bus = Math.Max(0, player.Delays.Bus - minutesElapsed);
-            player.Delays.Trashmaster = Math.Max(0, player.Delays.Trashmaster - minutesElapsed);
-            player.Delays.Mower = Math.Max(0, player.Delays.Mower - minutesElapsed);
-            player.Delays.Fisherman = Math.Max(0, player.Delays.Fisherman - minutesElapsed);
-            player.Delays.Honey = Math.Max(0, player.Delays.Honey - minutesElapsed);
-            player.Delays.Miner = Math.Max(0, player.Delays.Miner - minutesElapsed);
+            ProcessJobDelay(player, "Lumber", player.Delays.Lumber, v => player.Delays.Lumber = v, minutesElapsed);
+            ProcessJobDelay(player, "Product", player.Delays.Product, v => player.Delays.Product = v, minutesElapsed);
+            ProcessJobDelay(player, "Trucker Hauling", player.Delays.TruckerHauling, v => player.Delays.TruckerHauling = v, minutesElapsed);
+            ProcessJobDelay(player, "Trucker Mission", player.Delays.TruckerMission, v => player.Delays.TruckerMission = v, minutesElapsed);
+            ProcessJobDelay(player, "Trucker Container", player.Delays.TruckerContainer, v => player.Delays.TruckerContainer = v, minutesElapsed);
+            ProcessJobDelay(player, "Trucker Crate", player.Delays.TruckerCrate, v => player.Delays.TruckerCrate = v, minutesElapsed);
+            ProcessJobDelay(player, "Forager", player.Delays.Forager, v => player.Delays.Forager = v, minutesElapsed);
+            ProcessJobDelay(player, "Farmer", player.Delays.Farm, v => player.Delays.Farm = v, minutesElapsed);
+            ProcessJobDelay(player, "Sweeper", player.Delays.Sweeper, v => player.Delays.Sweeper = v, minutesElapsed);
+            ProcessJobDelay(player, "Courier", player.Delays.Courir, v => player.Delays.Courir = v, minutesElapsed);
+            ProcessJobDelay(player, "Forklifter", player.Delays.Forklifter, v => player.Delays.Forklifter = v, minutesElapsed);
+            ProcessJobDelay(player, "Bus Driver", player.Delays.Bus, v => player.Delays.Bus = v, minutesElapsed);
+            ProcessJobDelay(player, "Trashmaster", player.Delays.Trashmaster, v => player.Delays.Trashmaster = v, minutesElapsed);
+            ProcessJobDelay(player, "Mower", player.Delays.Mower, v => player.Delays.Mower = v, minutesElapsed);
+            ProcessJobDelay(player, "Fisherman", player.Delays.Fisherman, v => player.Delays.Fisherman = v, minutesElapsed);
+            ProcessJobDelay(player, "Honey", player.Delays.Honey, v => player.Delays.Honey = v, minutesElapsed);
+            ProcessJobDelay(player, "Miner", player.Delays.Miner, v => player.Delays.Miner = v, minutesElapsed);
+        }
+
+        private static void ProcessJobDelay(Player player, string jobName, int currentDelay, Action<int> updateDelay, int minutesElapsed)
+        {
+            if (currentDelay > 0)
+            {
+                int newDelay = Math.Max(0, currentDelay - minutesElapsed);
+                updateDelay(newDelay);
+
+                if (newDelay == 0 && player.IsConnected)
+                {
+                    player.SendClientMessage(Color.White, $"{Msg.Jobs} You can now work as a {{FFFF00}}{jobName}{{FFFFFF}} again.");
+                }
+            }
         }
     }
 }
