@@ -12,6 +12,7 @@ namespace ProjectSMP.Plugins.EVF2
     {
         private static readonly Dictionary<int, EVFVehicleData> _v = new();
         private static readonly Dictionary<int, EVFPlayerData> _p = new();
+        private static readonly Random _rng = new();
         private static Timer _updateTimer;
 
         public static event EventHandler<int> VehicleCreated;
@@ -27,6 +28,7 @@ namespace ProjectSMP.Plugins.EVF2
         public static event EventHandler<EVFVehiclePosChangeEventArgs> VehiclePosChanged;
         public static event EventHandler<EVFVehicleVelocityChangeEventArgs> VehicleVelocityChanged;
         public static event EventHandler<EVFVehicleHealthChangeEventArgs> VehicleHealthChanged;
+        public static event EventHandler<EVFVehicleModExEventArgs> VehicleModEx;
 
         // ── Init/Dispose ────────────────────────────────────────────────────
         public static void Initialize()
@@ -72,10 +74,19 @@ namespace ProjectSMP.Plugins.EVF2
         {
             var d = new EVFVehicleData
             {
-                PosX = pos.X, PosY = pos.Y, PosZ = pos.Z, PosAngle = angle,
-                SpawnX = pos.X, SpawnY = pos.Y, SpawnZ = pos.Z, SpawnAngle = angle,
-                SpawnWorld = worldId, SpawnInterior = interiorId,
-                Interior = interiorId, Color1 = color1, Color2 = color2,
+                PosX = pos.X,
+                PosY = pos.Y,
+                PosZ = pos.Z,
+                PosAngle = angle,
+                SpawnX = pos.X,
+                SpawnY = pos.Y,
+                SpawnZ = pos.Z,
+                SpawnAngle = angle,
+                SpawnWorld = worldId,
+                SpawnInterior = interiorId,
+                Interior = interiorId,
+                Color1 = color1,
+                Color2 = color2,
                 Fuel = EVFConstants.DefaultVehicleFuel,
                 UnoccupiedDamage = unoccupiedDamage,
                 Stored = true
@@ -178,6 +189,15 @@ namespace ProjectSMP.Plugins.EVF2
         }
 
         public static void RemovePaintjob(int id) => ChangePaintjob(id, EVFConstants.ResetPaintjobId);
+        public static int GetPaintjob(int id) => GetData(id)?.Paintjob ?? EVFConstants.ResetPaintjobId;
+        public static int GetStoredInterior(int id) => GetData(id)?.Interior ?? 0;
+        public static bool GetColors(int id, out int c1, out int c2)
+        {
+            var d = GetData(id);
+            c1 = d?.Color1 ?? 0;
+            c2 = d?.Color2 ?? 0;
+            return d != null;
+        }
 
         // ── Spawn Info ────────────────────────────────────────────────────
         public static void GetSpawnInfo(int id, out float x, out float y, out float z,
@@ -427,9 +447,9 @@ namespace ProjectSMP.Plugins.EVF2
             var row = EVFConstants.CarColors[i];
             if (row[0] == 0) return false;
             if (row[0] == 2) { c1 = row[1]; c2 = row[2]; return true; }
-            int idx = (new Random().Next(row[0] / 2) * 2);
-            idx = idx - (idx % 2); // ensure even
-            c1 = row[1 + idx]; c2 = row[2 + idx];
+            int r = _rng.Next(row[0]) & ~1;
+            c1 = row[1 + r];
+            c2 = row[2 + r];
             return true;
         }
 
@@ -480,7 +500,7 @@ namespace ProjectSMP.Plugins.EVF2
         public static bool IsTrailer(int vehicleId)
         {
             var v = BaseVehicle.Find(vehicleId); if (v == null) return false;
-            return v.Model is 435 or 450 or 584 or 591 or 606;
+            return (int)v.Model is 435 or 450 or 584 or 591 or 606;
         }
 
         // ── Nearest Vehicle ───────────────────────────────────────────────
@@ -614,34 +634,88 @@ namespace ProjectSMP.Plugins.EVF2
             return true;
         }
 
-        public static void OnWeaponShot(int playerId, int weaponId, int hitType, int hitId, Vector3 fPos)
+        public static void OnWeaponShot(int playerId, int weaponId, int hitType, int hitId, Vector3 hitPos)
         {
             if (hitType != (int)BulletHitType.Vehicle) return;
             var d = GetData(hitId); if (d == null) return;
             if (d.Bulletproof) return;
 
             var vehicle = BaseVehicle.Find(hitId); if (vehicle == null) return;
+            int modelId = (int)vehicle.Model;
             float health = vehicle.Health;
-
             float dmg = weaponId < EVFConstants.WeaponDamage.Length ? EVFConstants.WeaponDamage[weaponId] : 1f;
             var bodyPart = EVFVehicleBodyPart.Unknown;
 
-            if (health > 249f && (d.UnoccupiedDamage || IsVehicleOccupied(hitId)))
+            if (health > 249f)
             {
-                health -= dmg;
-                vehicle.Health = health;
-                int hp = (int)health;
-                if (hp is >= 251 and <= 399) FullUpdateDamage(hitId, EVFDamageType.Doors);
-                else if (hp is >= 400 and <= 599) FullUpdateDamage(hitId, EVFDamageType.Panels);
-                else if (hp is >= 600 and <= 700) FullUpdateDamage(hitId, EVFDamageType.Lights);
+                if (d.UnoccupiedDamage || IsVehicleOccupied(hitId))
+                {
+                    var modelType = (VehicleModelType)modelId;
+                    bool tireHit = false;
+                    int tireStatus = GetDamageStatus(hitId, EVFDamageType.Tires);
+
+                    BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.FrontWheels, out float fwX, out float fwY, out float fwZ);
+
+                    if (VectorSize(hitPos.X + fwX, hitPos.Y - fwY, hitPos.Z - fwZ) <= 0.4f)
+                    {
+                        bodyPart = EVFVehicleBodyPart.FrontLeftWheel;
+                        if (tireStatus + 8 > 15) UpdateDamageStatus(hitId, EVFDamageType.Tires, tireStatus + 8);
+                        tireHit = true;
+                    }
+                    else if (VectorSize(hitPos.X - fwX, hitPos.Y - fwY, hitPos.Z - fwZ) <= 0.4f)
+                    {
+                        bodyPart = EVFVehicleBodyPart.FrontRightWheel;
+                        if (tireStatus + 2 > 15) UpdateDamageStatus(hitId, EVFDamageType.Tires, tireStatus + 2);
+                        tireHit = true;
+                    }
+                    else
+                    {
+                        BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.RearWheels, out float rwX, out float rwY, out float rwZ);
+
+                        if (VectorSize(hitPos.X + rwX, hitPos.Y - rwY, hitPos.Z - rwZ) <= 0.4f)
+                        {
+                            bodyPart = EVFVehicleBodyPart.BackLeftWheel;
+                            if (tireStatus + 4 > 15) UpdateDamageStatus(hitId, EVFDamageType.Tires, tireStatus + 4);
+                            tireHit = true;
+                        }
+                        else if (VectorSize(hitPos.X - rwX, hitPos.Y - rwY, hitPos.Z - rwZ) <= 0.4f)
+                        {
+                            bodyPart = EVFVehicleBodyPart.BackRightWheel;
+                            if (tireStatus + 1 > 15) UpdateDamageStatus(hitId, EVFDamageType.Tires, tireStatus + 1);
+                            tireHit = true;
+                        }
+                        else
+                        {
+                            BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.PetrolCap, out float pcX, out float pcY, out float pcZ);
+
+                            if (VectorSize(hitPos.X - pcX, hitPos.Y - pcY, hitPos.Z - pcZ) <= 0.2f)
+                            {
+                                bodyPart = EVFVehicleBodyPart.PetrolCap;
+                                tireHit = true;
+                            }
+                            else
+                            {
+                                health -= dmg;
+                                vehicle.Health = health;
+                                int hp = (int)health;
+                                if (hp is >= 251 and <= 399) FullUpdateDamage(hitId, EVFDamageType.Doors);
+                                else if (hp is >= 400 and <= 599) FullUpdateDamage(hitId, EVFDamageType.Panels);
+                                else if (hp is >= 600 and <= 700) FullUpdateDamage(hitId, EVFDamageType.Lights);
+                            }
+                        }
+                    }
+                }
             }
-            else if (health <= 249f)
+            else
                 vehicle.Respawn();
 
             PlayerShotVehicle?.Invoke(null, new EVFPlayerShotVehicleEventArgs
             {
-                PlayerId = playerId, VehicleId = hitId,
-                WeaponId = weaponId, Damage = dmg, BodyPart = bodyPart
+                PlayerId = playerId,
+                VehicleId = hitId,
+                WeaponId = weaponId,
+                Damage = dmg,
+                BodyPart = bodyPart
             });
         }
 
@@ -707,8 +781,18 @@ namespace ProjectSMP.Plugins.EVF2
 
         public static (bool Valid, int Price) ValidateVehicleMod(int playerId, int vehicleId, int componentId)
         {
-            bool valid = IsValidComponent(vehicleId, componentId) && GetPlayerData(playerId).InModShop;
-            return (valid, GetComponentPrice(componentId));
+            var pd = GetPlayerData(playerId);
+            bool illegal = !IsValidComponent(vehicleId, componentId) || !pd.InModShop;
+            int price = GetComponentPrice(componentId);
+            VehicleModEx?.Invoke(null, new EVFVehicleModExEventArgs
+            {
+                PlayerId = playerId,
+                VehicleId = vehicleId,
+                ComponentId = componentId,
+                Price = price,
+                Illegal = illegal
+            });
+            return (!illegal, price);
         }
 
 
@@ -741,8 +825,14 @@ namespace ProjectSMP.Plugins.EVF2
                     VehiclePosChanged?.Invoke(null, new EVFVehiclePosChangeEventArgs
                     {
                         VehicleId = id,
-                        NewX = pos.X, NewY = pos.Y, NewZ = pos.Z, NewAngle = angle,
-                        OldX = d.PosX, OldY = d.PosY, OldZ = d.PosZ, OldAngle = d.PosAngle
+                        NewX = pos.X,
+                        NewY = pos.Y,
+                        NewZ = pos.Z,
+                        NewAngle = angle,
+                        OldX = d.PosX,
+                        OldY = d.PosY,
+                        OldZ = d.PosZ,
+                        OldAngle = d.PosAngle
                     });
                     d.PosX = pos.X; d.PosY = pos.Y; d.PosZ = pos.Z; d.PosAngle = angle;
                 }
@@ -753,8 +843,12 @@ namespace ProjectSMP.Plugins.EVF2
                     VehicleVelocityChanged?.Invoke(null, new EVFVehicleVelocityChangeEventArgs
                     {
                         VehicleId = id,
-                        NewX = vel.X, NewY = vel.Y, NewZ = vel.Z,
-                        OldX = d.VelX, OldY = d.VelY, OldZ = d.VelZ
+                        NewX = vel.X,
+                        NewY = vel.Y,
+                        NewZ = vel.Z,
+                        OldX = d.VelX,
+                        OldY = d.VelY,
+                        OldZ = d.VelZ
                     });
                     d.VelX = vel.X; d.VelY = vel.Y; d.VelZ = vel.Z;
                 }
@@ -796,5 +890,8 @@ namespace ProjectSMP.Plugins.EVF2
                 }
             }
         }
+
+        private static float VectorSize(float x, float y, float z)
+            => (float)Math.Sqrt(x * x + y * y + z * z);
     }
 }

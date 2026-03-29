@@ -8,8 +8,6 @@ namespace ProjectSMP.Plugins.EVF2
     public enum EVFVehicleBodyPart { Unknown, FrontLeftWheel, FrontRightWheel, BackLeftWheel, BackRightWheel, PetrolCap }
     public enum EVFBlinkSide { None = -1, Left = 0, Right = 1, Emergency = 2 }
 
-    public enum VehicleModelInfoType { Size = 1, FrontWheels = 3, RearWheels = 4, PetrolCap = 6, FrontSeat = 7, RearSeat = 8, FrontWheelOffset = 12, RearWheelOffset = 13 }
-
     public class EVFVehicleData
     {
         public float VelX, VelY, VelZ;
@@ -81,6 +79,15 @@ namespace ProjectSMP.Plugins.EVF2
         public int PlayerId { get; set; }
         public int VehicleId { get; set; }
         public float Speed { get; set; }
+    }
+
+    public class EVFVehicleModExEventArgs : EventArgs
+    {
+        public int PlayerId { get; set; }
+        public int VehicleId { get; set; }
+        public int ComponentId { get; set; }
+        public int Price { get; set; }
+        public bool Illegal { get; set; }
     }
 
     public class EVFVehiclePosChangeEventArgs : EventArgs

@@ -81,6 +81,7 @@ namespace ProjectSMP.Entities
         {
             base.OnMod(e);
             var (valid, price) = EVFService.ValidateVehicleMod(e.Player?.Id ?? -1, Id, e.ComponentId);
+            if (!valid) return;
             SaveModComponent(e.ComponentId);
             if (e.Player is Player player)
                 OnVehicleModified(player, e.ComponentId);
@@ -296,7 +297,8 @@ namespace ProjectSMP.Entities
         public static Vehicle CreateVehicle(VehicleModelType modelid, Vector3 position, float rotation, int color1, int color2, int respawnDelay = -1, bool addSiren = false)
         {
             var baseVehicle = Create(modelid, position, rotation, color1, color2, respawnDelay, addSiren);
-            if (baseVehicle is not Vehicle vehicle) {
+            if (baseVehicle is not Vehicle vehicle)
+            {
                 baseVehicle.Dispose();
                 throw new InvalidOperationException("Failed to create Vehicle instance");
             }
@@ -315,7 +317,8 @@ namespace ProjectSMP.Entities
         public static T CreateVehicle<T>(VehicleModelType modelid, Vector3 position, float rotation, int color1, int color2, int respawnDelay = -1, bool addSiren = false) where T : Vehicle, new()
         {
             var baseVehicle = Create(modelid, position, rotation, color1, color2, respawnDelay, addSiren);
-            if (baseVehicle is not T vehicle) {
+            if (baseVehicle is not T vehicle)
+            {
                 baseVehicle.Dispose();
                 throw new InvalidOperationException($"Failed to create {typeof(T).Name} instance");
             }

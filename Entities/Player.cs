@@ -171,6 +171,7 @@ namespace ProjectSMP
             if (WeaponConfigService.IsBulletWeapon((int)e.Weapon))
                 e.PreventDamage = true;
 
+            EVFService.OnWeaponShot(Id, (int)e.Weapon, (int)e.BulletHitType, e.HitId, e.Position);
             base.OnWeaponShot(e);
         }
 
