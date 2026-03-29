@@ -1,5 +1,4 @@
 #nullable enable
-using System.Linq;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.World;

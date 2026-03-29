@@ -103,7 +103,7 @@ namespace ProjectSMP.Plugins.EVF2
                 _v.Remove(id);
             }
             VehicleDestroyed?.Invoke(null, id);
-            BaseVehicle.Find(id)?.Destroy();
+            BaseVehicle.Find(id)?.Dispose();
         }
 
         public static void RemoveVehicle(int id)
@@ -249,7 +249,7 @@ namespace ProjectSMP.Plugins.EVF2
         public static void SetVehicleInterior(int id, int interiorId)
         {
             var v = BaseVehicle.Find(id); if (v == null) return;
-            v.Interior = interiorId;
+            v.LinkToInterior(interiorId);
             var d = GetData(id); if (d != null) d.Interior = interiorId;
         }
 
@@ -358,7 +358,7 @@ namespace ProjectSMP.Plugins.EVF2
         public static bool GetParam(int id, EVFParamType type)
         {
             var v = BaseVehicle.Find(id); if (v == null) return false;
-            v.GetParamsEx(out bool eng, out bool lights, out bool alarm, out bool doors,
+            v.GetParameters(out bool eng, out bool lights, out bool alarm, out bool doors,
                 out bool bonnet, out bool boot, out bool obj);
             return type switch
             {
@@ -376,7 +376,7 @@ namespace ProjectSMP.Plugins.EVF2
         public static void SetParam(int id, EVFParamType type, bool value, int delayMs = 0)
         {
             var v = BaseVehicle.Find(id); if (v == null) return;
-            v.GetParamsEx(out bool eng, out bool lights, out bool alarm, out bool doors,
+            v.GetParameters(out bool eng, out bool lights, out bool alarm, out bool doors,
                 out bool bonnet, out bool boot, out bool obj);
             switch (type)
             {
@@ -391,10 +391,10 @@ namespace ProjectSMP.Plugins.EVF2
             if (delayMs > 0)
             {
                 var t = new Timer(delayMs, false);
-                t.Tick += (s, e) => { BaseVehicle.Find(id)?.SetParamsEx(eng, lights, alarm, doors, bonnet, boot, obj); t.Dispose(); };
+                t.Tick += (s, e) => { BaseVehicle.Find(id)?.SetParameters(eng, lights, alarm, doors, bonnet, boot, obj); t.Dispose(); };
             }
             else
-                v.SetParamsEx(eng, lights, alarm, doors, bonnet, boot, obj);
+                v.SetParameters(eng, lights, alarm, doors, bonnet, boot, obj);
         }
 
         public static void SwitchEngine(int id, bool on) => SetParam(id, EVFParamType.Engine, on);
@@ -525,7 +525,7 @@ namespace ProjectSMP.Plugins.EVF2
                 }
             }
             if (worldId >= 0) v.VirtualWorld = worldId;
-            if (interiorId >= 0) v.Interior = interiorId;
+            if (interiorId >= 0) v.LinkToInterior(interiorId);
             v.Position = pos;
             if (_v.TryGetValue(id, out var d))
             {
@@ -650,6 +650,88 @@ namespace ProjectSMP.Plugins.EVF2
             return (int)v.Model is 435 or 450 or 584 or 591 or 606;
         }
 
+        // ── Object Attachment  ────────────────────────────────────────────
+        public static SampSharp.Streamer.World.DynamicObject GetVehicleSlotAttachedObject(int vehicleId, int slot)
+        {
+            var d = GetData(vehicleId); if (d == null) return null;
+            if (slot < 0 || slot >= d.AttachedObjects.Length) return null;
+            return d.AttachedObjects[slot];
+        }
+
+        public static bool IsObjectAttachedToVehicle(SampSharp.Streamer.World.DynamicObject obj, int vehicleId)
+        {
+            var d = GetData(vehicleId); if (d == null || obj == null) return false;
+            return d.AttachedObjects.Contains(obj);
+        }
+
+        public static bool AttachObjectToVehicle(SampSharp.Streamer.World.DynamicObject obj, int vehicleId, Vector3 offset, Vector3 rot)
+        {
+            var d = GetData(vehicleId); if (d == null || obj == null) return false;
+            for (int i = 0; i < d.AttachedObjects.Length; i++)
+            {
+                if (d.AttachedObjects[i] == null)
+                {
+                    obj.AttachTo(BaseVehicle.Find(vehicleId), offset, rot);
+                    d.AttachedObjects[i] = obj;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool EditVehicle(int playerId, int vehicleId)
+        {
+            var d = GetData(vehicleId); if (d == null) return false;
+            if (d.EditorObject != null) return false;
+            var v = BaseVehicle.Find(vehicleId); if (v == null) return false;
+
+            d.EditorObject = new SampSharp.Streamer.World.DynamicObject(19300, v.Position, new Vector3(0, 0, 0));
+            d.EditorObject.Edit(BasePlayer.Find(playerId));
+
+            var p = GetPlayerData(playerId);
+            p.EditorVehicleId = vehicleId;
+            p.EditorObject = null;
+            return true;
+        }
+
+        public static bool EditVehicleObject(int playerId, int vehicleId, SampSharp.Streamer.World.DynamicObject obj)
+        {
+            var d = GetData(vehicleId); if (d == null || obj == null) return false;
+            if (d.EditorObject != null) return false;
+            var v = BaseVehicle.Find(vehicleId); if (v == null) return false;
+
+            int model = obj.ModelId;
+            obj.Dispose();
+
+            d.EditorObject = new SampSharp.Streamer.World.DynamicObject(model, v.Position, new Vector3(0, 0, v.Angle));
+            d.EditorObject.Edit(BasePlayer.Find(playerId));
+
+            v.Angle = 0.0f;
+            return true;
+        }
+
+        // ── Vehicle State Sets  ───────────────────────────────────────────
+        public static void ResetVehicleProperties(int id)
+        {
+            var d = GetData(id); if (d == null) return;
+            d.TrailerId = -1;
+            d.Paintjob = 0;
+            d.Interior = 0;
+            d.Color1 = -1;
+            d.Color2 = -1;
+            d.Horn = 0;
+            d.SpawnX = 0; d.SpawnY = 0; d.SpawnZ = 0; d.SpawnAngle = 0;
+            d.SpawnWorld = 0; d.SpawnInterior = 0;
+            d.SpeedCap = 0;
+            d.FuelEnabled = false;
+            d.Fuel = EVFConstants.DefaultVehicleFuel;
+            d.Sticky = false;
+            d.UnoccupiedDamage = false;
+            d.Bomb = 0;
+            d.Bulletproof = false;
+            d.Stored = false;
+        }
+
         // ── Nearest Vehicle ───────────────────────────────────────────────
         public static int GetNearestVehicleToPos(Vector3 pos, int worldId = -1, int interiorId = -1, float maxDist = 0f, int except = -1)
         {
@@ -660,7 +742,7 @@ namespace ProjectSMP.Plugins.EVF2
                 if (v.Id == except) continue;
                 if ((int)v.Model == 590) continue;
                 if (worldId >= 0 && v.VirtualWorld != worldId) continue;
-                if (interiorId >= 0 && v.Interior != interiorId) continue;
+                if (interiorId >= 0 && GetVehicleInterior(v.Id) != interiorId) continue;
                 float dist = v.Position.DistanceTo(pos);
                 if (maxDist > 0f && dist > maxDist) continue;
                 if (best < 0f || dist < best) { best = dist; found = v.Id; }
@@ -697,7 +779,7 @@ namespace ProjectSMP.Plugins.EVF2
                 var cur = v.Position;
                 float curA = v.Angle;
                 if (cur.X != d.SpawnX || cur.Y != d.SpawnY || cur.Z != d.SpawnZ ||
-                    curA != d.SpawnAngle || v.VirtualWorld != d.SpawnWorld || v.Interior != d.SpawnInterior)
+                    curA != d.SpawnAngle || v.VirtualWorld != d.SpawnWorld || d.Interior != d.SpawnInterior)
                     TeleportVehicle(vehicleId, new Vector3(d.SpawnX, d.SpawnY, d.SpawnZ), d.SpawnAngle, d.SpawnWorld, d.SpawnInterior);
             }
         }
@@ -813,8 +895,10 @@ namespace ProjectSMP.Plugins.EVF2
                 {
                     var modelType = (VehicleModelType)modelId;
                     int tireStatus = GetDamageStatus(hitId, EVFDamageType.Tires);
+                    bool tireHit = false;
 
-                    BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.WheelsFront, out float fwX, out float fwY, out float fwZ);
+                    var fwVec = BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.WheelsFront);
+                    float fwX = fwVec.X, fwY = fwVec.Y, fwZ = fwVec.Z;
 
                     if (VectorSize(hitPos.X + fwX, hitPos.Y - fwY, hitPos.Z - fwZ) <= 0.4f)
                     {
@@ -830,7 +914,8 @@ namespace ProjectSMP.Plugins.EVF2
                     }
                     else
                     {
-                        BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.WheelsRear, out float rwX, out float rwY, out float rwZ);
+                        var rwVec = BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.WheelsRear);
+                        float rwX = rwVec.X, rwY = rwVec.Y, rwZ = rwVec.Z;
 
                         if (VectorSize(hitPos.X + rwX, hitPos.Y - rwY, hitPos.Z - rwZ) <= 0.4f)
                         {
@@ -846,7 +931,8 @@ namespace ProjectSMP.Plugins.EVF2
                         }
                         else
                         {
-                            BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.PetrolCap, out float pcX, out float pcY, out float pcZ);
+                            var pcVec = BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.PetrolCap);
+                            float pcX = pcVec.X, pcY = pcVec.Y, pcZ = pcVec.Z;
 
                             if (VectorSize(hitPos.X - pcX, hitPos.Y - pcY, hitPos.Z - pcZ) <= 0.2f)
                             {
@@ -911,7 +997,7 @@ namespace ProjectSMP.Plugins.EVF2
             if (vehicle != null)
             {
                 var pos = vehicle.Position;
-                CreateExplosion(pos, ExplosionType.LargeVisibleDamage2, 30f);
+                // CreateExplosionForAll(pos, ExplosionType.LargeVisibleDamage2, 30f);
                 vehicle.Respawn();
             }
             BombExploded?.Invoke(null, new EVFBombEventArgs { PlayerId = playerId, VehicleId = vehicleId });

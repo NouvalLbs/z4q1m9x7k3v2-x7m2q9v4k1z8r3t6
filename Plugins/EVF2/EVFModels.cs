@@ -40,6 +40,9 @@ namespace ProjectSMP.Plugins.EVF2
         
         public SampSharp.Streamer.World.DynamicObject[][] Neons = new SampSharp.Streamer.World.DynamicObject[3][];
         public SampSharp.Streamer.World.DynamicObject[] Blinks = new SampSharp.Streamer.World.DynamicObject[4];
+        
+        public SampSharp.Streamer.World.DynamicObject EditorObject;
+        public SampSharp.Streamer.World.DynamicObject[] AttachedObjects = new SampSharp.Streamer.World.DynamicObject[30];
 
         public EVFVehicleData()
         {
@@ -51,6 +54,7 @@ namespace ProjectSMP.Plugins.EVF2
     {
         public int EditorVehicleId = -1;
         public bool InModShop;
+        public SampSharp.Streamer.World.DynamicObject EditorObject;
     }
 
     public class EVFTrailerEventArgs : EventArgs
