@@ -166,7 +166,7 @@ namespace ProjectSMP.Plugins.EVF2
         {
             var v = BaseVehicle.Find(id); if (v == null) return;
             var d = GetData(id);
-            if (GetRandomColors(v.Model, out var rc1, out var rc2))
+            if (GetRandomColors((int)v.Model, out var rc1, out var rc2))
             {
                 if (c1 == -1) c1 = rc1;
                 if (c2 == -1) c2 = rc2;
@@ -264,6 +264,8 @@ namespace ProjectSMP.Plugins.EVF2
         public static void SwitchDoors(int id, bool locked) => SetParam(id, EVFParamType.Doors, locked);
         public static void SwitchBonnet(int id, bool open) => SetParam(id, EVFParamType.Bonnet, open);
         public static void SwitchBoot(int id, bool open) => SetParam(id, EVFParamType.Boot, open);
+        public static void SwitchObjective(int id, bool on) => SetParam(id, EVFParamType.Objective, on);
+        public static bool IsValidVehicleModelId(int modelId) => modelId is >= 400 and <= 611;
 
         // ── Damage Status ─────────────────────────────────────────────────
         public static bool IsDamageEnabled(int id, EVFDamageType type)
@@ -386,6 +388,9 @@ namespace ProjectSMP.Plugins.EVF2
             if (worldId >= 0) v.VirtualWorld = worldId;
             if (interiorId >= 0) v.Interior = interiorId;
             v.Position = pos;
+            if (_v.TryGetValue(id, out var d)) {
+                d.PosX = pos.X; d.PosY = pos.Y; d.PosZ = pos.Z; d.PosAngle = angle;
+            }
             v.Angle = angle;
         }
 
@@ -403,7 +408,7 @@ namespace ProjectSMP.Plugins.EVF2
         public static bool IsValidVehicleDoor(int id, int doorId)
         {
             var v = BaseVehicle.Find(id); if (v == null) return false;
-            return doorId <= GetModelDoors(v.Model);
+            return doorId <= GetModelDoors((int)v.Model);
         }
 
         // ── Speed ─────────────────────────────────────────────────────────
@@ -457,7 +462,7 @@ namespace ProjectSMP.Plugins.EVF2
         public static bool IsValidComponent(int vehicleId, int componentId)
         {
             var v = BaseVehicle.Find(vehicleId); if (v == null) return false;
-            int modelId = v.Model;
+            int modelId = (int)v.Model;
             if ((componentId >= 1008 && componentId <= 1010) || componentId == 1025 ||
                 (componentId >= 1073 && componentId <= 1087) || (componentId >= 1096 && componentId <= 1098))
             {
@@ -561,6 +566,7 @@ namespace ProjectSMP.Plugins.EVF2
 
         public static void OnVehicleDamageStatusUpdate(int vehicleId)
         {
+            if (GetData(vehicleId) == null) return;
             if (!IsDamageEnabled(vehicleId, EVFDamageType.Panels)) UpdateDamageStatus(vehicleId, EVFDamageType.Panels, 0);
             if (!IsDamageEnabled(vehicleId, EVFDamageType.Doors)) UpdateDamageStatus(vehicleId, EVFDamageType.Doors, 0);
             if (!IsDamageEnabled(vehicleId, EVFDamageType.Lights)) UpdateDamageStatus(vehicleId, EVFDamageType.Lights, 0);
@@ -871,7 +877,7 @@ namespace ProjectSMP.Plugins.EVF2
                             d.Uptime = 0;
                             int consumption = 0;
                             if (speed == 0f) { if (GetParam(id, EVFParamType.Engine)) consumption = EVFConstants.FuelMultiplier; }
-                            else { for (int i = 20, top = (int)GetTopSpeed(v.Model); i <= top; i += 20) if (speed > i) consumption += EVFConstants.FuelMultiplier; }
+                            else { for (int i = 20, top = (int)GetTopSpeed((int)v.Model); i <= top; i += 20) if (speed > i) consumption += EVFConstants.FuelMultiplier; }
                             if (consumption > 0)
                             {
                                 int old = d.Fuel, newFuel = Math.Max(0, old - consumption - 1);
@@ -893,5 +899,57 @@ namespace ProjectSMP.Plugins.EVF2
 
         private static float VectorSize(float x, float y, float z)
             => (float)Math.Sqrt(x * x + y * y + z * z);
+
+        public static void SetVehicleHealth(int id, float health)
+        {
+            var v = BaseVehicle.Find(id); if (v == null) return;
+            v.Health = health;
+            var d = GetData(id); if (d != null) d.Health = health;
+        }
+
+        public static void SetVehiclePosition(int id, Vector3 pos)
+        {
+            var v = BaseVehicle.Find(id); if (v == null) return;
+            v.Position = pos;
+            var d = GetData(id); if (d != null) { d.PosX = pos.X; d.PosY = pos.Y; d.PosZ = pos.Z; }
+        }
+
+        public static void SetVehicleAngle(int id, float angle)
+        {
+            var v = BaseVehicle.Find(id); if (v == null) return;
+            v.Angle = angle;
+            var d = GetData(id); if (d != null) d.PosAngle = angle;
+        }
+
+        public static int GetVehicleSeats(int vehicleId)
+        {
+            var v = BaseVehicle.Find(vehicleId); if (v == null) return 0;
+            return GetModelSeats((int)v.Model);
+        }
+
+        public static float GetVehicleTopSpeed(int vehicleId)
+        {
+            var v = BaseVehicle.Find(vehicleId); if (v == null) return 0f;
+            return GetTopSpeed((int)v.Model);
+        }
+
+        public static int GetVehicleDoorCount(int vehicleId)
+        {
+            var v = BaseVehicle.Find(vehicleId); if (v == null) return 0;
+            return GetModelDoors((int)v.Model);
+        }
+
+        public static string GetVehicleNameById(int vehicleId)
+        {
+            var v = BaseVehicle.Find(vehicleId); if (v == null) return "Unknown";
+            return GetVehicleName((int)v.Model);
+        }
+
+        public static float GetTopSpeed(VehicleModelType m) => GetTopSpeed((int)m);
+        public static int GetModelSeats(VehicleModelType m) => GetModelSeats((int)m);
+        public static int GetModelDoors(VehicleModelType m) => GetModelDoors((int)m);
+        public static string GetVehicleName(VehicleModelType m) => GetVehicleName((int)m);
+        public static bool GetRandomColors(VehicleModelType m, out int c1, out int c2)
+            => GetRandomColors((int)m, out c1, out c2);
     }
 }

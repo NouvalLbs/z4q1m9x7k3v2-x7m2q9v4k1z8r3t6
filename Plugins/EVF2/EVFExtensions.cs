@@ -70,7 +70,7 @@ namespace ProjectSMP.Plugins.EVF2
         {
             var v = BaseVehicle.Find(vehicleId);
             if (v == null) return -1;
-            int seats = EVFService.GetModelSeats((int)v.Model);
+            int seats = EVFService.GetVehicleSeats(vehicleId);
             for (int i = startSeat; i < seats; i++)
                 if (!IsVehicleSeatOccupied(vehicleId, i)) return i;
             return -1;
