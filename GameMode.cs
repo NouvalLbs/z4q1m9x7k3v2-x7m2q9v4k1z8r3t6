@@ -12,7 +12,6 @@ using ProjectSMP.Features.Jobs.DynamicJob;
 using ProjectSMP.Features.LevelSystem;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Features.ProgressBar;
-using ProjectSMP.Plugins.AndroidDialogBridge;
 using ProjectSMP.Plugins.Anticheat;
 using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.CEF;
@@ -254,10 +253,5 @@ namespace ProjectSMP
         [Callback]
         public void OnCefClientEventCS(int player_id, string args_json)
             => CefService.HandleClientEvent(player_id, args_json);
-
-        [Callback]
-        public void AndroidDialog_OnResponse(int playerId, int dialogId, int response, int listitem, string inputtext) {
-            AndroidDialogBridge.HandleResponse(playerId, dialogId, response == 1, listitem, inputtext);
-        }
     }
 }

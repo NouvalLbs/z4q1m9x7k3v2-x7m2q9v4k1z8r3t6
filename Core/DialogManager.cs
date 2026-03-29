@@ -2,7 +2,6 @@
 using SampSharp.GameMode.Display;
 using SampSharp.GameMode.Events;
 using SampSharp.GameMode.World;
-using ProjectSMP.Plugins.AndroidDialogBridge;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -56,17 +55,6 @@ namespace ProjectSMP.Core
 
             public void Show(Action<DialogResponseEventArgs> onResponse = null)
             {
-                if (_player is Player p && AndroidDialogBridge.ShouldUseBridge(p))
-                {
-                    AndroidDialogBridge.ShowDialog(p.Id, 0, _title, _message, _btnLeft, _btnRight,
-                        (response, listitem, inputtext) =>
-                        {
-                            var args = new DialogResponseEventArgs(_player, 0, response ? 1 : 0, listitem, inputtext);
-                            onResponse?.Invoke(args);
-                        });
-                    return;
-                }
-
                 var dialog = new MessageDialog(_title, _message, _btnLeft, _btnRight);
                 if (onResponse != null)
                     dialog.Response += (s, e) => onResponse(e);
@@ -76,18 +64,6 @@ namespace ProjectSMP.Core
             public Task<DialogResponseEventArgs> ShowAsync()
             {
                 var tcs = new TaskCompletionSource<DialogResponseEventArgs>();
-
-                if (_player is Player p && AndroidDialogBridge.ShouldUseBridge(p))
-                {
-                    AndroidDialogBridge.ShowDialog(p.Id, 0, _title, _message, _btnLeft, _btnRight,
-                        (response, listitem, inputtext) =>
-                        {
-                            var args = new DialogResponseEventArgs(_player, 0, response ? 1 : 0, listitem, inputtext);
-                            tcs.TrySetResult(args);
-                        });
-                    return tcs.Task;
-                }
-
                 var dialog = new MessageDialog(_title, _message, _btnLeft, _btnRight);
                 dialog.Response += (s, e) => tcs.TrySetResult(e);
                 dialog.Show(_player);
@@ -126,18 +102,6 @@ namespace ProjectSMP.Core
 
             public void Show(Action<DialogResponseEventArgs> onResponse = null)
             {
-                if (_player is Player p && AndroidDialogBridge.ShouldUseBridge(p))
-                {
-                    var style = _isPassword ? 3 : 1;
-                    AndroidDialogBridge.ShowDialog(p.Id, style, _title, _message, _btnLeft, _btnRight,
-                        (response, listitem, inputtext) =>
-                        {
-                            var args = new DialogResponseEventArgs(_player, 0, response ? 1 : 0, listitem, inputtext);
-                            onResponse?.Invoke(args);
-                        });
-                    return;
-                }
-
                 var dialog = new InputDialog(_title, _message, _isPassword, _btnLeft, _btnRight);
                 if (onResponse != null)
                     dialog.Response += (s, e) => onResponse(e);
@@ -147,19 +111,6 @@ namespace ProjectSMP.Core
             public Task<DialogResponseEventArgs> ShowAsync()
             {
                 var tcs = new TaskCompletionSource<DialogResponseEventArgs>();
-
-                if (_player is Player p && AndroidDialogBridge.ShouldUseBridge(p))
-                {
-                    var style = _isPassword ? 3 : 1;
-                    AndroidDialogBridge.ShowDialog(p.Id, style, _title, _message, _btnLeft, _btnRight,
-                        (response, listitem, inputtext) =>
-                        {
-                            var args = new DialogResponseEventArgs(_player, 0, response ? 1 : 0, listitem, inputtext);
-                            tcs.TrySetResult(args);
-                        });
-                    return tcs.Task;
-                }
-
                 var dialog = new InputDialog(_title, _message, _isPassword, _btnLeft, _btnRight);
                 dialog.Response += (s, e) => tcs.TrySetResult(e);
                 dialog.Show(_player);
@@ -191,18 +142,6 @@ namespace ProjectSMP.Core
 
             public void Show(Action<DialogResponseEventArgs> onResponse = null)
             {
-                if (_player is Player p && AndroidDialogBridge.ShouldUseBridge(p))
-                {
-                    var info = string.Join("\n", _items);
-                    AndroidDialogBridge.ShowDialog(p.Id, 2, _title, info, _btnLeft, _btnRight,
-                        (response, listitem, inputtext) =>
-                        {
-                            var args = new DialogResponseEventArgs(_player, 0, response ? 1 : 0, listitem, inputtext);
-                            onResponse?.Invoke(args);
-                        });
-                    return;
-                }
-
                 var dialog = new ListDialog(_title, _btnLeft, _btnRight);
                 foreach (var item in _items)
                     dialog.AddItem(item);
@@ -214,19 +153,6 @@ namespace ProjectSMP.Core
             public Task<DialogResponseEventArgs> ShowAsync()
             {
                 var tcs = new TaskCompletionSource<DialogResponseEventArgs>();
-
-                if (_player is Player p && AndroidDialogBridge.ShouldUseBridge(p))
-                {
-                    var info = string.Join("\n", _items);
-                    AndroidDialogBridge.ShowDialog(p.Id, 2, _title, info, _btnLeft, _btnRight,
-                        (response, listitem, inputtext) =>
-                        {
-                            var args = new DialogResponseEventArgs(_player, 0, response ? 1 : 0, listitem, inputtext);
-                            tcs.TrySetResult(args);
-                        });
-                    return tcs.Task;
-                }
-
                 var dialog = new ListDialog(_title, _btnLeft, _btnRight);
                 foreach (var item in _items)
                     dialog.AddItem(item);
@@ -267,23 +193,6 @@ namespace ProjectSMP.Core
 
             public void Show(Action<DialogResponseEventArgs> onResponse = null)
             {
-                if (_player is Player p && AndroidDialogBridge.ShouldUseBridge(p))
-                {
-                    var headerLine = string.Join("\t", _headers);
-                    var lines = new List<string> { headerLine };
-                    foreach (var row in _rows)
-                        lines.Add(string.Join("\t", row));
-                    var info = string.Join("\n", lines);
-
-                    AndroidDialogBridge.ShowDialog(p.Id, 4, _title, info, _btnLeft, _btnRight,
-                        (response, listitem, inputtext) =>
-                        {
-                            var args = new DialogResponseEventArgs(_player, 0, response ? 1 : 0, listitem, inputtext);
-                            onResponse?.Invoke(args);
-                        });
-                    return;
-                }
-
                 var dialog = new TablistDialog(_title, _headers, _btnLeft, _btnRight);
                 foreach (var row in _rows)
                     dialog.Add(row);
@@ -295,24 +204,6 @@ namespace ProjectSMP.Core
             public Task<DialogResponseEventArgs> ShowAsync()
             {
                 var tcs = new TaskCompletionSource<DialogResponseEventArgs>();
-
-                if (_player is Player p && AndroidDialogBridge.ShouldUseBridge(p))
-                {
-                    var headerLine = string.Join("\t", _headers);
-                    var lines = new List<string> { headerLine };
-                    foreach (var row in _rows)
-                        lines.Add(string.Join("\t", row));
-                    var info = string.Join("\n", lines);
-
-                    AndroidDialogBridge.ShowDialog(p.Id, 4, _title, info, _btnLeft, _btnRight,
-                        (response, listitem, inputtext) =>
-                        {
-                            var args = new DialogResponseEventArgs(_player, 0, response ? 1 : 0, listitem, inputtext);
-                            tcs.TrySetResult(args);
-                        });
-                    return tcs.Task;
-                }
-
                 var dialog = new TablistDialog(_title, _headers, _btnLeft, _btnRight);
                 foreach (var row in _rows)
                     dialog.Add(row);
@@ -353,22 +244,6 @@ namespace ProjectSMP.Core
 
             public void Show(Action<DialogResponseEventArgs> onResponse = null)
             {
-                if (_player is Player p && AndroidDialogBridge.ShouldUseBridge(p))
-                {
-                    var lines = new List<string>();
-                    foreach (var row in _rows)
-                        lines.Add(string.Join("\t", row));
-                    var info = string.Join("\n", lines);
-
-                    AndroidDialogBridge.ShowDialog(p.Id, 5, _title, info, _btnLeft, _btnRight,
-                        (response, listitem, inputtext) =>
-                        {
-                            var args = new DialogResponseEventArgs(_player, 0, response ? 1 : 0, listitem, inputtext);
-                            onResponse?.Invoke(args);
-                        });
-                    return;
-                }
-
                 var dialog = new TablistDialog(_title, _columns, _btnLeft, _btnRight);
                 foreach (var row in _rows)
                     dialog.Add(row);
@@ -380,23 +255,6 @@ namespace ProjectSMP.Core
             public Task<DialogResponseEventArgs> ShowAsync()
             {
                 var tcs = new TaskCompletionSource<DialogResponseEventArgs>();
-
-                if (_player is Player p && AndroidDialogBridge.ShouldUseBridge(p))
-                {
-                    var lines = new List<string>();
-                    foreach (var row in _rows)
-                        lines.Add(string.Join("\t", row));
-                    var info = string.Join("\n", lines);
-
-                    AndroidDialogBridge.ShowDialog(p.Id, 5, _title, info, _btnLeft, _btnRight,
-                        (response, listitem, inputtext) =>
-                        {
-                            var args = new DialogResponseEventArgs(_player, 0, response ? 1 : 0, listitem, inputtext);
-                            tcs.TrySetResult(args);
-                        });
-                    return tcs.Task;
-                }
-
                 var dialog = new TablistDialog(_title, _columns, _btnLeft, _btnRight);
                 foreach (var row in _rows)
                     dialog.Add(row);
@@ -452,39 +310,6 @@ namespace ProjectSMP.Core
 
                 if (page < totalPages - 1)
                     pageItems.Add("{91ff00}>> Next");
-
-                if (_player is Player p && AndroidDialogBridge.ShouldUseBridge(p))
-                {
-                    var info = string.Join("\n", pageItems);
-                    AndroidDialogBridge.ShowDialog(p.Id, 2, $"{_title} (Page {page + 1}/{totalPages})", info, _btnLeft, _btnRight,
-                        (response, listitem, inputtext) =>
-                        {
-                            if (!response)
-                            {
-                                var args = new DialogResponseEventArgs(_player, 0, 0, listitem, inputtext);
-                                onResponse?.Invoke(args);
-                                return;
-                            }
-
-                            var selectedText = pageItems[listitem];
-
-                            if (selectedText.Contains("<< Previous"))
-                            {
-                                ShowPage(page - 1, onResponse);
-                                return;
-                            }
-
-                            if (selectedText.Contains(">> Next"))
-                            {
-                                ShowPage(page + 1, onResponse);
-                                return;
-                            }
-
-                            var args2 = new DialogResponseEventArgs(_player, 0, 1, listitem, inputtext);
-                            onResponse?.Invoke(args2);
-                        });
-                    return;
-                }
 
                 var dialog = new ListDialog($"{_title} (Page {page + 1}/{totalPages})", _btnLeft, _btnRight);
                 foreach (var item in pageItems)
@@ -583,44 +408,6 @@ namespace ProjectSMP.Core
                     for (var i = 1; i < _headers.Length; i++)
                         nextRow[i] = "";
                     pageRows.Add(nextRow);
-                }
-
-                if (_player is Player p && AndroidDialogBridge.ShouldUseBridge(p))
-                {
-                    var headerLine = string.Join("\t", _headers);
-                    var lines = new List<string> { headerLine };
-                    foreach (var row in pageRows)
-                        lines.Add(string.Join("\t", row));
-                    var info = string.Join("\n", lines);
-
-                    AndroidDialogBridge.ShowDialog(p.Id, 4, $"{_title} (Page {page + 1}/{totalPages})", info, _btnLeft, _btnRight,
-                        (response, listitem, inputtext) =>
-                        {
-                            if (!response)
-                            {
-                                var args = new DialogResponseEventArgs(_player, 0, 0, listitem, inputtext);
-                                onResponse?.Invoke(args);
-                                return;
-                            }
-
-                            var selectedRow = pageRows[listitem];
-
-                            if (selectedRow[0].Contains("<< Previous"))
-                            {
-                                ShowPage(page - 1, onResponse);
-                                return;
-                            }
-
-                            if (selectedRow[0].Contains(">> Next"))
-                            {
-                                ShowPage(page + 1, onResponse);
-                                return;
-                            }
-
-                            var args2 = new DialogResponseEventArgs(_player, 0, 1, listitem, inputtext);
-                            onResponse?.Invoke(args2);
-                        });
-                    return;
                 }
 
                 var dialog = new TablistDialog($"{_title} (Page {page + 1}/{totalPages})", _headers, _btnLeft, _btnRight);

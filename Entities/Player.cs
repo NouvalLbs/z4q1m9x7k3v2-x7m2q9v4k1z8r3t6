@@ -18,7 +18,6 @@ using ProjectSMP.Features.Jobs.DynamicJob;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Features.ProgressBar;
 using ProjectSMP.Features.ProgressBar.Data;
-using ProjectSMP.Plugins.AndroidDialogBridge;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
@@ -66,7 +65,6 @@ namespace ProjectSMP
             AskService.ClearPlayerAsks(this);
             _ = InventoryService.SaveAsync(this);
             ProgressBarService.OnPlayerDisconnect(this);
-            AndroidDialogBridge.Cleanup(this.Id);
             this.ClearPlayerData();
             base.OnDisconnected(e);
         }
