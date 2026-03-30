@@ -309,6 +309,8 @@ namespace ProjectSMP.Entities
             vehicle.CustomColor2 = color2;
             vehicle.SaveSpawnPoint();
             WeaponConfigService.OnVehicleSpawn(vehicle.Id);
+            EVFService.RegisterVehicle(vehicle.Id, (int)modelid, position, rotation, color1, color2, 0, 0, false);
+            EVFService.SetFuelEnabled(vehicle.Id, true);
             vehicle.ApplySpawnSettings();
             vehicle.CreateVehicleLabel();
             return vehicle;
@@ -329,6 +331,8 @@ namespace ProjectSMP.Entities
             vehicle.CustomColor2 = color2;
             vehicle.SaveSpawnPoint();
             WeaponConfigService.OnVehicleSpawn(vehicle.Id);
+            EVFService.RegisterVehicle(vehicle.Id, (int)modelid, position, rotation, color1, color2, 0, 0, false);
+            EVFService.SetFuelEnabled(vehicle.Id, true);
             vehicle.ApplySpawnSettings();
             vehicle.CreateVehicleLabel();
             return vehicle;

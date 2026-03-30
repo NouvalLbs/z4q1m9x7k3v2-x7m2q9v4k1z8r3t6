@@ -5,6 +5,7 @@ using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.World;
 using ProjectSMP.Plugins.Anticheat;
 using ProjectSMP.Plugins.WeaponConfig;
+using ProjectSMP.Plugins.EVF2;
 
 namespace ProjectSMP.Extensions;
 
@@ -17,8 +18,10 @@ public static class SafeServerExtensions
         _anticheat = anticheat;
     }
 
-    public static void EnableStuntBonusForAllSafe(bool enable) {
-        foreach (var p in BasePlayer.All) {
+    public static void EnableStuntBonusForAllSafe(bool enable)
+    {
+        foreach (var p in BasePlayer.All)
+        {
             if (p is Player player)
                 player.EnableStuntBonus(enable);
         }
@@ -43,10 +46,12 @@ public static class SafeServerExtensions
             weapon1, ammo1, weapon2, ammo2, weapon3, ammo3);
     }
 
-    public static BaseVehicle CreateVehicleSafe(VehicleModelType model, Vector3 position, float rotation,
-        int color1, int color2, int respawnDelay = -1, bool addSiren = false)
+    public static BaseVehicle CreateVehicleSafe(VehicleModelType model, Vector3 position, float rotation, int color1, int color2, int respawnDelay = -1, bool addSiren = false)
     {
-        return SafeVehicleExtensions.CreateSafe(model, position, rotation, color1, color2, respawnDelay, addSiren);
+        var vehicle = SafeVehicleExtensions.CreateSafe(model, position, rotation, color1, color2, respawnDelay, addSiren);
+        EVFService.RegisterVehicle(vehicle.Id, (int)model, position, rotation, color1, color2, 0, 0, false);
+        EVFService.SetFuelEnabled(vehicle.Id, true);
+        return vehicle;
     }
 
     public static void RegisterPickupSafe(int pickupId, float x, float y, float z, int type = 0, int weapon = 0, int amount = 0)

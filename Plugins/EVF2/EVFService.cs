@@ -895,7 +895,6 @@ namespace ProjectSMP.Plugins.EVF2
                 {
                     var modelType = (VehicleModelType)modelId;
                     int tireStatus = GetDamageStatus(hitId, EVFDamageType.Tires);
-                    bool tireHit = false;
 
                     var fwVec = BaseVehicle.GetModelInfo(modelType, VehicleModelInfoType.WheelsFront);
                     float fwX = fwVec.X, fwY = fwVec.Y, fwZ = fwVec.Z;
@@ -904,13 +903,11 @@ namespace ProjectSMP.Plugins.EVF2
                     {
                         bodyPart = EVFVehicleBodyPart.FrontLeftWheel;
                         if (tireStatus + 8 > 15) UpdateDamageStatus(hitId, EVFDamageType.Tires, tireStatus + 8);
-                        tireHit = true;
                     }
                     else if (VectorSize(hitPos.X - fwX, hitPos.Y - fwY, hitPos.Z - fwZ) <= 0.4f)
                     {
                         bodyPart = EVFVehicleBodyPart.FrontRightWheel;
                         if (tireStatus + 2 > 15) UpdateDamageStatus(hitId, EVFDamageType.Tires, tireStatus + 2);
-                        tireHit = true;
                     }
                     else
                     {
@@ -921,13 +918,11 @@ namespace ProjectSMP.Plugins.EVF2
                         {
                             bodyPart = EVFVehicleBodyPart.BackLeftWheel;
                             if (tireStatus + 4 > 15) UpdateDamageStatus(hitId, EVFDamageType.Tires, tireStatus + 4);
-                            tireHit = true;
                         }
                         else if (VectorSize(hitPos.X - rwX, hitPos.Y - rwY, hitPos.Z - rwZ) <= 0.4f)
                         {
                             bodyPart = EVFVehicleBodyPart.BackRightWheel;
                             if (tireStatus + 1 > 15) UpdateDamageStatus(hitId, EVFDamageType.Tires, tireStatus + 1);
-                            tireHit = true;
                         }
                         else
                         {
@@ -937,7 +932,6 @@ namespace ProjectSMP.Plugins.EVF2
                             if (VectorSize(hitPos.X - pcX, hitPos.Y - pcY, hitPos.Z - pcZ) <= 0.2f)
                             {
                                 bodyPart = EVFVehicleBodyPart.PetrolCap;
-                                tireHit = true;
                             }
                             else
                             {
