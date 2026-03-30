@@ -4,6 +4,7 @@ using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
+using ProjectSMP.Features.Bank.DynamicATM;
 using ProjectSMP.Features.Bank.DynamicBank;
 using ProjectSMP.Features.Bank.Paycheck;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
@@ -21,10 +22,10 @@ using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.Core.Callbacks;
 using SampSharp.GameMode;
+using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Events;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
-using SampSharp.GameMode.Definitions;
 using System;
 using System.Threading.Tasks;
 
@@ -150,6 +151,11 @@ namespace ProjectSMP
             BankPickupService.Initialize();
             var bankDataList = Task.Run(BankPickupService.LoadDataAsync).GetAwaiter().GetResult();
             BankPickupService.CreateObjects(bankDataList);
+
+            // Initialize Dynamic ATMs
+            ATMService.Initialize();
+            var atmDataList = Task.Run(ATMService.LoadDataAsync).GetAwaiter().GetResult();
+            ATMService.CreateObjects(atmDataList);
 
             // Initialize Dynamic Jobs
             JobPickupService.Initialize();

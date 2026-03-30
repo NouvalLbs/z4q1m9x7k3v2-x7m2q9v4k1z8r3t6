@@ -10,6 +10,7 @@ using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank;
 using ProjectSMP.Features.Bank.DynamicBank;
+using ProjectSMP.Features.Bank.DynamicATM;
 using ProjectSMP.Features.Chat;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
@@ -234,6 +235,7 @@ namespace ProjectSMP
                 }
 
                 BankPickupService.HandleInteract(this);
+                ATMService.HandleInteract(this);
                 JobPickupService.HandleInteract(this);
             }
 
