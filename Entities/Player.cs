@@ -9,6 +9,7 @@ using ProjectSMP.Entities.Players.Inventory;
 using ProjectSMP.Entities.Players.NameTag;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Entities.Vehicles.Engine;
+using ProjectSMP.Entities.Vehicles.Speedo;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank;
 using ProjectSMP.Features.Bank.DynamicATM;
@@ -73,6 +74,7 @@ namespace ProjectSMP
             AskService.ClearPlayerAsks(this);
             _ = InventoryService.SaveAsync(this);
             ProgressBarService.OnPlayerDisconnect(this);
+            SpeedometerService.OnPlayerDisconnect(this);
             this.ClearPlayerData();
             base.OnDisconnected(e);
         }
@@ -266,6 +268,7 @@ namespace ProjectSMP
             base.OnStateChanged(e);
             EVFService.OnPlayerStateChange(Id, e.NewState, e.OldState);
             EngineService.OnPlayerStateChanged(this, e.NewState);
+            SpeedometerService.OnPlayerStateChanged(this, e.NewState, e.OldState);
             ForklifterService.OnPlayerStateChanged(this, e.NewState, e.OldState);
         }
     }

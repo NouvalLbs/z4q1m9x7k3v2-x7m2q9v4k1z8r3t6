@@ -3,6 +3,7 @@ using ProjectSMP.Core.Discords;
 using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.Needs;
+using ProjectSMP.Entities.Vehicles.Speedo;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank.DynamicATM;
 using ProjectSMP.Features.Bank.DynamicBank;
@@ -117,6 +118,9 @@ namespace ProjectSMP
 
             // Initialize Needs Service
             NeedsService.Initialize();
+
+            // Initialize Speedometer Service
+            SpeedometerService.Initialize();
 
             // Initialize Condition Service
             ConditionService.Initialize();
@@ -251,6 +255,7 @@ namespace ProjectSMP
             PreviewModelDialog.Dispose();
             RealtimeClockService.Dispose();
             NeedsService.Dispose();
+            SpeedometerService.Dispose();
             ConditionService.Dispose();
             JailService.Dispose();
             PlaytimeService.Dispose();

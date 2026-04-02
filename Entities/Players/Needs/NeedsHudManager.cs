@@ -3,6 +3,7 @@ using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Display;
 using SampSharp.GameMode.SAMP;
+using System;
 using System.Collections.Generic;
 
 namespace ProjectSMP.Entities.Players.Needs
@@ -61,6 +62,13 @@ namespace ProjectSMP.Entities.Players.Needs
         {
             Cleanup(player);
             Initialize(player);
+        }
+
+        public static (int count, float[] coords) GetActiveHudInfo(Player player)
+        {
+            if (!_playerHuds.TryGetValue(player.Id, out var data))
+                return (0, Array.Empty<float>());
+            return (data.ActiveHudCount, data.ActiveHudCoords);
         }
 
         private static void GenerateHud(Player player)

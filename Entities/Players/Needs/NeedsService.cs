@@ -1,4 +1,5 @@
 ﻿using ProjectSMP.Plugins.CEF;
+using SampSharp.GameMode.Definitions;
 
 namespace ProjectSMP.Entities.Players.Needs
 {
@@ -59,14 +60,14 @@ namespace ProjectSMP.Entities.Players.Needs
 
         public static void RefreshHud(Player player)
         {
-            if (player.Settings.HBEMode == 0)
-            {
+            if (player.Settings.HBEMode == 0) {
                 SendHudDataToCef(player);
-            }
-            else
-            {
+            } else {
                 NeedsHudManager.RegenerateHud(player);
             }
+
+            if (player.State == PlayerState.Driving)
+                Vehicles.Speedo.SpeedometerService.Regenerate(player);
         }
 
         public static void SendHudDataToCef(Player player)
