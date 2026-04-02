@@ -212,7 +212,6 @@ namespace ProjectSMP
         public override void OnEnterVehicle(EnterVehicleEventArgs e)
         {
             base.OnEnterVehicle(e);
-            EngineService.OnPlayerEnterVehicle(this, e.Vehicle as Vehicle, e.IsPassenger);
             ForklifterService.OnPlayerEnterVehicle(this, e.Vehicle as Vehicle, e.IsPassenger);
         }
 
@@ -266,6 +265,8 @@ namespace ProjectSMP
         {
             base.OnStateChanged(e);
             EVFService.OnPlayerStateChange(Id, e.NewState, e.OldState);
+            EngineService.OnPlayerStateChanged(this, e.NewState);
+            ForklifterService.OnPlayerStateChanged(this, e.NewState, e.OldState);
         }
     }
 }

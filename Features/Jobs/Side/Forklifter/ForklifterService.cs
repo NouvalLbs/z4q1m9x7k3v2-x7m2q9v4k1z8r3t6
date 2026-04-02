@@ -30,7 +30,6 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
         private static readonly Dictionary<int, ForklifterSession> _sessions = new();
         private static readonly Dictionary<int, DynamicRaceCheckpoint> _checkpoints = new();
         private static readonly Dictionary<int, Vector3> _checkpointPositions = new();
-        private static readonly Dictionary<int, Timer> _startDialogTimers = new();
         private static Timer? _pollTimer;
         private static readonly Random _rng = new();
 
@@ -86,8 +85,6 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
         {
             _pollTimer?.Dispose();
             foreach (var cp in _checkpoints.Values) cp.Dispose();
-            foreach (var t in _startDialogTimers.Values) t.Dispose();
-            _startDialogTimers.Clear();
             _checkpoints.Clear();
             _checkpointPositions.Clear();
         }
@@ -100,40 +97,28 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
             {
                 var lastPos = player.Position;
                 var tm = new Timer(100, false);
-                tm.Tick += (s, e) =>
-                {
-                    tm.Dispose();
-                    if (!player.IsConnected) return;
-                    player.RemoveFromVehicle();
-                    player.SetPositionSafe(lastPos);
-                };
-                return;
+                tm.Tick += (s, e) => { tm.Dispose(); if (!player.IsConnected) return; player.RemoveFromVehicle(); player.SetPositionSafe(lastPos); };
             }
-
-            var vid = vehicle.Id;
-            if (_startDialogTimers.TryGetValue(player.Id, out var old)) { old.Dispose(); _startDialogTimers.Remove(player.Id); }
-            var t = new Timer(1500, false);
-            _startDialogTimers[player.Id] = t;
-            t.Tick += (s, e) =>
-            {
-                t.Dispose();
-                _startDialogTimers.Remove(player.Id);
-                if (!player.IsConnected || !player.IsCharLoaded) return;
-                if (_sessions.ContainsKey(player.Id)) return;
-                if (player.State != PlayerState.Driving || player.Vehicle?.Id != vid) return;
-                ShowStartDialog(player);
-            };
         }
 
         public static void OnPlayerExitVehicle(Player player, Vehicle? vehicle)
         {
-            if (_startDialogTimers.TryGetValue(player.Id, out var t)) { t.Dispose(); _startDialogTimers.Remove(player.Id); }
             if (vehicle == null || !_vehicleIds.Contains(vehicle.Id)) return;
             if (!_sessions.TryGetValue(player.Id, out var session)) return;
 
             CancelJob(player);
             player.SendClientMessage(Color.White, $"{Msg.Forklifter} Pekerjaan Forklift dibatalkan karena keluar dari kendaraan.");
             SideJobVehicleManager.ScheduleRespawn(vehicle);
+        }
+
+        public static void OnPlayerStateChanged(Player player, PlayerState newState, PlayerState oldState)
+        {
+            if (newState != PlayerState.Driving) return;
+            var vehicle = player.Vehicle as Vehicle;
+            if (vehicle == null || !_vehicleIds.Contains(vehicle.Id)) return;
+            if (!player.IsCharLoaded || _sessions.ContainsKey(player.Id)) return;
+            if (SideJobVehicleManager.IsPendingRespawn(vehicle.Id)) return;
+            ShowStartDialog(player);
         }
 
         private static void OnTick(object? sender, EventArgs e)

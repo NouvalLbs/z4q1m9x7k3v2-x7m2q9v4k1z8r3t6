@@ -9,9 +9,11 @@ namespace ProjectSMP.Entities.Vehicles.Engine
     public static class EngineService
     {
         private static readonly Random _rng = new();
-        public static void OnPlayerEnterVehicle(Player player, Vehicle? vehicle, bool isPassenger)
+        public static void OnPlayerStateChanged(Player player, PlayerState newState)
         {
-            if (isPassenger || vehicle == null) return;
+            if (newState != PlayerState.Driving) return;
+            var vehicle = player.Vehicle as Vehicle;
+            if (vehicle == null) return;
             if (!vehicle.GetEngineState())
                 player.SendClientMessage(Color.White,
                     $"{Msg.Vehicles} Mesin masih mati, ketik {{FFFF00}}/engine{{FFFFFF}} atau {{FFFF00}}[Y]{{FFFFFF}} untuk menghidupkannya.");
