@@ -2,7 +2,7 @@
 
 namespace ProjectSMP.Features.Jobs.Side.Forklifter
 {
-    public enum ForklifterPhase { GoToLoad, Loading, GoToUnload, Unloading, ReturnToParking, WaitingExit }
+    public enum ForklifterPhase { GoToLoad, Loading, GoToUnload, Unloading, ReturnToParking }
 
     public class ForklifterSession
     {

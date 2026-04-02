@@ -1,7 +1,4 @@
 ﻿#nullable enable
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using ProjectSMP.Core;
 using ProjectSMP.Entities;
 using ProjectSMP.Entities.Players.Delay;
@@ -14,6 +11,9 @@ using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using SampSharp.Streamer.World;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ProjectSMP.Features.Jobs.Side.Forklifter
 {
@@ -30,6 +30,7 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
         private static readonly Dictionary<int, ForklifterSession> _sessions = new();
         private static readonly Dictionary<int, DynamicRaceCheckpoint> _checkpoints = new();
         private static readonly Dictionary<int, Vector3> _checkpointPositions = new();
+        private static readonly Dictionary<int, Timer> _startDialogTimers = new();
         private static Timer? _pollTimer;
         private static readonly Random _rng = new();
 
@@ -58,8 +59,6 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
             (2755.7400f, -2385.7966f, 13.4036f, 177.1400f)
         };
 
-        private static readonly Vector3 ReturnPosition = new(2753.0f, -2380.0f, 13.4f);
-
         private const string BriefingText =
             "{FFFFFF}Kamu ditugaskan untuk membantu proses pemuatan barang di area Ocean Docks menggunakan Forklift.\n" +
             "Kamu akan diarahkan oleh checkpoint untuk mengambil barang yang akan dipindahkan ke gudang.\n" +
@@ -87,6 +86,8 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
         {
             _pollTimer?.Dispose();
             foreach (var cp in _checkpoints.Values) cp.Dispose();
+            foreach (var t in _startDialogTimers.Values) t.Dispose();
+            _startDialogTimers.Clear();
             _checkpoints.Clear();
             _checkpointPositions.Clear();
         }
@@ -95,35 +96,47 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
         {
             if (isPassenger || vehicle == null || !_vehicleIds.Contains(vehicle.Id)) return;
             if (!player.IsCharLoaded || _sessions.ContainsKey(player.Id)) return;
-            if (SideJobVehicleManager.IsPendingRespawn(vehicle.Id)) return;
+            if (SideJobVehicleManager.IsPendingRespawn(vehicle.Id))
+            {
+                var lastPos = player.Position;
+                var tm = new Timer(100, false);
+                tm.Tick += (s, e) =>
+                {
+                    tm.Dispose();
+                    if (!player.IsConnected) return;
+                    player.RemoveFromVehicle();
+                    player.SetPositionSafe(lastPos);
+                };
+                return;
+            }
 
             var vid = vehicle.Id;
+            if (_startDialogTimers.TryGetValue(player.Id, out var old)) { old.Dispose(); _startDialogTimers.Remove(player.Id); }
             var t = new Timer(1500, false);
-            t.Tick += (s, e) => {
+            _startDialogTimers[player.Id] = t;
+            t.Tick += (s, e) =>
+            {
                 t.Dispose();
+                _startDialogTimers.Remove(player.Id);
                 if (!player.IsConnected || !player.IsCharLoaded) return;
                 if (_sessions.ContainsKey(player.Id)) return;
                 if (player.State != PlayerState.Driving || player.Vehicle?.Id != vid) return;
-
                 ShowStartDialog(player);
             };
         }
 
         public static void OnPlayerExitVehicle(Player player, Vehicle? vehicle)
         {
+            if (_startDialogTimers.TryGetValue(player.Id, out var t)) { t.Dispose(); _startDialogTimers.Remove(player.Id); }
             if (vehicle == null || !_vehicleIds.Contains(vehicle.Id)) return;
             if (!_sessions.TryGetValue(player.Id, out var session)) return;
-            if (session.Phase == ForklifterPhase.WaitingExit) {
-                FinalizeJob(player, vehicle);
-                return;
-            }
 
             CancelJob(player);
-            player.SendClientMessage(Color.White, $"{Msg.Jobs} Pekerjaan Forklift dibatalkan karena keluar dari kendaraan.");
+            player.SendClientMessage(Color.White, $"{Msg.Forklifter} Pekerjaan Forklift dibatalkan karena keluar dari kendaraan.");
             SideJobVehicleManager.ScheduleRespawn(vehicle);
         }
 
-        private static void OnTick(object sender, EventArgs e)
+        private static void OnTick(object? sender, EventArgs e)
         {
             foreach (var (id, session) in new Dictionary<int, ForklifterSession>(_sessions))
             {
@@ -157,7 +170,7 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
                     {
                         var rem = DelayService.GetJobDelay(player, "forklifter");
                         player.SendClientMessage(Color.White,
-                            $"{Msg.Jobs} Kamu harus menunggu {{FF6347}}{rem} menit{{FFFFFF}} sebelum bekerja sebagai Forklift lagi.");
+                            $"{Msg.Forklifter} Kamu harus menunggu {{FF6347}}{rem} menit{{FFFFFF}} sebelum bekerja sebagai Forklift lagi.");
                         if (vehicle != null)
                             SideJobVehicleManager.EjectAndScheduleRespawn(player, vehicle);
                         return;
@@ -206,8 +219,8 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
             var nextLoadIdx = PeekOrFallback(session.LoadQueue, (loadIdx + 1) % LoadPositions.Length);
             SetCheckpoint(player.Id, LoadPositions[loadIdx], LoadPositions[nextLoadIdx], CheckpointType.Normal);
 
-            player.SendClientMessage(Color.White,
-                $"{Msg.Jobs} Pekerjaan Forklift dimulai! Pergi ke {{FFFF00}}titik muat{{FFFFFF}}.");
+            player.SendClientMessage(Color.White, $"{Msg.Forklifter} Kamu bertugas memindahkan beberapa box dari trailer lalu menaruhnya ke rak penyimpanan.");
+            player.SendClientMessage(Color.White, $"{Msg.Forklifter} Silakan menuju marker yang tersedia untuk mengambil box yang telah disiapkan sebelumnya.");
         }
 
         private static void Process(Player player, ForklifterSession session)
@@ -218,11 +231,13 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
                     if (!IsInCheckpoint(player)) return;
                     ClearCheckpoint(player.Id);
                     session.Phase = ForklifterPhase.Loading;
+                    player.ToggleControllable(false);
                     ProgressBarService.StartProgress(player, ProgressDuration, "Loading_Cargo...");
                     break;
 
                 case ForklifterPhase.Loading:
                     if (player.ProgressBarData.IsActive) return;
+                    player.ToggleControllable(true);
                     session.CycleCount++;
 
                     var unloadIdx = NextIndex(session.UnloadQueue, UnloadPositions.Length);
@@ -231,23 +246,27 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
 
                     session.Phase = ForklifterPhase.GoToUnload;
                     player.SendClientMessage(Color.White,
-                        $"{Msg.Jobs} Kargo dimuat! Antarkan ke {{FFFF00}}titik unload{{FFFFFF}}. ({session.CycleCount}/{MaxCycles})");
+                        $"{Msg.Forklifter} Kargo dimuat! Antarkan ke {{FFFF00}}titik unload{{FFFFFF}}. ({session.CycleCount}/{MaxCycles})");
                     break;
 
                 case ForklifterPhase.GoToUnload:
                     if (!IsInCheckpoint(player)) return;
                     ClearCheckpoint(player.Id);
                     session.Phase = ForklifterPhase.Unloading;
+                    player.ToggleControllable(false);
                     ProgressBarService.StartProgress(player, ProgressDuration, "Unloading_Cargo...");
                     break;
 
                 case ForklifterPhase.Unloading:
                     if (player.ProgressBarData.IsActive) return;
+                    player.ToggleControllable(true);
 
                     if (session.CycleCount >= MaxCycles)
                     {
                         session.Phase = ForklifterPhase.ReturnToParking;
-                        SetCheckpoint(player.Id, ReturnPosition, ReturnPosition, CheckpointType.Finish);
+                        var returnVehicle = BaseVehicle.Find(session.VehicleId) as Vehicle;
+                        var returnPos = returnVehicle?.SpawnPosition ?? new Vector3(2753.0f, -2380.0f, 13.4f);
+                        SetCheckpoint(player.Id, returnPos, returnPos, CheckpointType.Finish);
                         player.SendClientMessage(Color.White,
                             $"{Msg.Jobs} Semua box dipindahkan! Kembalikan Forklift ke {{FFFF00}}tempat parkir{{FFFFFF}}.");
                         return;
@@ -259,23 +278,20 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
 
                     session.Phase = ForklifterPhase.GoToLoad;
                     player.SendClientMessage(Color.White,
-                        $"{Msg.Jobs} Kargo diturunkan! Kembali ke {{FFFF00}}titik muat{{FFFFFF}}. ({session.CycleCount}/{MaxCycles})");
+                        $"{Msg.Forklifter} Kargo diturunkan! Kembali ke {{FFFF00}}titik muat{{FFFFFF}}. ({session.CycleCount}/{MaxCycles})");
                     break;
 
                 case ForklifterPhase.ReturnToParking:
                     if (!IsInCheckpoint(player)) return;
                     ClearCheckpoint(player.Id);
-                    session.Phase = ForklifterPhase.WaitingExit;
-                    player.SendClientMessage(Color.White,
-                        $"{Msg.Jobs} Forklift dikembalikan! Keluar dari kendaraan untuk menerima gaji.");
-                    break;
-
-                case ForklifterPhase.WaitingExit:
+                    var finishVehicle = BaseVehicle.Find(session.VehicleId) as Vehicle;
+                    player.RemoveFromVehicle();
+                    FinalizeJob(player, finishVehicle);
                     break;
             }
         }
 
-        private static void FinalizeJob(Player player, Vehicle vehicle)
+        private static void FinalizeJob(Player player, Vehicle? vehicle)
         {
             _sessions.Remove(player.Id);
             ClearCheckpoint(player.Id);
@@ -287,16 +303,17 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
             PaycheckService.GivePaycheck(player, PaycheckAmount, "Side Job - Forklift");
 
             player.SendClientMessage(Color.White,
-                $"{Msg.Jobs} Kerja bagus! Paycheck {{00FF00}}{Utilities.GroupDigits(PaycheckAmount)}{{FFFFFF}} ditambahkan dan delay {{FF6347}}{DelayMinutes} menit{{FFFFFF}} dimulai.");
+                $"{Msg.Forklifter} Kerja bagus! Paycheck {{00FF00}}{Utilities.GroupDigits(PaycheckAmount)}{{FFFFFF}} ditambahkan dan delay {{FF6347}}{DelayMinutes} menit{{FFFFFF}} dimulai.");
 
-            SideJobVehicleManager.ScheduleRespawn(vehicle);
+            if (vehicle != null)
+                SideJobVehicleManager.ScheduleRespawn(vehicle);
         }
 
         private static void CancelJob(Player player)
         {
             _sessions.Remove(player.Id);
             ClearCheckpoint(player.Id);
-
+            player.ToggleControllable(true);
             if (player.ProgressBarData.IsActive)
                 ProgressBarService.DestroyProgressBar(player);
         }
@@ -304,7 +321,8 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
         private static void SetCheckpoint(int playerId, Vector3 pos, Vector3 nextPos, CheckpointType type)
         {
             ClearCheckpoint(playerId);
-            var cp = new DynamicRaceCheckpoint(type, pos, nextPos, CheckpointSize, -1, -1, null, CheckpointSize * 10f);
+            var player = BasePlayer.Find(playerId) as Player;
+            var cp = new DynamicRaceCheckpoint(type, pos, nextPos, CheckpointSize, -1, -1, player, 1000.0f);
             _checkpoints[playerId] = cp;
             _checkpointPositions[playerId] = pos;
         }

@@ -118,7 +118,7 @@ namespace ProjectSMP.Entities.Players.Delay
 
                 if (newDelay == 0 && player.IsConnected)
                 {
-                    player.SendClientMessage(Color.White, $"{Msg.Jobs} You can now work as a {{FFFF00}}{jobName}{{FFFFFF}} again.");
+                    player.SendClientMessage(Color.White, $"{{C6E2FF}}[{jobName.ToUpper()}]:{{FFFFFF}} You can now work as a {{FFFF00}}{jobName}{{FFFFFF}} again.");
                 }
             }
         }
