@@ -3,7 +3,7 @@ using ProjectSMP.Entities.Players.Delay;
 using System;
 using System.Linq;
 
-namespace ProjectSMP.Features.Jobs
+namespace ProjectSMP.Features.Jobs.Core
 {
     public static class JobService
     {

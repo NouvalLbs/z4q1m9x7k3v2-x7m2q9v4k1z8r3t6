@@ -64,7 +64,7 @@ public class CameraHackCheck
         }
 
         int specAct = (int)player.SpecialAction;
-        if (specAct == 3 || (24 <= specAct && specAct <= 25))
+        if (specAct == 2 || (24 <= specAct && specAct <= 25))
         {
             if (camMode != 3 && camMode != 55 && camMode != 53)
             {

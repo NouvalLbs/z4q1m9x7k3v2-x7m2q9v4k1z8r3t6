@@ -9,7 +9,8 @@ using ProjectSMP.Features.Bank.DynamicBank;
 using ProjectSMP.Features.Bank.Paycheck;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.Dynamic.DynamicPickups;
-using ProjectSMP.Features.Jobs.DynamicJob;
+using ProjectSMP.Features.Jobs.Core.DynamicJob;
+using ProjectSMP.Features.Jobs.Side.Forklifter;
 using ProjectSMP.Features.LevelSystem;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Features.ProgressBar;
@@ -137,6 +138,9 @@ namespace ProjectSMP
             // Initialize Progressbar
             ProgressBarService.Initialize();
 
+            // Initialize SideJobs - Forklifter
+            ForklifterService.Initialize();
+
             // Initialize Dynamic Pickups
             PickupService.Initialize();
             var pickupDataList = Task.Run(PickupService.LoadDataAsync).GetAwaiter().GetResult();
@@ -253,6 +257,7 @@ namespace ProjectSMP
             ReportService.Dispose();
             AskService.Dispose();
             ProgressBarService.Dispose();
+            ForklifterService.Dispose();
             GeoLocationService.Dispose();
 
             try

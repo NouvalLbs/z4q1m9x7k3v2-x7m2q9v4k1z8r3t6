@@ -31,17 +31,22 @@ public class SpecialActionCheck
         if (sa == 0) return;
 
         bool allowed = st.SetSpecialActionId == sa
-                    || sa == (int)SpecialAction.Duck
-                    || sa == (int)SpecialAction.HandsUp;
+            || sa == (int)SpecialAction.Duck
+            || sa == (int)SpecialAction.HandsUp
+            || sa == (int)SpecialAction.EnterVehicle
+            || sa == (int)SpecialAction.ExitVehicle;
 
         if (!allowed)
             _warnings.AddWarning(player.Id, "SpecialActionHack", $"sa={sa}");
-        else {
+        else
+        {
             int anim = st.Anim;
 
-            if (sa == (int)SpecialAction.Usejetpack) {
+            if (sa == (int)SpecialAction.Usejetpack)
+            {
                 bool validJetpackAnim = (1128 <= anim && anim <= 1134) || (1538 <= anim && anim <= 1544);
-                if (!validJetpackAnim && anim != 0) {
+                if (!validJetpackAnim && anim != 0)
+                {
                     _warnings.AddWarning(player.Id, "SpecialActionHack",
                         $"jetpack invalidAnim={anim}");
                 }

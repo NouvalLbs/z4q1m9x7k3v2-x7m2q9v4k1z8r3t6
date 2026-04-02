@@ -1,11 +1,12 @@
 ﻿using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Administrator.Commands;
 using ProjectSMP.Extensions;
+using ProjectSMP.Features.Jobs.Core.DynamicJob;
 using SampSharp.GameMode;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 
-namespace ProjectSMP.Features.Jobs.DynamicJob.Commands
+namespace ProjectSMP.Features.Jobs.Core.DynamicJob.Commands
 {
     public class JobPickupCommands : AdminCommandBase
     {

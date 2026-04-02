@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace ProjectSMP.Features.Jobs.DynamicJob
+namespace ProjectSMP.Features.Jobs.Core.DynamicJob
 {
     public static class JobPickupService
     {

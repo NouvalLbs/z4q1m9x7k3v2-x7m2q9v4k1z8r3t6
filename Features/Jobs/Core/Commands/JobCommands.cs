@@ -1,11 +1,12 @@
 ﻿using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Delay;
+using ProjectSMP.Features.Jobs.Core;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.SAMP.Commands;
 using System.Collections.Generic;
 
-namespace ProjectSMP.Features.Jobs.Commands
+namespace ProjectSMP.Features.Jobs.Core.Commands
 {
     public class JobCommands
     {

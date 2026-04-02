@@ -40,5 +40,6 @@
         public const string Ask_A = "{C6E2FF}[ANS]{ff0000}";
         public const string Inventory = "{C6E2FF}INVENTORY:{FFFFFF}";
         public const string Jobs = "{C6E2FF}JOB:{FFFFFF}";
+        public const string Vehicles = "{C6E2FF}VEHICLE:{FFFFFF}";
     }
 }

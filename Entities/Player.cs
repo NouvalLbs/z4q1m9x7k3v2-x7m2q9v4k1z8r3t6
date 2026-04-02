@@ -1,5 +1,6 @@
 #nullable enable
 using ProjectSMP.Core;
+using ProjectSMP.Entities;
 using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Character;
@@ -7,15 +8,17 @@ using ProjectSMP.Entities.Players.Condition;
 using ProjectSMP.Entities.Players.Inventory;
 using ProjectSMP.Entities.Players.NameTag;
 using ProjectSMP.Entities.Players.Needs;
+using ProjectSMP.Entities.Vehicles.Engine;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank;
-using ProjectSMP.Features.Bank.DynamicBank;
 using ProjectSMP.Features.Bank.DynamicATM;
+using ProjectSMP.Features.Bank.DynamicBank;
 using ProjectSMP.Features.Chat;
 using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.EnterExit;
-using ProjectSMP.Features.Jobs.DynamicJob;
+using ProjectSMP.Features.Jobs.Core.DynamicJob;
+using ProjectSMP.Features.Jobs.Side.Forklifter;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Features.ProgressBar;
 using ProjectSMP.Features.ProgressBar.Data;
@@ -209,16 +212,22 @@ namespace ProjectSMP
         public override void OnEnterVehicle(EnterVehicleEventArgs e)
         {
             base.OnEnterVehicle(e);
+            EngineService.OnPlayerEnterVehicle(this, e.Vehicle as Vehicle, e.IsPassenger);
+            ForklifterService.OnPlayerEnterVehicle(this, e.Vehicle as Vehicle, e.IsPassenger);
         }
 
         public override void OnExitVehicle(PlayerVehicleEventArgs e)
         {
             base.OnExitVehicle(e);
+            ForklifterService.OnPlayerExitVehicle(this, e.Vehicle as Vehicle);
         }
 
         public override void OnKeyStateChanged(KeyStateChangedEventArgs e)
         {
             base.OnKeyStateChanged(e);
+            if (e.NewKeys.HasFlag(Keys.Yes) && !e.OldKeys.HasFlag(Keys.Yes))
+                EngineService.ToggleEngine(this);
+
             if (e.NewKeys.HasFlag(Keys.Crouch) && !e.OldKeys.HasFlag(Keys.Crouch))
                 EVFExtensions.HandleHorn(this);
 

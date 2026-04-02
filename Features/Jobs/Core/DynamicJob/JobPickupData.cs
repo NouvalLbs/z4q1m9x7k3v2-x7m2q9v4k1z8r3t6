@@ -1,7 +1,7 @@
 ﻿using ProjectSMP.Core;
 using SampSharp.Streamer.World;
 
-namespace ProjectSMP.Features.Jobs.DynamicJob
+namespace ProjectSMP.Features.Jobs.Core.DynamicJob
 {
     public class DynamicJobData
     {

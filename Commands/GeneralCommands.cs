@@ -2,7 +2,7 @@ using Microsoft.VisualBasic;
 using ProjectSMP.Core;
 using ProjectSMP.Features.Bank;
 using ProjectSMP.Features.Chat;
-using ProjectSMP.Features.Jobs;
+using ProjectSMP.Features.Jobs.Core;
 using ProjectSMP.Features.LevelSystem;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Display;

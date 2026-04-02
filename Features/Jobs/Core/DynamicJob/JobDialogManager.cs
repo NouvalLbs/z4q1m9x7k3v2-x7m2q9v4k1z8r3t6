@@ -1,9 +1,10 @@
 ﻿using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Delay;
+using ProjectSMP.Features.Jobs.Core;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 
-namespace ProjectSMP.Features.Jobs.DynamicJob
+namespace ProjectSMP.Features.Jobs.Core.DynamicJob
 {
     public static class JobDialogManager
     {

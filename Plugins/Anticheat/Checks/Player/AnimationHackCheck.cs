@@ -59,15 +59,17 @@ public class AnimationHackCheck
             }
         }
 
-        if (specAct == (int)SpecialAction.EnterVehicle || specAct == (int)SpecialAction.ExitVehicle)
-        {
-            bool validVehAnim = (1543 <= anim && anim <= 1544) || anim == 0;
-            if (!validVehAnim)
+        /*
+            if (specAct == (int)SpecialAction.EnterVehicle || specAct == (int)SpecialAction.ExitVehicle)
             {
-                _warnings.AddWarning(player.Id, "AnimationHack",
-                    $"vehAction specAct={specAct} anim={anim}");
+                bool validVehAnim = (1543 <= anim && anim <= 1544) || anim == 0;
+                if (!validVehAnim)
+                {
+                    _warnings.AddWarning(player.Id, "AnimationHack",
+                        $"vehAction specAct={specAct} anim={anim}");
+                }
             }
-        }
+        */
 
         if (specAct == (int)SpecialAction.HandsUp)
         {
