@@ -1,14 +1,16 @@
-﻿namespace ProjectSMP.Features.Jobs.Side.Forklifter
+﻿using System.Collections.Generic;
+
+namespace ProjectSMP.Features.Jobs.Side.Forklifter
 {
-    public enum ForklifterPhase { GoToLoad, Loading, GoToUnload, Unloading }
+    public enum ForklifterPhase { GoToLoad, Loading, GoToUnload, Unloading, ReturnToParking, WaitingExit }
 
     public class ForklifterSession
     {
         public bool IsActive { get; set; }
         public ForklifterPhase Phase { get; set; }
-        public int LoadCount { get; set; }
-        public int UnloadCount { get; set; }
-        public int CurrentLoadIndex { get; set; }
-        public int CurrentUnloadIndex { get; set; }
+        public int CycleCount { get; set; }
+        public int VehicleId { get; set; }
+        public Queue<int> LoadQueue { get; set; } = new();
+        public Queue<int> UnloadQueue { get; set; } = new();
     }
 }

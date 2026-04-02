@@ -9,6 +9,7 @@ using ProjectSMP.Features.Bank.DynamicBank;
 using ProjectSMP.Features.Bank.Paycheck;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.Dynamic.DynamicPickups;
+using ProjectSMP.Features.Jobs.Core;
 using ProjectSMP.Features.Jobs.Core.DynamicJob;
 using ProjectSMP.Features.Jobs.Side.Forklifter;
 using ProjectSMP.Features.LevelSystem;
@@ -258,6 +259,7 @@ namespace ProjectSMP
             AskService.Dispose();
             ProgressBarService.Dispose();
             ForklifterService.Dispose();
+            SideJobVehicleManager.Dispose();
             GeoLocationService.Dispose();
 
             try
