@@ -40,12 +40,10 @@ namespace ProjectSMP
     public class GameMode : BaseMode
     {
         private AnticheatPlugin _anticheat = null!;
-        private RakNetService _rakNetService;
 
         protected override void OnInitialized(EventArgs e)
         {
             base.OnInitialized(e);
-            _rakNetService = new RakNetService();
 
             CefService.OnInitialized += (playerId, success) =>
             {
