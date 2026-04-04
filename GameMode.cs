@@ -23,6 +23,7 @@ using ProjectSMP.Plugins.CEF;
 using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.GPS.WazeGPS;
+using ProjectSMP.Plugins.RakNet;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.Core.Callbacks;
@@ -43,6 +44,9 @@ namespace ProjectSMP
         protected override void OnInitialized(EventArgs e)
         {
             base.OnInitialized(e);
+
+            // Initialize RakNet
+            RakNetEventHandler.Initialize();
 
             CefService.OnInitialized += (playerId, success) =>
             {
@@ -296,5 +300,21 @@ namespace ProjectSMP
         [Callback]
         public void OnCefClientEventCS(int player_id, string args_json)
             => CefService.HandleClientEvent(player_id, args_json);
+
+        [Callback]
+        public void RNB_OnIncomingPacket(int playerId, int packetId, int bs)
+            => RakNetService.HandleIncomingPacket(playerId, packetId, bs);
+
+        [Callback]
+        public void RNB_OnIncomingRPC(int playerId, int rpcId, int bs)
+            => RakNetService.HandleIncomingRPC(playerId, rpcId, bs);
+
+        [Callback]
+        public void RNB_OnOutgoingPacket(int playerId, int packetId, int bs)
+            => RakNetService.HandleOutgoingPacket(playerId, packetId, bs);
+
+        [Callback]
+        public void RNB_OnOutgoingRPC(int playerId, int rpcId, int bs)
+            => RakNetService.HandleOutgoingRPC(playerId, rpcId, bs);
     }
 }

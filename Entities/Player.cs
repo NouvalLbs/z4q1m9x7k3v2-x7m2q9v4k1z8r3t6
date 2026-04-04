@@ -34,7 +34,6 @@ using SampSharp.GameMode.Events;
 using SampSharp.GameMode.Pools;
 using SampSharp.GameMode.World;
 using System;
-using System.Data;
 using System.Threading.Tasks;
 
 namespace ProjectSMP
