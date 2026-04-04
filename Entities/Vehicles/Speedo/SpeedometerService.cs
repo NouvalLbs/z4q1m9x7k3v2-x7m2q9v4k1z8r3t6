@@ -1,4 +1,5 @@
 ﻿using ProjectSMP.Entities.Players.Needs;
+using ProjectSMP.Plugins.CEF;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Display;
@@ -30,12 +31,27 @@ namespace ProjectSMP.Entities.Vehicles.Speedo
         public static void OnPlayerStateChanged(Player player, PlayerState newState, PlayerState oldState)
         {
             if (newState == PlayerState.Driving)
-                Show(player);
+            {
+                if (player.Settings.HBEMode == 1)
+                    Show(player);
+                else
+                    CefService.EmitEvent(player.Id, "setInVehicle", new { value = true });
+            }
             else if (oldState == PlayerState.Driving)
-                Hide(player);
+            {
+                if (player.Settings.HBEMode == 1)
+                    Hide(player);
+                else
+                    CefService.EmitEvent(player.Id, "setInVehicle", new { value = false });
+            }
         }
 
-        public static void OnPlayerDisconnect(Player player) => Hide(player);
+        public static void OnPlayerDisconnect(Player player)
+        {
+            Hide(player);
+            if (player.Settings.HBEMode == 0 && player.State == PlayerState.Driving)
+                CefService.EmitEvent(player.Id, "setInVehicle", new { value = false });
+        }
 
         public static void Regenerate(Player player)
         {
@@ -105,6 +121,50 @@ namespace ProjectSMP.Entities.Vehicles.Speedo
                     : angle < 247.5f ? "SW"
                     : angle < 292.5f ? "W"
                     : "NW";
+            }
+
+            foreach (var bp in BasePlayer.All)
+            {
+                if (bp is not Player p || p.IsDisposed || p.State != PlayerState.Driving) continue;
+                if (p.Settings.HBEMode != 0) continue;
+
+                var veh = p.Vehicle;
+                if (veh == null) continue;
+
+                var vel = veh.Velocity;
+                var raw = Math.Sqrt(vel.X * vel.X + vel.Y * vel.Y + vel.Z * vel.Z);
+                var kmh = (int)(raw * 180);
+
+                var gear = raw < 0.001 ? "N"
+                    : kmh <= 20 ? "1"
+                    : kmh <= 40 ? "2"
+                    : kmh <= 60 ? "3"
+                    : kmh <= 80 ? "4"
+                    : "5";
+
+                var angle = veh.Angle;
+                var heading = (angle >= 337.5f || angle < 22.5f) ? "N"
+                    : angle < 67.5f ? "NE"
+                    : angle < 112.5f ? "E"
+                    : angle < 157.5f ? "SE"
+                    : angle < 202.5f ? "S"
+                    : angle < 247.5f ? "SW"
+                    : angle < 292.5f ? "W"
+                    : "NW";
+
+                var vehicle = veh as Vehicle;
+                var fuelPct = vehicle != null && vehicle.MaxFuel > 0
+                    ? (int)(vehicle.Fuel / vehicle.MaxFuel * 100)
+                    : 0;
+
+                CefService.EmitEvent(p.Id, "updateSpeedo", new
+                {
+                    VehicleSpeed = kmh,
+                    VehicleGear = gear,
+                    VehicleHeading = heading,
+                    VehicleName = GetVehicleName(veh),
+                    VehicleFuel = fuelPct
+                });
             }
         }
 

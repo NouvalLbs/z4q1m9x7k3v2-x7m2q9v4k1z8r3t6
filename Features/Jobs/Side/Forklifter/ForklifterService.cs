@@ -20,8 +20,8 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
     public static class ForklifterService
     {
         private const int MaxCycles = 5;
-        private const int PaycheckAmount = 50000;
-        private const int DelayMinutes = 30;
+        private const int PaycheckAmount = 20000;
+        private const int DelayMinutes = 15;
         private const int ProgressDuration = 6;
         private const float CheckpointSize = 4.0f;
         private const float CheckpointCheckRadius = 4.5f;
@@ -285,7 +285,7 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
                 ProgressBarService.DestroyProgressBar(player);
 
             DelayService.SetJobDelay(player, "forklifter", DelayMinutes);
-            PaycheckService.GivePaycheck(player, PaycheckAmount, "Side Job - Forklift");
+            PaycheckService.GivePaycheck(player, PaycheckAmount, "Sidejob(Forklift)");
 
             player.SendClientMessage(Color.White,
                 $"{Msg.Forklifter} Kerja bagus! Paycheck {{00FF00}}{Utilities.GroupDigits(PaycheckAmount)}{{FFFFFF}} ditambahkan dan delay {{FF6347}}{DelayMinutes} menit{{FFFFFF}} dimulai.");
