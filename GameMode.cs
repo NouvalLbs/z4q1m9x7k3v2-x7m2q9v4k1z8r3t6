@@ -22,6 +22,7 @@ using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.CEF;
 using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.GarageBlocker;
+using ProjectSMP.Plugins.GPS.WazeGPS;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.Core.Callbacks;
@@ -269,6 +270,7 @@ namespace ProjectSMP
             SweeperService.Dispose();
             SideJobVehicleManager.Dispose();
             GeoLocationService.Dispose();
+            WazeGpsService.Dispose();
 
             try
             {

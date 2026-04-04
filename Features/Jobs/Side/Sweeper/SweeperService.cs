@@ -4,6 +4,7 @@ using ProjectSMP.Entities;
 using ProjectSMP.Entities.Players.Delay;
 using ProjectSMP.Features.Bank.Paycheck;
 using ProjectSMP.Features.Jobs.Core;
+using ProjectSMP.Plugins.GPS.WazeGPS;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
