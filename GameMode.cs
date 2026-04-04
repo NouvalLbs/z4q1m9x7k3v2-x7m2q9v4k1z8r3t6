@@ -23,7 +23,6 @@ using ProjectSMP.Plugins.CEF;
 using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.GPS.WazeGPS;
-using ProjectSMP.Plugins.RakNet;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.Core.Callbacks;
