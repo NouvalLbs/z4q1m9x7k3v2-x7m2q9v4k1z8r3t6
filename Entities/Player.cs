@@ -26,7 +26,6 @@ using ProjectSMP.Features.ProgressBar;
 using ProjectSMP.Features.ProgressBar.Data;
 using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.GPS.WazeGPS;
-using ProjectSMP.Plugins.RakNet;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
@@ -46,7 +45,6 @@ namespace ProjectSMP
         public override void OnConnected(EventArgs e)
         {
             base.OnConnected(e);
-            RakNetService.OnPlayerConnect(Id);
             ClientManager.CheckPlayerClient(this);
             WeaponConfigService.OnConnect(this);
             WeaponConfigService.PlayerDamage += OnPlayerDamage;
@@ -82,7 +80,6 @@ namespace ProjectSMP
             ForklifterService.OnPlayerDisconnect(this);
             SweeperService.OnPlayerDisconnect(this);
             WazeGpsService.OnPlayerDisconnect(this);
-            RakNetService.OnPlayerDisconnect(Id);
             this.ClearPlayerData();
             base.OnDisconnected(e);
         }
