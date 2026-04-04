@@ -23,6 +23,7 @@ using ProjectSMP.Plugins.CEF;
 using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.GPS.WazeGPS;
+using ProjectSMP.Plugins.RakNet;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.Core.Callbacks;
@@ -43,6 +44,11 @@ namespace ProjectSMP
         protected override void OnInitialized(EventArgs e)
         {
             base.OnInitialized(e);
+
+            RakNetService.IncomingPacket += OnRakNetIncomingPacket;
+            RakNetService.OutgoingPacket += OnRakNetOutgoingPacket;
+            RakNetService.IncomingRPC += OnRakNetIncomingRPC;
+            RakNetService.OutgoingRPC += OnRakNetOutgoingRPC;
 
             CefService.OnInitialized += (playerId, success) =>
             {
@@ -282,6 +288,11 @@ namespace ProjectSMP
                 Console.WriteLine($"[Discord] Shutdown error: {ex.Message}");
             }
 
+            RakNetService.IncomingPacket -= OnRakNetIncomingPacket;
+            RakNetService.OutgoingPacket -= OnRakNetOutgoingPacket;
+            RakNetService.IncomingRPC -= OnRakNetIncomingRPC;
+            RakNetService.OutgoingRPC -= OnRakNetOutgoingRPC;
+
             base.OnExited(e);
         }
 
@@ -296,5 +307,41 @@ namespace ProjectSMP
         [Callback]
         public void OnCefClientEventCS(int player_id, string args_json)
             => CefService.HandleClientEvent(player_id, args_json);
+
+        [Callback]
+        public int OnRakNetIncomingPacket(int playerId, int packetId, int bs)
+            => RakNetService.HandleIncomingPacket(playerId, packetId, bs);
+
+        [Callback]
+        public int OnRakNetOutgoingPacket(int playerId, int packetId, int bs)
+            => RakNetService.HandleOutgoingPacket(playerId, packetId, bs);
+
+        [Callback]
+        public int OnRakNetIncomingRPC(int playerId, int rpcId, int bs)
+            => RakNetService.HandleIncomingRPC(playerId, rpcId, bs);
+
+        [Callback]
+        public int OnRakNetOutgoingRPC(int playerId, int rpcId, int bs)
+            => RakNetService.HandleOutgoingRPC(playerId, rpcId, bs);
+
+        private void OnRakNetIncomingPacket(object sender, PacketEventArgs e)
+        {
+            // Handle incoming packets
+        }
+
+        private void OnRakNetOutgoingPacket(object sender, PacketEventArgs e)
+        {
+            // Handle outgoing packets
+        }
+
+        private void OnRakNetIncomingRPC(object sender, RPCEventArgs e)
+        {
+            // Handle incoming RPCs
+        }
+
+        private void OnRakNetOutgoingRPC(object sender, RPCEventArgs e)
+        {
+            // Handle outgoing RPCs
+        }
     }
 }
