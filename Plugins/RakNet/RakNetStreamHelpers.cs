@@ -52,7 +52,7 @@ namespace ProjectSMP.Plugins.RakNet
             foreach (var player in BasePlayer.All.OfType<BasePlayer>())
             {
                 if (player.Id == excludedPlayerId) continue;
-                if (player.IsVehicleStreamedIn(vehicle))
+                if (vehicle.IsStreamedIn(player))
                 {
                     bs.SendPacket(player.Id, priority, reliability, orderingChannel);
                 }
@@ -71,7 +71,7 @@ namespace ProjectSMP.Plugins.RakNet
             foreach (var player in BasePlayer.All.OfType<BasePlayer>())
             {
                 if (player.Id == excludedPlayerId) continue;
-                if (player.IsVehicleStreamedIn(vehicle))
+                if (vehicle.IsStreamedIn(player))
                 {
                     bs.SendRPC(player.Id, rpcId, priority, reliability, orderingChannel);
                 }
