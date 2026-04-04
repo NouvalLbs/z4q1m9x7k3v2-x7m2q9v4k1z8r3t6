@@ -13,6 +13,7 @@ using ProjectSMP.Features.Dynamic.DynamicPickups;
 using ProjectSMP.Features.Jobs.Core;
 using ProjectSMP.Features.Jobs.Core.DynamicJob;
 using ProjectSMP.Features.Jobs.Side.Forklifter;
+using ProjectSMP.Features.Jobs.Side.Sweeper;
 using ProjectSMP.Features.LevelSystem;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Features.ProgressBar;
@@ -145,6 +146,7 @@ namespace ProjectSMP
 
             // Initialize SideJobs - Forklifter
             ForklifterService.Initialize();
+            SweeperService.Initialize();
 
             // Initialize Dynamic Pickups
             PickupService.Initialize();
@@ -264,6 +266,7 @@ namespace ProjectSMP
             AskService.Dispose();
             ProgressBarService.Dispose();
             ForklifterService.Dispose();
+            SweeperService.Dispose();
             SideJobVehicleManager.Dispose();
             GeoLocationService.Dispose();
 

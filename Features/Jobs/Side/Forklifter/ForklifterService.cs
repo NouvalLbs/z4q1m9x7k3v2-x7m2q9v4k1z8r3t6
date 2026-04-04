@@ -111,6 +111,17 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
             SideJobVehicleManager.ScheduleRespawn(vehicle);
         }
 
+        public static void OnPlayerDisconnect(Player player)
+        {
+            if (!_sessions.TryGetValue(player.Id, out var session)) return;
+
+            _sessions.Remove(player.Id);
+            ClearCheckpoint(player.Id);
+
+            var v = BaseVehicle.Find(session.VehicleId) as Vehicle;
+            if (v != null) SideJobVehicleManager.ScheduleRespawn(v);
+        }
+
         public static void OnPlayerStateChanged(Player player, PlayerState newState, PlayerState oldState)
         {
             if (newState != PlayerState.Driving) return;
@@ -253,7 +264,7 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
                         var returnPos = returnVehicle?.SpawnPosition ?? new Vector3(2753.0f, -2380.0f, 13.4f);
                         SetCheckpoint(player.Id, returnPos, returnPos, CheckpointType.Finish);
                         player.SendClientMessage(Color.White,
-                            $"{Msg.Jobs} Semua box dipindahkan! Kembalikan Forklift ke {{FFFF00}}tempat parkir{{FFFFFF}}.");
+                            $"{Msg.Forklifter} Semua box dipindahkan! Kembalikan Forklift ke {{FFFF00}}tempat parkir{{FFFFFF}}.");
                         return;
                     }
 

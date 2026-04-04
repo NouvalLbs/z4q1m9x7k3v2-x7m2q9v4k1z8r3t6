@@ -20,6 +20,7 @@ using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.EnterExit;
 using ProjectSMP.Features.Jobs.Core.DynamicJob;
 using ProjectSMP.Features.Jobs.Side.Forklifter;
+using ProjectSMP.Features.Jobs.Side.Sweeper;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Features.ProgressBar;
 using ProjectSMP.Features.ProgressBar.Data;
@@ -75,6 +76,8 @@ namespace ProjectSMP
             _ = InventoryService.SaveAsync(this);
             ProgressBarService.OnPlayerDisconnect(this);
             SpeedometerService.OnPlayerDisconnect(this);
+            ForklifterService.OnPlayerDisconnect(this);
+            SweeperService.OnPlayerDisconnect(this);
             this.ClearPlayerData();
             base.OnDisconnected(e);
         }
@@ -221,6 +224,7 @@ namespace ProjectSMP
         {
             base.OnExitVehicle(e);
             ForklifterService.OnPlayerExitVehicle(this, e.Vehicle as Vehicle);
+            SweeperService.OnPlayerExitVehicle(this, e.Vehicle as Vehicle);
         }
 
         public override void OnKeyStateChanged(KeyStateChangedEventArgs e)
@@ -270,6 +274,7 @@ namespace ProjectSMP
             EngineService.OnPlayerStateChanged(this, e.NewState);
             SpeedometerService.OnPlayerStateChanged(this, e.NewState, e.OldState);
             ForklifterService.OnPlayerStateChanged(this, e.NewState, e.OldState);
+            SweeperService.OnPlayerStateChanged(this, e.NewState, e.OldState);
         }
     }
 }
