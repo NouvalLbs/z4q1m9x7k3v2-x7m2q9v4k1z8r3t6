@@ -1,5 +1,15 @@
 ﻿namespace ProjectSMP.Plugins.RakNet
 {
+    public enum EventType
+    {
+        IncomingPacket,
+        IncomingRPC,
+        OutgoingPacket,
+        OutgoingRPC,
+        IncomingCustomRPC,
+        NumberOfEventTypes
+    }
+
     public enum ValueType
     {
         Int8 = 0,
@@ -11,11 +21,23 @@
         Float,
         Bool,
         String,
-        IgnoreBits,
-        CVector,
-        CNetObjectPos,
+        CInt8,
+        CInt16,
+        CInt32,
+        CUInt8,
+        CUInt16,
+        CUInt32,
+        CFloat,
+        CBool,
+        CString,
+        Bits,
+        Float3,
+        Float4,
+        Vector,
+        NormQuat,
         String8,
-        String32
+        String32,
+        IgnoreBits
     }
 
     public enum PacketPriority

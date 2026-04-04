@@ -7,8 +7,9 @@ namespace ProjectSMP.Plugins.RakNet
     {
         public event EventHandler<RakNetEventArgs> OnIncomingPacket;
         public event EventHandler<RakNetEventArgs> OnIncomingRPC;
-        public event EventHandler<RakNetEventArgs> OnOutcomingPacket;
-        public event EventHandler<RakNetEventArgs> OnOutcomingRPC;
+        public event EventHandler<RakNetEventArgs> OnOutgoingPacket;
+        public event EventHandler<RakNetEventArgs> OnOutgoingRPC;
+        public event EventHandler<RakNetEventArgs> OnIncomingCustomRPC;
 
         public RakNetService()
         {
@@ -31,19 +32,27 @@ namespace ProjectSMP.Plugins.RakNet
             return !args.PreventDefault;
         }
 
-        [Callback("OnOutcomingPacket")]
-        public bool InternalOnOutcomingPacket(int playerid, int packetid, int bsId)
+        [Callback("OnOutgoingPacket")]
+        public bool InternalOnOutgoingPacket(int playerid, int packetid, int bsId)
         {
             var args = new RakNetEventArgs(playerid, packetid, new BitStream(bsId, false));
-            OnOutcomingPacket?.Invoke(this, args);
+            OnOutgoingPacket?.Invoke(this, args);
             return !args.PreventDefault;
         }
 
-        [Callback("OnOutcomingRPC")]
-        public bool InternalOnOutcomingRPC(int playerid, int rpcid, int bsId)
+        [Callback("OnOutgoingRPC")]
+        public bool InternalOnOutgoingRPC(int playerid, int rpcid, int bsId)
         {
             var args = new RakNetEventArgs(playerid, rpcid, new BitStream(bsId, false));
-            OnOutcomingRPC?.Invoke(this, args);
+            OnOutgoingRPC?.Invoke(this, args);
+            return !args.PreventDefault;
+        }
+
+        [Callback("OnIncomingCustomRPC")]
+        public bool InternalOnIncomingCustomRPC(int playerid, int rpcid, int bsId)
+        {
+            var args = new RakNetEventArgs(playerid, rpcid, new BitStream(bsId, false));
+            OnIncomingCustomRPC?.Invoke(this, args);
             return !args.PreventDefault;
         }
     }
