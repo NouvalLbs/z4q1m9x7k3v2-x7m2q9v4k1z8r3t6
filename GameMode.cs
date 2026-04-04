@@ -23,6 +23,7 @@ using ProjectSMP.Plugins.CEF;
 using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.GPS.WazeGPS;
+using ProjectSMP.Plugins.RakNet;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.Core.Callbacks;
@@ -39,10 +40,12 @@ namespace ProjectSMP
     public class GameMode : BaseMode
     {
         private AnticheatPlugin _anticheat = null!;
+        private RakNetService _rakNetService;
 
         protected override void OnInitialized(EventArgs e)
         {
             base.OnInitialized(e);
+            _rakNetService = new RakNetService();
 
             CefService.OnInitialized += (playerId, success) =>
             {
