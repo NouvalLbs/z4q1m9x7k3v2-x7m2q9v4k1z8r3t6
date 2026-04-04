@@ -22,6 +22,7 @@ using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.CEF;
 using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.GarageBlocker;
+using ProjectSMP.Plugins.GPS.WazeGPS;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.Core.Callbacks;
@@ -116,6 +117,9 @@ namespace ProjectSMP
             RealtimeClockService.Init();
             RealtimeClockService.SetInterval(10000, restartTimer: false);
             RealtimeClockService.Sync(serverTime: true);
+
+            // Initialize WazeGPS
+            WazeGPSService.Initialize();
 
             // Initialize Needs Service
             NeedsService.Initialize();
@@ -269,6 +273,7 @@ namespace ProjectSMP
             SweeperService.Dispose();
             SideJobVehicleManager.Dispose();
             GeoLocationService.Dispose();
+            WazeGPSService.Dispose();
 
             try
             {

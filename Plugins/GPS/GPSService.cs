@@ -1,4 +1,5 @@
-﻿using SampSharp.GameMode;
+﻿#nullable enable
+using SampSharp.GameMode;
 using System;
 using System.Collections.Generic;
 

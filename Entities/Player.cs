@@ -25,6 +25,7 @@ using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Features.ProgressBar;
 using ProjectSMP.Features.ProgressBar.Data;
 using ProjectSMP.Plugins.EVF2;
+using ProjectSMP.Plugins.GPS.WazeGPS;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
@@ -78,6 +79,7 @@ namespace ProjectSMP
             SpeedometerService.OnPlayerDisconnect(this);
             ForklifterService.OnPlayerDisconnect(this);
             SweeperService.OnPlayerDisconnect(this);
+            WazeGPSService.OnPlayerDisconnect(this);
             this.ClearPlayerData();
             base.OnDisconnected(e);
         }
