@@ -191,11 +191,11 @@ namespace ProjectSMP.Core.Discords
                     "Reverification Successful!",
                     $"You have been granted the **{role.Name}** role.\nYour UCP: **{ucpData.ucp}**"), ephemeral: true);
 
-                Console.WriteLine($"[Discord] Reverif: {user.Username} ({user.Id}) -> UCP: {ucpData.ucp}");
+                Console.WriteLine($"[+] Discord - Reverif: {user.Username} ({user.Id}) -> UCP: {ucpData.ucp}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Discord] Reverif error: {ex.Message}");
+                Console.WriteLine($"[+] Discord - Reverif error: {ex.Message}");
                 await RespondAsync(embed: DiscordEmbeds.BuildError(
                     "Permission Error",
                     "Bot doesn't have permission to assign roles. Please contact server administrator."), ephemeral: true);

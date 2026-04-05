@@ -24,12 +24,14 @@ namespace ProjectSMP.Core.Discords
             _config = await LoadOrCreateConfig();
             if (string.IsNullOrEmpty(_config.Token))
             {
-                Console.WriteLine("[Discord] Token not configured in DiscordConfig.json");
+                Console.WriteLine("[+] Discord - Token not configured in DiscordConfig.json");
                 return;
             }
 
-            var config = new DiscordSocketConfig {
-                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMembers, AlwaysDownloadUsers = true
+            var config = new DiscordSocketConfig
+            {
+                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMembers,
+                AlwaysDownloadUsers = true
             };
 
             _client = new DiscordSocketClient(config);
@@ -49,7 +51,7 @@ namespace ProjectSMP.Core.Discords
             _responseTimer.Tick += ProcessResponses;
 
             _isRunning = true;
-            Console.WriteLine("[Discord] Service initialized");
+            Console.WriteLine("[+] Discord - Service initialized");
         }
 
         public static async Task ShutdownAsync()
@@ -64,12 +66,12 @@ namespace ProjectSMP.Core.Discords
                 _client.Dispose();
             }
 
-            Console.WriteLine("[Discord] Service stopped");
+            Console.WriteLine("[+] Discord - Service stopped");
         }
 
         private static Task Log(LogMessage msg)
         {
-            Console.WriteLine($"[Discord] {msg}");
+            Console.WriteLine($"[+] Discord - {msg}");
             return Task.CompletedTask;
         }
 
@@ -78,14 +80,14 @@ namespace ProjectSMP.Core.Discords
             try
             {
                 await _interactions.RegisterCommandsToGuildAsync(_config.GuildId);
-                Console.WriteLine($"[Discord] Bot ready! Logged in as {_client.CurrentUser.Username}");
+                Console.WriteLine($"[+] Discord - Bot ready! Logged in as {_client.CurrentUser.Username}");
 
                 if (_config.AutoCreateUcpPanel)
                     await EnsureUcpPanel();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Discord] Error on ready: {ex.Message}");
+                Console.WriteLine($"[+] Discord - Error on ready: {ex.Message}");
             }
         }
 
@@ -98,7 +100,7 @@ namespace ProjectSMP.Core.Discords
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Discord] Error handling interaction: {ex.Message}");
+                Console.WriteLine($"[+] Discord - Error handling interaction: {ex.Message}");
 
                 if (interaction.Type == InteractionType.ApplicationCommand)
                     await interaction.RespondAsync($"Error: {ex.Message}", ephemeral: true);
@@ -125,7 +127,7 @@ namespace ProjectSMP.Core.Discords
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Discord] Error processing responses: {ex.Message}");
+                Console.WriteLine($"[+] Discord - Error processing responses: {ex.Message}");
             }
         }
 
@@ -152,7 +154,7 @@ namespace ProjectSMP.Core.Discords
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Discord] Error sending response to {response.UserId}: {ex.Message}");
+                Console.WriteLine($"[+] Discord - Error sending response to {response.UserId}: {ex.Message}");
             }
         }
 
@@ -170,7 +172,7 @@ namespace ProjectSMP.Core.Discords
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Discord] Error sending DM: {ex.Message}");
+                Console.WriteLine($"[+] Discord - Error sending DM: {ex.Message}");
             }
         }
 
@@ -180,14 +182,14 @@ namespace ProjectSMP.Core.Discords
             {
                 if (_config.UcpPanelChannelId == 0)
                 {
-                    Console.WriteLine("[Discord] UCP Panel channel ID not configured");
+                    Console.WriteLine("[+] Discord - UCP Panel channel ID not configured");
                     return;
                 }
 
                 var channel = await _client.GetChannelAsync(_config.UcpPanelChannelId) as ITextChannel;
                 if (channel == null)
                 {
-                    Console.WriteLine($"[Discord] UCP Panel channel {_config.UcpPanelChannelId} not found");
+                    Console.WriteLine($"[+] Discord - UCP Panel channel {_config.UcpPanelChannelId} not found");
                     return;
                 }
 
@@ -198,13 +200,13 @@ namespace ProjectSMP.Core.Discords
                         var existingMsg = await channel.GetMessageAsync(_config.UcpPanelMessageId);
                         if (existingMsg != null)
                         {
-                            Console.WriteLine($"[Discord] UCP Panel already exists (Message ID: {_config.UcpPanelMessageId})");
+                            Console.WriteLine($"[+] Discord - UCP Panel already exists (Message ID: {_config.UcpPanelMessageId})");
                             return;
                         }
                     }
                     catch
                     {
-                        Console.WriteLine("[Discord] Previous UCP Panel message not found, creating new one");
+                        Console.WriteLine("[+] Discord - Previous UCP Panel message not found, creating new one");
                     }
                 }
 
@@ -221,11 +223,11 @@ namespace ProjectSMP.Core.Discords
                 _config.UcpPanelMessageId = message.Id;
                 await SaveConfig();
 
-                Console.WriteLine($"[Discord] UCP Panel created (Message ID: {message.Id})");
+                Console.WriteLine($"[+] Discord - UCP Panel created (Message ID: {message.Id})");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Discord] Error ensuring UCP panel: {ex.Message}");
+                Console.WriteLine($"[+] Discord - Error ensuring UCP panel: {ex.Message}");
             }
         }
 
@@ -252,8 +254,8 @@ namespace ProjectSMP.Core.Discords
                     var json = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true });
                     await File.WriteAllTextAsync(ConfigPath, json);
 
-                    Console.WriteLine($"[Discord] Created default config at {ConfigPath}");
-                    Console.WriteLine("[Discord] Please configure Token, GuildId, and UcpPanelChannelId");
+                    Console.WriteLine($"[+] Discord - Created default config at {ConfigPath}");
+                    Console.WriteLine("[+] Discord - Please configure Token, GuildId, and UcpPanelChannelId");
 
                     return defaultConfig;
                 }
@@ -263,7 +265,7 @@ namespace ProjectSMP.Core.Discords
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Discord] Error loading config: {ex.Message}");
+                Console.WriteLine($"[+] Discord - Error loading config: {ex.Message}");
                 return new DiscordConfigs();
             }
         }
@@ -277,11 +279,12 @@ namespace ProjectSMP.Core.Discords
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Discord] Error saving config: {ex.Message}");
+                Console.WriteLine($"[+] Discord - Error saving config: {ex.Message}");
             }
         }
 
-        public static DiscordConfigs GetConfig() {
+        public static DiscordConfigs GetConfig()
+        {
             return _config;
         }
 

@@ -1,5 +1,6 @@
 ﻿using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Plugins.CEF;
+using ProjectSMP.Plugins.EVF2;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.Display;
@@ -152,10 +153,11 @@ namespace ProjectSMP.Entities.Vehicles.Speedo
                     : angle < 292.5f ? "W"
                     : "NW";
 
-                var vehicle = veh as Vehicle;
-                var fuelPct = vehicle != null && vehicle.MaxFuel > 0
-                    ? (int)(vehicle.Fuel / vehicle.MaxFuel * 100)
-                    : 0;
+                // FIX: Gunakan EVF fuel system
+                int evfFuel = EVFService.GetFuel(veh.Id);
+                int fuelPct = EVFService.IsFuelEnabled(veh.Id)
+                    ? (int)((evfFuel / (float)EVFConstants.MaxVehicleFuel) * 100)
+                    : 100;
 
                 CefService.EmitEvent(p.Id, "updateSpeedo", new
                 {

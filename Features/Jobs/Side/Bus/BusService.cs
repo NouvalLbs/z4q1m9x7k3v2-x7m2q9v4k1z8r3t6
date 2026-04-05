@@ -195,7 +195,7 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
             if (!_sessions.TryGetValue(player.Id, out var session)) return;
 
             CancelJob(player, session);
-            player.SendClientMessage(Color.White, $"{Msg.Jobs} Pekerjaan Bus dibatalkan karena keluar dari kendaraan.");
+            player.SendClientMessage(Color.White, $"{Msg.Bus} Pekerjaan Bus dibatalkan karena keluar dari kendaraan.");
             SideJobVehicleManager.ScheduleRespawn(vehicle);
         }
 
@@ -254,7 +254,7 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
                     {
                         var rem = DelayService.GetJobDelay(player, "bus");
                         player.SendClientMessage(Color.White,
-                            $"{Msg.Jobs} Kamu harus menunggu {{FF6347}}{rem} menit{{FFFFFF}} sebelum bekerja sebagai Bus Driver lagi.");
+                            $"{Msg.Bus} Kamu harus menunggu {{FF6347}}{rem} menit{{FFFFFF}} sebelum bekerja sebagai Bus Driver lagi.");
                         if (v != null) SideJobVehicleManager.EjectAndScheduleRespawn(player, v);
                         return;
                     }
@@ -292,7 +292,7 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
 
                     if (_activeRoutes.Contains(route))
                     {
-                        player.SendClientMessage(Color.White, $"{Msg.Jobs} Rute ini sedang digunakan oleh orang lain!");
+                        player.SendClientMessage(Color.White, $"{Msg.Bus} Rute ini sedang digunakan oleh orang lain!");
                         ShowRouteDialog(player);
                         return;
                     }
@@ -334,7 +334,7 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
 
             SetCheckpoint(player, session);
             player.SendClientMessage(Color.White,
-                $"{Msg.Jobs} Rute {{FFFF00}}{RouteLabels[(int)route]}{{FFFFFF}} dimulai! Ikuti checkpoint di minimap.");
+                $"{Msg.Bus} Rute {{FFFF00}}{RouteLabels[(int)route]}{{FFFFFF}} dimulai! Ikuti checkpoint di minimap.");
         }
 
         private static void Process(Player player, BusSession session)
@@ -426,7 +426,7 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
             PaycheckService.GivePaycheck(player, salary, "Sidejob(Bus)");
 
             player.SendClientMessage(Color.White,
-                $"{Msg.Jobs} Rute selesai! Paycheck {{00FF00}}{Utilities.GroupDigits(salary)}{{FFFFFF}} ditambahkan. " +
+                $"{Msg.Bus} Rute selesai! Paycheck {{00FF00}}{Utilities.GroupDigits(salary)}{{FFFFFF}} ditambahkan. " +
                 $"Delay {{FF6347}}{DelayMinutes} menit{{FFFFFF}} dimulai.");
 
             var v = BaseVehicle.Find(session.VehicleId) as Vehicle;

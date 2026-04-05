@@ -74,7 +74,7 @@ namespace ProjectSMP
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[Discord] Init failed: {ex.Message}");
+                    Console.WriteLine($"[+] Discord - Init failed: {ex.Message}");
                 }
             });
 
@@ -289,7 +289,7 @@ namespace ProjectSMP
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Discord] Shutdown error: {ex.Message}");
+                Console.WriteLine($"[+] Discord - Shutdown error: {ex.Message}");
             }
 
             base.OnExited(e);

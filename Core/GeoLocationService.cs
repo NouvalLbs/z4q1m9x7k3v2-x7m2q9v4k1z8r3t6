@@ -16,16 +16,16 @@ namespace ProjectSMP.Core
             {
                 if (!File.Exists(DatabasePath))
                 {
-                    Console.WriteLine($"[GeoLocation] Database not found: {DatabasePath}");
+                    Console.WriteLine($"[+] GeoLocation - Database not found: {DatabasePath}");
                     return;
                 }
 
                 _reader = new DatabaseReader(DatabasePath);
-                Console.WriteLine("[GeoLocation] Database loaded successfully");
+                Console.WriteLine("[+] GeoLocation - Database loaded successfully");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[GeoLocation] Failed to load database: {ex.Message}");
+                Console.WriteLine($"[+] GeoLocation - Failed to load database: {ex.Message}");
             }
         }
 
@@ -47,7 +47,7 @@ namespace ProjectSMP.Core
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[GeoLocation] Error getting location for {ipAddress}: {ex.Message}");
+                Console.WriteLine($"[+] GeoLocation - Error getting location for {ipAddress}: {ex.Message}");
                 return ("Unknown", "Unknown");
             }
         }
@@ -55,7 +55,7 @@ namespace ProjectSMP.Core
         public static void Dispose()
         {
             _reader?.Dispose();
-            Console.WriteLine("[GeoLocation] Service disposed");
+            Console.WriteLine("[+] GeoLocation - Service disposed");
         }
     }
 }

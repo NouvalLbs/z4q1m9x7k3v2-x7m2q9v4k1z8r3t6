@@ -1,9 +1,10 @@
 using ProjectSMP.Core;
 using ProjectSMP.Entities.Players.Account;
 using ProjectSMP.Entities.Players.Needs;
+using ProjectSMP.Entities.Vehicles.Speedo;
+using ProjectSMP.Plugins.CEF;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.Streamer;
-using ProjectSMP.Plugins.CEF;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
 using System.Collections.Generic;
@@ -195,6 +196,13 @@ namespace ProjectSMP.Entities.Players.Settings
                         {
                             player.Settings.HBEMode = 0;
                             NeedsHudManager.Cleanup(player);
+
+                            if (player.State == PlayerState.Driving)
+                            {
+                                SpeedometerService.OnPlayerDisconnect(player);
+                                CefService.EmitEvent(player.Id, "setInVehicle", new { value = true });
+                            }
+
                             NeedsService.SendHudDataToCef(player);
                             CefService.EmitEvent(player.Id, "setHudVisible", new { visible = true });
                             player.SendClientMessage(Color.White, $"{Msg.Settings} HBE Mode changed to CEF Modern");
@@ -210,6 +218,13 @@ namespace ProjectSMP.Entities.Players.Settings
                         {
                             player.Settings.HBEMode = 1;
                             CefService.EmitEvent(player.Id, "setHudVisible", new { visible = false });
+
+                            if (player.State == PlayerState.Driving)
+                            {
+                                CefService.EmitEvent(player.Id, "setInVehicle", new { value = false });
+                                SpeedometerService.OnPlayerStateChanged(player, PlayerState.Driving, PlayerState.OnFoot);
+                            }
+
                             NeedsHudManager.Initialize(player);
                             player.SendClientMessage(Color.White, $"{Msg.Settings} HBE Mode changed to TextDraw Modern");
                         }

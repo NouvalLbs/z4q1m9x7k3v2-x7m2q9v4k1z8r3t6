@@ -71,7 +71,7 @@ namespace ProjectSMP.Core.Discords
                     "Registration Successful!",
                     $"Your UCP **{ucpName}** has been created.\nCheck your DM for the verification PIN!"), ephemeral: true);
 
-                Console.WriteLine($"[Discord] New UCP registered: {ucpName} (Discord: {user.Id})");
+                Console.WriteLine($"[+] Discord - New UCP registered: {ucpName} (Discord: {user.Id})");
             }
             catch
             {
@@ -155,7 +155,7 @@ namespace ProjectSMP.Core.Discords
                     "Password Changed!",
                     $"Your password for **{ucpData.ucp}** has been updated successfully.\nCheck your DM for details."), ephemeral: true);
 
-                Console.WriteLine($"[Discord] Password changed: {ucpData.ucp} (Discord: {user.Id})");
+                Console.WriteLine($"[+] Discord - Password changed: {ucpData.ucp} (Discord: {user.Id})");
             }
             catch
             {
