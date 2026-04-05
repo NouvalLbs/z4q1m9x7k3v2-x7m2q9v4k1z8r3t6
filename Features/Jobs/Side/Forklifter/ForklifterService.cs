@@ -75,6 +75,7 @@ namespace ProjectSMP.Features.Jobs.Side.Forklifter
                 var v = Vehicle.CreateVehicle((VehicleModelType)530, new Vector3(x, y, z), a, -1, -1, 60);
                 v.VehicleType = VehicleType.Job;
                 _vehicleIds.Add(v.Id);
+                SideJobVehicleManager.RegisterVehicle(v.Id, (VehicleModelType)530, new Vector3(x, y, z), a, -1, -1);
             }
 
             _pollTimer = new Timer(500, true);

@@ -104,7 +104,6 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
                 new Vector3(981.2806f, -1782.4598f, 14.1825f),
                 new Vector3(878.5309f, -1767.7321f, 13.4767f),
                 new Vector3(641.0339f, -1622.0313f, 15.3255f),
-                new Vector3(640.3440f, -1345.6141f, 13.4773f),
                 new Vector3(640.0079f, -1345.6520f, 13.4927f),
                 new Vector3(653.9548f, -1205.6824f, 18.2400f),
                 new Vector3(853.4523f, -1026.4595f, 27.3663f),
@@ -126,7 +125,7 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
         {
             new[] { false, false, true, false, false, true, false, false, true, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false },
             new[] { false, false, false, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false, false },
-            new[] { false, false, false, true, false, false, false, true, false, false, true, false, false, true, false, false, true, false, false, false, false, false, false, false }
+            new[] { false, false, false, true, false, false, false, true, false, true, false, false, true, false, false, true, false, false, false, false, false, false, false }
         };
 
         private static readonly int[] Salaries = { 15000, 20000, 25000 };
@@ -139,10 +138,22 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
         };
 
         private const string BriefingText =
-            "{FFFFFF}Kamu bekerja sebagai pengemudi bus kota yang bertanggung jawab mengantar penumpang menuju tujuan mereka dengan aman dan sesuai rute perjalanan.\n\n" +
-            "Untuk memulai pekerjaan, datangi area kendaraan Bus yang tersedia lalu masuk ke dalam kendaraan tersebut. Setelah itu, pilih rute perjalanan yang ingin kamu jalankan berdasarkan pilihan yang muncul di layar. Jika semua rute sedang digunakan, silakan menunggu hingga rute berikutnya tersedia.\n\n" +
-            "Sistem akan memandu perjalanan kamu melalui sejumlah titik pemberhentian yang harus dilalui, termasuk area penjemputan dan pemberhentian penumpang sesuai jalur yang dipilih. Ikuti setiap titik hingga perjalanan selesai.\n\n" +
-            "Setelah seluruh rute berhasil diselesaikan, pembayaran akan langsung diberikan secara otomatis. Kamu dapat melihat total penghasilan menggunakan perintah {FFFF00}/salary{FFFFFF}.";
+            "{FFFFFF}Kamu bekerja sebagai pengemudi bus kota yang bertanggung jawab " +
+            "mengantar penumpang menuju tujuan mereka dengan aman dan sesuai rute.\n\n" +
+
+            "Untuk memulai pekerjaan, datangi area kendaraan Bus yang tersedia lalu " +
+            "masuk ke dalam kendaraan tersebut.\n" +
+            "Setelah itu, pilih rute perjalanan yang ingin kamu jalankan berdasarkan " +
+            "pilihan yang muncul di layar.\n\n" +
+
+            "Sistem akan memandu perjalanan melalui sejumlah titik pemberhentian, " +
+            "termasuk area penjemputan dan penurunan penumpang sesuai jalur yang dipilih.\n" +
+            "Ikuti setiap titik hingga perjalanan selesai.\n\n" +
+
+            "Setelah seluruh rute berhasil diselesaikan, pembayaran akan diberikan " +
+            "secara otomatis.\n" +
+            "Kamu dapat melihat total penghasilan menggunakan perintah " +
+            "{FFFF00}/salary{FFFFFF}.";
 
         public static void Initialize()
         {
@@ -151,6 +162,7 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
                 var v = Vehicle.CreateVehicle((VehicleModelType)431, new Vector3(x, y, z), a, -1, -1, 60);
                 v.VehicleType = VehicleType.Job;
                 _vehicleIds.Add(v.Id);
+                SideJobVehicleManager.RegisterVehicle(v.Id, (VehicleModelType)431, new Vector3(x, y, z), a, -1, -1);
             }
 
             _pollTimer = new Timer(500, true);
@@ -380,10 +392,14 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
         private static void SetCheckpoint(Player player, BusSession session)
         {
             var pts = Routes[(int)session.Route];
+            var stops = StopCheckpoints[(int)session.Route];
             var idx = session.CheckpointIndex;
             var pos = pts[idx];
             var next = idx + 1 < pts.Length ? pts[idx + 1] : pos;
-            var type = idx == pts.Length - 1 ? CheckpointType.Finish : CheckpointType.Normal;
+
+            var isLastCheckpoint = idx == pts.Length - 1;
+            var isStopPoint = idx < stops.Length && stops[idx];
+            var type = (isLastCheckpoint || isStopPoint) ? CheckpointType.Finish : CheckpointType.Normal;
 
             ClearCheckpoint(player.Id);
             _checkpoints[player.Id] = new DynamicRaceCheckpoint(type, pos, next, CpSize, -1, -1, player, 1500.0f);
