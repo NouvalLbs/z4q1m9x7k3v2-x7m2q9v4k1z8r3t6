@@ -281,5 +281,11 @@ namespace ProjectSMP
             SweeperService.OnPlayerStateChanged(this, e.NewState, e.OldState);
             BusService.OnPlayerStateChanged(this, e.NewState, e.OldState);
         }
+
+        public override void OnClickMap(PositionEventArgs e)
+        {
+            base.OnClickMap(e);
+            WaypointTeleportService.HandleWaypoint(this, e.Position);
+        }
     }
 }

@@ -27,8 +27,6 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
         private static readonly Dictionary<int, BusSession> _sessions = new();
         private static readonly HashSet<BusRoute> _activeRoutes = new();
         private static readonly Dictionary<int, DynamicRaceCheckpoint> _checkpoints = new();
-        private static readonly Dictionary<int, Vector3> _cpPositions = new();
-        private static Timer? _pollTimer;
 
         private static readonly (float X, float Y, float Z, float A)[] Spawns =
         {
@@ -164,17 +162,12 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
                 _vehicleIds.Add(v.Id);
                 SideJobVehicleManager.RegisterVehicle(v.Id, (VehicleModelType)431, new Vector3(x, y, z), a, -1, -1);
             }
-
-            _pollTimer = new Timer(500, true);
-            _pollTimer.Tick += OnTick;
         }
 
         public static void Dispose()
         {
-            _pollTimer?.Dispose();
             foreach (var cp in _checkpoints.Values) cp.Dispose();
             _checkpoints.Clear();
-            _cpPositions.Clear();
         }
 
         public static void OnPlayerEnterVehicle(Player player, Vehicle? vehicle, bool isPassenger)
@@ -219,22 +212,6 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
             if (!player.IsCharLoaded || _sessions.ContainsKey(player.Id)) return;
             if (SideJobVehicleManager.IsPendingRespawn(vehicle.Id)) return;
             ShowStartDialog(player);
-        }
-
-        private static void OnTick(object? sender, EventArgs e)
-        {
-            foreach (var (id, session) in new Dictionary<int, BusSession>(_sessions))
-            {
-                var player = BasePlayer.Find(id) as Player;
-                if (player == null || !player.IsConnected || !player.IsCharLoaded)
-                {
-                    _activeRoutes.Remove(session.Route);
-                    _sessions.Remove(id);
-                    ClearCheckpoint(id);
-                    continue;
-                }
-                Process(player, session);
-            }
         }
 
         private static void ShowStartDialog(Player player)
@@ -337,83 +314,80 @@ namespace ProjectSMP.Features.Jobs.Side.Bus
                 $"{Msg.Bus} Rute {{FFFF00}}{RouteLabels[(int)route]}{{FFFFFF}} dimulai! Ikuti checkpoint di minimap.");
         }
 
-        private static void Process(Player player, BusSession session)
-        {
-            switch (session.Phase)
-            {
-                case BusPhase.Driving:
-                    if (!IsInCheckpoint(player)) return;
-
-                    var pts = Routes[(int)session.Route];
-                    var stops = StopCheckpoints[(int)session.Route];
-                    var isStopPoint = session.CheckpointIndex < stops.Length && stops[session.CheckpointIndex];
-
-                    if (isStopPoint)
-                    {
-                        ClearCheckpoint(player.Id);
-                        session.Phase = BusPhase.Waiting;
-                        player.ToggleControllable(false);
-                        ProgressBarService.StartProgress(player, StopWaitDuration, "PLEASE_WAIT");
-                        return;
-                    }
-
-                    session.CheckpointIndex++;
-
-                    if (session.CheckpointIndex >= pts.Length)
-                    {
-                        ClearCheckpoint(player.Id);
-                        FinalizeJob(player, session);
-                        return;
-                    }
-
-                    SetCheckpoint(player, session);
-                    break;
-
-                case BusPhase.Waiting:
-                    if (player.ProgressBarData.IsActive) return;
-
-                    player.ToggleControllable(true);
-                    session.Phase = BusPhase.Driving;
-                    session.CheckpointIndex++;
-
-                    var pts2 = Routes[(int)session.Route];
-                    if (session.CheckpointIndex >= pts2.Length)
-                    {
-                        ClearCheckpoint(player.Id);
-                        FinalizeJob(player, session);
-                        return;
-                    }
-
-                    SetCheckpoint(player, session);
-                    break;
-            }
-        }
-
         private static void SetCheckpoint(Player player, BusSession session)
         {
+            ClearCheckpoint(player.Id);
+
             var pts = Routes[(int)session.Route];
             var stops = StopCheckpoints[(int)session.Route];
             var idx = session.CheckpointIndex;
             var pos = pts[idx];
             var next = idx + 1 < pts.Length ? pts[idx + 1] : pos;
 
-            var isLastCheckpoint = idx == pts.Length - 1;
-            var isStopPoint = idx < stops.Length && stops[idx];
-            var type = (isLastCheckpoint || isStopPoint) ? CheckpointType.Finish : CheckpointType.Normal;
+            var isStop = idx < stops.Length && stops[idx];
+            var isLast = idx == pts.Length - 1;
+            var type = (isLast || isStop) ? CheckpointType.Finish : CheckpointType.Normal;
 
-            ClearCheckpoint(player.Id);
-            _checkpoints[player.Id] = new DynamicRaceCheckpoint(type, pos, next, CpSize, -1, -1, player, 1500.0f);
-            _cpPositions[player.Id] = pos;
+            var cp = new DynamicRaceCheckpoint(type, pos, next, CpSize, -1, -1, player, 1500.0f);
+            cp.Enter += (s, e) =>
+            {
+                if (e.Player != player || !_sessions.TryGetValue(player.Id, out var sess)) return;
+                if (sess.Phase != BusPhase.Driving) return;
+
+                var curStops = StopCheckpoints[(int)sess.Route];
+                var curIdx = sess.CheckpointIndex;
+                var isStopPoint = curIdx < curStops.Length && curStops[curIdx];
+
+                if (isStopPoint)
+                {
+                    ClearCheckpoint(player.Id);
+                    sess.Phase = BusPhase.Waiting;
+                    player.ToggleControllable(false);
+                    ProgressBarService.StartProgress(player, StopWaitDuration, "PLEASE_WAIT");
+
+                    var waitTimer = new Timer(StopWaitDuration * 1000, false);
+                    waitTimer.Tick += (ws, we) =>
+                    {
+                        waitTimer.Dispose();
+                        if (!player.IsConnected || !_sessions.TryGetValue(player.Id, out var s2)) return;
+
+                        player.ToggleControllable(true);
+                        s2.Phase = BusPhase.Driving;
+                        s2.CheckpointIndex++;
+
+                        var pts2 = Routes[(int)s2.Route];
+                        if (s2.CheckpointIndex >= pts2.Length)
+                        {
+                            FinalizeJob(player, s2);
+                            return;
+                        }
+
+                        SetCheckpoint(player, s2);
+                    };
+                }
+                else
+                {
+                    sess.CheckpointIndex++;
+                    var pts2 = Routes[(int)sess.Route];
+
+                    if (sess.CheckpointIndex >= pts2.Length)
+                    {
+                        ClearCheckpoint(player.Id);
+                        FinalizeJob(player, sess);
+                        return;
+                    }
+
+                    SetCheckpoint(player, sess);
+                }
+            };
+
+            _checkpoints[player.Id] = cp;
         }
 
         private static void ClearCheckpoint(int pid)
         {
             if (_checkpoints.TryGetValue(pid, out var cp)) { cp.Dispose(); _checkpoints.Remove(pid); }
-            _cpPositions.Remove(pid);
         }
-
-        private static bool IsInCheckpoint(Player player) =>
-            _cpPositions.TryGetValue(player.Id, out var pos) && player.Position.DistanceTo(pos) <= CpRadius;
 
         private static void FinalizeJob(Player player, BusSession session)
         {

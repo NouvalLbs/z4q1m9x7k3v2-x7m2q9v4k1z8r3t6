@@ -25,8 +25,6 @@ namespace ProjectSMP.Features.Jobs.Side.Sweeper
         private static readonly Dictionary<int, SweeperSession> _sessions = new();
         private static readonly HashSet<SweeperRoute> _activeRoutes = new();
         private static readonly Dictionary<int, DynamicRaceCheckpoint> _checkpoints = new();
-        private static readonly Dictionary<int, Vector3> _cpPositions = new();
-        private static Timer? _pollTimer;
 
         private static readonly (float X, float Y, float Z, float A)[] Spawns =
         {
@@ -120,17 +118,12 @@ namespace ProjectSMP.Features.Jobs.Side.Sweeper
                 _vehicleIds.Add(v.Id);
                 SideJobVehicleManager.RegisterVehicle(v.Id, (VehicleModelType)574, new Vector3(x, y, z), a, -1, -1);
             }
-
-            _pollTimer = new Timer(500, true);
-            _pollTimer.Tick += OnTick;
         }
 
         public static void Dispose()
         {
-            _pollTimer?.Dispose();
             foreach (var cp in _checkpoints.Values) cp.Dispose();
             _checkpoints.Clear();
-            _cpPositions.Clear();
         }
 
         public static void OnPlayerEnterVehicle(Player player, Vehicle? vehicle, bool isPassenger)
@@ -175,22 +168,6 @@ namespace ProjectSMP.Features.Jobs.Side.Sweeper
             if (!player.IsCharLoaded || _sessions.ContainsKey(player.Id)) return;
             if (SideJobVehicleManager.IsPendingRespawn(vehicle.Id)) return;
             ShowStartDialog(player);
-        }
-
-        private static void OnTick(object? sender, EventArgs e)
-        {
-            foreach (var (id, session) in new Dictionary<int, SweeperSession>(_sessions))
-            {
-                var player = BasePlayer.Find(id) as Player;
-                if (player == null || !player.IsConnected || !player.IsCharLoaded)
-                {
-                    _activeRoutes.Remove(session.Route);
-                    _sessions.Remove(id);
-                    ClearCheckpoint(id);
-                    continue;
-                }
-                Process(player, session);
-            }
         }
 
         private static void ShowStartDialog(Player player)
@@ -289,8 +266,6 @@ namespace ProjectSMP.Features.Jobs.Side.Sweeper
 
         private static void Process(Player player, SweeperSession session)
         {
-            if (!IsInCheckpoint(player)) return;
-
             var pts = Routes[(int)session.Route];
             session.CheckpointIndex++;
 
@@ -306,25 +281,28 @@ namespace ProjectSMP.Features.Jobs.Side.Sweeper
 
         private static void SetCheckpoint(Player player, SweeperSession session)
         {
+            ClearCheckpoint(player.Id);
+
             var pts = Routes[(int)session.Route];
             var idx = session.CheckpointIndex;
             var pos = pts[idx];
             var next = idx + 1 < pts.Length ? pts[idx + 1] : pos;
             var type = idx == pts.Length - 1 ? CheckpointType.Finish : CheckpointType.Normal;
 
-            ClearCheckpoint(player.Id);
-            _checkpoints[player.Id] = new DynamicRaceCheckpoint(type, pos, next, CpSize, -1, -1, player, 1500.0f);
-            _cpPositions[player.Id] = pos;
+            var cp = new DynamicRaceCheckpoint(type, pos, next, CpSize, -1, -1, player, 1500.0f);
+            cp.Enter += (s, e) =>
+            {
+                if (e.Player != player || !_sessions.TryGetValue(player.Id, out var sess)) return;
+                Process(player, sess);
+            };
+
+            _checkpoints[player.Id] = cp;
         }
 
         private static void ClearCheckpoint(int pid)
         {
             if (_checkpoints.TryGetValue(pid, out var cp)) { cp.Dispose(); _checkpoints.Remove(pid); }
-            _cpPositions.Remove(pid);
         }
-
-        private static bool IsInCheckpoint(Player player) =>
-            _cpPositions.TryGetValue(player.Id, out var pos) && player.Position.DistanceTo(pos) <= CpRadius;
 
         private static void FinalizeJob(Player player, SweeperSession session)
         {

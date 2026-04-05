@@ -1,8 +1,10 @@
 ﻿#nullable enable
-using System;
 using ProjectSMP.Core;
+using ProjectSMP.Features.Chat;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
+using System;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ProjectSMP.Entities.Vehicles.Engine
 {
@@ -30,7 +32,7 @@ namespace ProjectSMP.Entities.Vehicles.Engine
             if (newState)
             {
                 var name = Utilities.ReturnName(player);
-                player.SendClientMessage(Color.White, $"{{D0AEEB}}** {name} mencoba menghidupkan mesin kendaraan.");
+                ChatService.ProcessActionText(player, $"{name} mencoba menghidupkan mesin kendaraan.", ActionType.Me, ChatDistance.Normal);
 
                 var delay = _rng.Next(2000, 4001);
                 var t = new Timer(delay, false);
