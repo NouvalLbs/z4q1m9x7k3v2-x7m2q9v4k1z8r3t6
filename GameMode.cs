@@ -13,6 +13,7 @@ using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.Dynamic.DynamicPickups;
 using ProjectSMP.Features.Jobs.Core;
 using ProjectSMP.Features.Jobs.Core.DynamicJob;
+using ProjectSMP.Features.Jobs.Side.Bus;
 using ProjectSMP.Features.Jobs.Side.Forklifter;
 using ProjectSMP.Features.Jobs.Side.Sweeper;
 using ProjectSMP.Features.LevelSystem;
@@ -23,8 +24,6 @@ using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.CEF;
 using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.GarageBlocker;
-using ProjectSMP.Plugins.GPS.WazeGPS;
-using ProjectSMP.Plugins.GPS.ZoneGPS;
 using ProjectSMP.Plugins.RakNet;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
@@ -157,6 +156,7 @@ namespace ProjectSMP
             // Initialize SideJobs - Forklifter
             ForklifterService.Initialize();
             SweeperService.Initialize();
+            BusService.Initialize();
 
             // Initialize Dynamic Pickups
             PickupService.Initialize();
@@ -279,9 +279,8 @@ namespace ProjectSMP
             ForklifterService.Dispose();
             SweeperService.Dispose();
             SideJobVehicleManager.Dispose();
+            BusService.Dispose();
             GeoLocationService.Dispose();
-            ZoneGpsService.Dispose();
-            WazeGpsService.Dispose();
 
             try
             {

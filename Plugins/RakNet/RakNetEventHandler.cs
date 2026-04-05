@@ -18,7 +18,7 @@ namespace ProjectSMP.Plugins.RakNet
             var player = BasePlayer.Find(playerId) as Player;
             if (player == null) return;
 
-            Console.WriteLine($"[RakNet] Incoming Packet - Player: {player.Name}, PacketID: {packetId}, BS: {bs}");
+            // Console.WriteLine($"[RakNet] Incoming Packet - Player: {player.Name}, PacketID: {packetId}, BS: {bs}");
         }
 
         private static void HandleIncomingRPC(int playerId, int rpcId, int bs)
@@ -26,7 +26,7 @@ namespace ProjectSMP.Plugins.RakNet
             var player = BasePlayer.Find(playerId) as Player;
             if (player == null) return;
 
-            Console.WriteLine($"[RakNet] Incoming RPC - Player: {player.Name}, RPCID: {rpcId}, BS: {bs}");
+            // Console.WriteLine($"[RakNet] Incoming RPC - Player: {player.Name}, RPCID: {rpcId}, BS: {bs}");
         }
 
         private static void HandleOutgoingPacket(int playerId, int packetId, int bs)
@@ -34,7 +34,7 @@ namespace ProjectSMP.Plugins.RakNet
             var player = BasePlayer.Find(playerId) as Player;
             if (player == null) return;
 
-            Console.WriteLine($"[RakNet] Outgoing Packet - Player: {player.Name}, PacketID: {packetId}, BS: {bs}");
+            // Console.WriteLine($"[RakNet] Outgoing Packet - Player: {player.Name}, PacketID: {packetId}, BS: {bs}");
         }
 
         private static void HandleOutgoingRPC(int playerId, int rpcId, int bs)
@@ -42,7 +42,7 @@ namespace ProjectSMP.Plugins.RakNet
             var player = BasePlayer.Find(playerId) as Player;
             if (player == null) return;
 
-            Console.WriteLine($"[RakNet] Outgoing RPC - Player: {player.Name}, RPCID: {rpcId}, BS: {bs}");
+            // Console.WriteLine($"[RakNet] Outgoing RPC - Player: {player.Name}, RPCID: {rpcId}, BS: {bs}");
         }
     }
 }

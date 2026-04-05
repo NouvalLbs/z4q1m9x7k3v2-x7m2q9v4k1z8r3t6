@@ -19,13 +19,13 @@ using ProjectSMP.Features.CinematicCamera;
 using ProjectSMP.Features.Dynamic.DynamicDoor;
 using ProjectSMP.Features.EnterExit;
 using ProjectSMP.Features.Jobs.Core.DynamicJob;
+using ProjectSMP.Features.Jobs.Side.Bus;
 using ProjectSMP.Features.Jobs.Side.Forklifter;
 using ProjectSMP.Features.Jobs.Side.Sweeper;
 using ProjectSMP.Features.PreviewModelDialog;
 using ProjectSMP.Features.ProgressBar;
 using ProjectSMP.Features.ProgressBar.Data;
 using ProjectSMP.Plugins.EVF2;
-using ProjectSMP.Plugins.GPS.WazeGPS;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
 using SampSharp.GameMode;
@@ -78,7 +78,7 @@ namespace ProjectSMP
             SpeedometerService.OnPlayerDisconnect(this);
             ForklifterService.OnPlayerDisconnect(this);
             SweeperService.OnPlayerDisconnect(this);
-            WazeGpsService.OnPlayerDisconnect(this);
+            BusService.OnPlayerDisconnect(this);
             this.ClearPlayerData();
             base.OnDisconnected(e);
         }
@@ -220,6 +220,7 @@ namespace ProjectSMP
             base.OnEnterVehicle(e);
             ForklifterService.OnPlayerEnterVehicle(this, e.Vehicle as Vehicle, e.IsPassenger);
             SweeperService.OnPlayerEnterVehicle(this, e.Vehicle as Vehicle, e.IsPassenger);
+            BusService.OnPlayerEnterVehicle(this, e.Vehicle as Vehicle, e.IsPassenger);
         }
 
         public override void OnExitVehicle(PlayerVehicleEventArgs e)
@@ -227,6 +228,7 @@ namespace ProjectSMP
             base.OnExitVehicle(e);
             ForklifterService.OnPlayerExitVehicle(this, e.Vehicle as Vehicle);
             SweeperService.OnPlayerExitVehicle(this, e.Vehicle as Vehicle);
+            BusService.OnPlayerExitVehicle(this, e.Vehicle as Vehicle);
         }
 
         public override void OnKeyStateChanged(KeyStateChangedEventArgs e)
@@ -277,6 +279,7 @@ namespace ProjectSMP
             SpeedometerService.OnPlayerStateChanged(this, e.NewState, e.OldState);
             ForklifterService.OnPlayerStateChanged(this, e.NewState, e.OldState);
             SweeperService.OnPlayerStateChanged(this, e.NewState, e.OldState);
+            BusService.OnPlayerStateChanged(this, e.NewState, e.OldState);
         }
     }
 }

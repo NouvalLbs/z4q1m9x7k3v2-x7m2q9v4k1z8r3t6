@@ -5,7 +5,6 @@ using ProjectSMP.Entities.Players.Delay;
 using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank.Paycheck;
 using ProjectSMP.Features.Jobs.Core;
-using ProjectSMP.Plugins.GPS.WazeGPS;
 using SampSharp.GameMode;
 using SampSharp.GameMode.Definitions;
 using SampSharp.GameMode.SAMP;
@@ -162,7 +161,6 @@ namespace ProjectSMP.Features.Jobs.Side.Sweeper
             _activeRoutes.Remove(session.Route);
             _sessions.Remove(player.Id);
             ClearCheckpoint(player.Id);
-            player.StopWaze();
 
             var v = BaseVehicle.Find(session.VehicleId) as Vehicle;
             if (v != null) SideJobVehicleManager.ScheduleRespawn(v);
@@ -284,13 +282,6 @@ namespace ProjectSMP.Features.Jobs.Side.Sweeper
             _sessions[player.Id] = session;
 
             SetCheckpoint(player, session);
-
-            var pts = Routes[(int)route];
-            if (pts.Length > 0)
-            {
-                player.SetWazeDestination(pts[0], 0x00FF00FF);
-            }
-
             player.SendClientMessage(Color.White,
                 $"{Msg.Sweeper} Rute {{FFFF00}}{RouteLabels[(int)route]}{{FFFFFF}} dimulai! Ikuti checkpoint di minimap.");
         }
@@ -305,13 +296,11 @@ namespace ProjectSMP.Features.Jobs.Side.Sweeper
             if (session.CheckpointIndex >= pts.Length)
             {
                 ClearCheckpoint(player.Id);
-                player.StopWaze();
                 FinalizeJob(player, session);
                 return;
             }
 
             SetCheckpoint(player, session);
-            player.SetWazeDestination(pts[session.CheckpointIndex], 0x00FF00FF);
         }
 
         private static void SetCheckpoint(Player player, SweeperSession session)
@@ -341,7 +330,6 @@ namespace ProjectSMP.Features.Jobs.Side.Sweeper
             _activeRoutes.Remove(session.Route);
             _sessions.Remove(player.Id);
             player.RemoveFromVehicle();
-            player.StopWaze();
 
             var salary = Salaries[(int)session.Route];
             DelayService.SetJobDelay(player, "sweeper", DelayMinutes);
@@ -360,7 +348,6 @@ namespace ProjectSMP.Features.Jobs.Side.Sweeper
             _activeRoutes.Remove(session.Route);
             _sessions.Remove(player.Id);
             ClearCheckpoint(player.Id);
-            player.StopWaze();
         }
     }
 }
