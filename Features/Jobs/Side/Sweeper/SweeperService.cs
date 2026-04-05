@@ -2,6 +2,7 @@
 using ProjectSMP.Core;
 using ProjectSMP.Entities;
 using ProjectSMP.Entities.Players.Delay;
+using ProjectSMP.Extensions;
 using ProjectSMP.Features.Bank.Paycheck;
 using ProjectSMP.Features.Jobs.Core;
 using ProjectSMP.Plugins.GPS.WazeGPS;
@@ -105,15 +106,11 @@ namespace ProjectSMP.Features.Jobs.Side.Sweeper
         };
 
         private const string BriefingText =
-            "{FFFFFF}Selamat datang di pekerjaan pembersihan kota. Tugas kamu adalah menjaga kebersihan " +
-            "jalan dengan menggunakan kendaraan Sweeper. Untuk memulai, segera datangi area parkir Sweeper " +
-            "lalu gunakan kendaraan yang tersedia.\n" +
-            "Setelah berada di dalam kendaraan, pilih jalur kerja yang ingin kamu ambil. Jika semua jalur " +
-            "sedang digunakan, harap menunggu hingga rute berikutnya tersedia.\n" +
-            "Sistem akan memandu perjalanan kamu melalui beberapa titik tugas di sepanjang area pembersihan. " +
-            "Selesaikan seluruh titik tersebut untuk menuntaskan pekerjaan.\n" +
-            "Ketika semua tugas selesai, pembayaran akan langsung diberikan secara otomatis. " +
-            "Kamu bisa melihat total gaji menggunakan perintah {FFFF00}/salary{FFFFFF}.";
+            "{FFFFFF}Selamat datang di pekerjaan pembersihan kota.\n" +
+            "Tugas kamu adalah menjaga kebersihan jalan dengan menggunakan kendaraan Sweeper. Untuk memulai, segera datangi area parkir Sweeper lalu gunakan kendaraan yang tersedia.\n" +
+            "Setelah berada di dalam kendaraan, pilih jalur kerja yang ingin kamu ambil. Jika semua jalur sedang digunakan, harap menunggu hingga rute berikutnya tersedia.\n" +
+            "Sistem akan memandu perjalanan kamu melalui beberapa titik tugas di sepanjang area pembersihan. Selesaikan seluruh titik tersebut untuk menuntaskan pekerjaan.\n" +
+            "Ketika semua tugas selesai, pembayaran akan langsung diberikan secara otomatis. Kamu bisa melihat total gaji menggunakan perintah {FFFF00}/salary{FFFFFF}.";
 
         public static void Initialize()
         {
@@ -134,6 +131,18 @@ namespace ProjectSMP.Features.Jobs.Side.Sweeper
             foreach (var cp in _checkpoints.Values) cp.Dispose();
             _checkpoints.Clear();
             _cpPositions.Clear();
+        }
+
+        public static void OnPlayerEnterVehicle(Player player, Vehicle? vehicle, bool isPassenger)
+        {
+            if (isPassenger || vehicle == null || !_vehicleIds.Contains(vehicle.Id)) return;
+            if (!player.IsCharLoaded || _sessions.ContainsKey(player.Id)) return;
+            if (SideJobVehicleManager.IsPendingRespawn(vehicle.Id))
+            {
+                var lastPos = player.Position;
+                var tm = new Timer(100, false);
+                tm.Tick += (s, e) => { tm.Dispose(); if (!player.IsConnected) return; player.RemoveFromVehicle(); player.SetPositionSafe(lastPos); };
+            }
         }
 
         public static void OnPlayerExitVehicle(Player player, Vehicle? vehicle)

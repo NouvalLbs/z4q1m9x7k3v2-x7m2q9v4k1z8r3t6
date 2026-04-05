@@ -1,12 +1,36 @@
 #nullable enable
 using System;
 using SampSharp.GameMode.SAMP;
-using ProjectSMP.Core;
+using SampSharp.GameMode.World;
 
 namespace ProjectSMP.Entities.Players.Delay
 {
     public static class DelayService
     {
+        private static Timer? _delayTimer;
+
+        public static void Initialize()
+        {
+            _delayTimer = new Timer(60000, true);
+            _delayTimer.Tick += OnDelayTick;
+        }
+
+        public static void Dispose()
+        {
+            _delayTimer?.Dispose();
+        }
+
+        private static void OnDelayTick(object sender, EventArgs e)
+        {
+            foreach (var bp in BasePlayer.All)
+            {
+                if (bp is Player p && p.IsCharLoaded && !p.IsDisposed)
+                {
+                    ReduceAllDelays(p, 1);
+                }
+            }
+        }
+
         public static void SetQuitJobDelay(Player player, int days)
         {
             var expireTime = DateTime.UtcNow.AddDays(days);

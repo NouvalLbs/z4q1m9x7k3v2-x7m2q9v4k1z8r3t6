@@ -219,6 +219,7 @@ namespace ProjectSMP
         {
             base.OnEnterVehicle(e);
             ForklifterService.OnPlayerEnterVehicle(this, e.Vehicle as Vehicle, e.IsPassenger);
+            SweeperService.OnPlayerEnterVehicle(this, e.Vehicle as Vehicle, e.IsPassenger);
         }
 
         public override void OnExitVehicle(PlayerVehicleEventArgs e)

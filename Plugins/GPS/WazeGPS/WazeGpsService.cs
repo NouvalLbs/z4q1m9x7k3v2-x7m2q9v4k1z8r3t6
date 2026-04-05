@@ -9,7 +9,7 @@ namespace ProjectSMP.Plugins.GPS.WazeGPS
 {
     public static class WazeGpsService
     {
-        private const int MaxWazeDots = 100;
+        private const int MaxWazeDots = 1024;
         private const int WazeUpdateTime = 1000;
         private const float ArrivalRange = 30.0f;
         private const float DotDistance = 12.5f;
@@ -150,42 +150,32 @@ namespace ProjectSMP.Plugins.GPS.WazeGPS
 
             DestroyWazeRoutes(playerId);
 
-            var currentPos = player.Position;
-            var closestNodeResult = GpsService.GetClosestNodeToPoint(currentPos);
-            if (closestNodeResult.Error != GpsError.None)
-                return;
-
-            var nodePosResult = GpsService.GetNodePosition(closestNodeResult.NodeId);
-            if (nodePosResult.Error != GpsError.None)
-                return;
-
-            var x = nodePosResult.Position.X;
-            var y = nodePosResult.Position.Y;
-
-            var maxSize = Math.Min(MaxWazeDots, sizeResult.Size);
-
-            for (int i = 0; i < maxSize; i++)
+            for (int i = 0; i < sizeResult.Size - 1; i++)
             {
-                var nodeResult = GpsService.GetPathNode(pathId, i);
-                if (nodeResult.Error != GpsError.None)
+                if (data.RouteCount >= MaxWazeDots)
+                    break;
+
+                var currentNodeResult = GpsService.GetPathNode(pathId, i);
+                if (currentNodeResult.Error != GpsError.None)
                     continue;
 
-                var nodePos = GpsService.GetNodePosition(nodeResult.NodeId);
-                if (nodePos.Error != GpsError.None)
+                var nextNodeResult = GpsService.GetPathNode(pathId, i + 1);
+                if (nextNodeResult.Error != GpsError.None)
                     continue;
 
-                var indexResult = GpsService.GetPathNodeIndex(pathId, nodeResult.NodeId);
-                if (indexResult.Error != GpsError.None)
+                var currentPosResult = GpsService.GetNodePosition(currentNodeResult.NodeId);
+                if (currentPosResult.Error != GpsError.None)
                     continue;
 
-                if (i == indexResult.Index)
-                {
-                    if (!CreateWazePointer(playerId, x, y, nodePos.Position.X, nodePos.Position.Y, data.Color))
-                        break;
-                }
+                var nextPosResult = GpsService.GetNodePosition(nextNodeResult.NodeId);
+                if (nextPosResult.Error != GpsError.None)
+                    continue;
 
-                x = nodePos.Position.X + 0.5f;
-                y = nodePos.Position.Y + 0.5f;
+                if (!CreateWazePointer(playerId,
+                    currentPosResult.Position.X, currentPosResult.Position.Y,
+                    nextPosResult.Position.X, nextPosResult.Position.Y,
+                    data.Color))
+                    break;
             }
         }
 
@@ -199,7 +189,7 @@ namespace ProjectSMP.Plugins.GPS.WazeGPS
             var distance = CalculateDistance(x1, y1, 0, x2, y2, 0);
             var points = (int)(distance / DotDistance);
 
-            for (int i = 1; i <= points; i++)
+            for (int i = 0; i <= points; i++)
             {
                 if (data.RouteCount >= MaxWazeDots)
                     return false;

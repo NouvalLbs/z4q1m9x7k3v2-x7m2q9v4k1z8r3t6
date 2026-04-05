@@ -6,7 +6,7 @@ namespace ProjectSMP.Plugins.GPS.ZoneGPS
 {
     public static class ZoneGpsService
     {
-        private const int MaxPlayerGangZones = 256;
+        private const int MaxPlayerGangZones = 1024;
         private static readonly Dictionary<int, Dictionary<int, ZoneGpsData>> _playerZones = new();
 
         public static int Create(BasePlayer player, float minX, float minY, float maxX, float maxY)

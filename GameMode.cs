@@ -2,6 +2,7 @@ using ProjectSMP.Core;
 using ProjectSMP.Core.Discords;
 using ProjectSMP.Entities.Players.Administrator;
 using ProjectSMP.Entities.Players.Condition;
+using ProjectSMP.Entities.Players.Delay;
 using ProjectSMP.Entities.Players.Needs;
 using ProjectSMP.Entities.Vehicles.Speedo;
 using ProjectSMP.Extensions;
@@ -138,6 +139,9 @@ namespace ProjectSMP
             // Initialize Playing Time Service
             PlaytimeService.Initialize();
 
+            // Initialize Delay Service
+            DelayService.Initialize();
+
             // Initialize Paycheck Service
             PaycheckService.Initialize();
 
@@ -267,6 +271,7 @@ namespace ProjectSMP
             ConditionService.Dispose();
             JailService.Dispose();
             PlaytimeService.Dispose();
+            DelayService.Dispose();
             PaycheckService.Dispose();
             ReportService.Dispose();
             AskService.Dispose();
