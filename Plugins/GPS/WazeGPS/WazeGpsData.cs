@@ -12,6 +12,7 @@ namespace ProjectSMP.Plugins.GPS.WazeGPS
         public int RouteCount { get; set; }
         public Dictionary<int, int> Routes { get; set; } = new();
         public HashSet<int> CreatedRoutes { get; set; } = new();
+        public List<int> ZoneIds { get; set; } = new();
 
         public void Reset()
         {

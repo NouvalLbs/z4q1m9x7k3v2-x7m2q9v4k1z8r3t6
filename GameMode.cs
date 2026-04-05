@@ -23,6 +23,7 @@ using ProjectSMP.Plugins.CEF;
 using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.GPS.WazeGPS;
+using ProjectSMP.Plugins.GPS.ZoneGPS;
 using ProjectSMP.Plugins.RakNet;
 using ProjectSMP.Plugins.RealtimeClock;
 using ProjectSMP.Plugins.WeaponConfig;
@@ -274,6 +275,7 @@ namespace ProjectSMP
             SweeperService.Dispose();
             SideJobVehicleManager.Dispose();
             GeoLocationService.Dispose();
+            ZoneGpsService.Dispose();
             WazeGpsService.Dispose();
 
             try

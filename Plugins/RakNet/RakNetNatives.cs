@@ -68,7 +68,7 @@ namespace ProjectSMP.Plugins.RakNet
         public virtual int RNB_BS_WriteUint32(int bs, int value) => throw new NativeNotImplementedException();
 
         [NativeMethod]
-        public virtual int RNB_BS_WriteFloat(int bs, float value) => throw new NativeNotImplementedException();
+        public virtual float RNB_BS_WriteFloat(int bs, float value) => throw new NativeNotImplementedException();
 
         [NativeMethod]
         public virtual int RNB_BS_WriteBool(int bs, int value) => throw new NativeNotImplementedException();

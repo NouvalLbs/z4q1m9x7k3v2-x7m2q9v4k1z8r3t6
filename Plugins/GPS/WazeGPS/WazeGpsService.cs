@@ -1,4 +1,5 @@
-﻿using SampSharp.GameMode;
+﻿using ProjectSMP.Plugins.GPS.ZoneGPS;
+using SampSharp.GameMode;
 using SampSharp.GameMode.SAMP;
 using SampSharp.GameMode.World;
 using System;
@@ -79,6 +80,8 @@ namespace ProjectSMP.Plugins.GPS.WazeGPS
                 DestroyWazeRoutes(player.Id);
                 _playerData.Remove(player.Id);
             }
+
+            ZoneGpsService.OnPlayerDisconnect(player);
         }
 
         private static void UpdateWaze(int playerId)
@@ -198,27 +201,26 @@ namespace ProjectSMP.Plugins.GPS.WazeGPS
 
             for (int i = 1; i <= points; i++)
             {
-                var index = data.RouteCount;
-
-                if (index >= MaxWazeDots)
+                if (data.RouteCount >= MaxWazeDots)
                     return false;
 
                 var x = x1 + (((x2 - x1) / points) * i);
                 var y = y1 + (((y2 - y1) / points) * i);
 
                 var halfDot = DotDistance / 2;
-                var gangZone = new GangZone(
+                var zoneId = ZoneGpsService.Create(
+                    player,
                     x - halfDot - 5,
                     y - halfDot - 5,
                     x + halfDot + 5,
                     y + halfDot + 5
                 );
 
-                gangZone.Color = new Color(color);
-                gangZone.Show(player);
+                if (zoneId == -1)
+                    return false;
 
-                data.Routes[index] = gangZone.Id;
-                data.CreatedRoutes.Add(index);
+                ZoneGpsService.Show(player, zoneId, color);
+                data.ZoneIds.Add(zoneId);
                 data.RouteCount++;
             }
 
@@ -227,20 +229,16 @@ namespace ProjectSMP.Plugins.GPS.WazeGPS
 
         private static void DestroyWazeRoutes(int playerId)
         {
-            if (!_playerData.ContainsKey(playerId))
+            var player = BasePlayer.Find(playerId);
+            if (player == null || !_playerData.ContainsKey(playerId))
                 return;
 
             var data = _playerData[playerId];
 
-            foreach (var index in data.CreatedRoutes)
-            {
-                if (data.Routes.TryGetValue(index, out var gangZoneId))
-                {
-                    var gangZone = GangZone.Find(gangZoneId);
-                    gangZone?.Dispose();
-                }
-            }
+            foreach (var zoneId in data.ZoneIds)
+                ZoneGpsService.Destroy(player, zoneId);
 
+            data.ZoneIds.Clear();
             data.Routes.Clear();
             data.CreatedRoutes.Clear();
             data.RouteCount = 0;
@@ -261,6 +259,7 @@ namespace ProjectSMP.Plugins.GPS.WazeGPS
 
             _timers.Clear();
             _playerData.Clear();
+            ZoneGpsService.Dispose();
         }
     }
 }
