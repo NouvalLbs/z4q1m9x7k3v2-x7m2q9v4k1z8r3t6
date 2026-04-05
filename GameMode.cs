@@ -22,6 +22,7 @@ using ProjectSMP.Features.ProgressBar;
 using ProjectSMP.Plugins.Anticheat;
 using ProjectSMP.Plugins.Anticheat.Configuration;
 using ProjectSMP.Plugins.CEF;
+using ProjectSMP.Plugins.ColAndreas;
 using ProjectSMP.Plugins.EVF2;
 using ProjectSMP.Plugins.GarageBlocker;
 using ProjectSMP.Plugins.RakNet;
@@ -48,6 +49,7 @@ namespace ProjectSMP
 
             // Initialize RakNet
             RakNetEventHandler.Initialize();
+            ColAndreasService.Init();
 
             CefService.OnInitialized += (playerId, success) =>
             {
